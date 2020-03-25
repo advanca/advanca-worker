@@ -1,0 +1,77 @@
+[package]
+authors = ["Advanca Authors"]
+edition = "2018"
+license = 'Apache-2.0'
+name = "advanca-worker-enclave"
+version = "0.1.0"
+
+[lib]
+name = "advanca_worker_enclave"
+crate-type = ["staticlib"]
+
+[features]
+default = []
+production = []
+
+[target.'cfg(not(target_env = "sgx"))'.dependencies]
+sgx_tse       = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd      = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs","net","backtrace"] }
+sgx_rand      = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_trts      = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_types     = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tseal     = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tcrypto   = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_serialize = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tunittest = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+
+[dependencies]
+# unmodified crates
+codec             = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
+primitive-types   = { version = "0.6", default-features = false, features = ["codec"] }
+
+# mesalock-modified crates
+log               = { tag = "sgx_1.1.0", git = "https://github.com/mesalock-linux/log-sgx" }
+env_logger        = { tag = "sgx_1.1.0", git = "https://github.com/mesalock-linux/env_logger-sgx" }
+serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
+serde_json        = { tag = "sgx_1.1.0", git = "https://github.com/mesalock-linux/serde-json-sgx"}
+serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
+protobuf          = { version = "2.8.1", branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
+base64          = { version = "0.10", git = "https://github.com/mesalock-linux/rust-base64-sgx" }
+hex = { tag = "sgx_1.1.0", git = "https://github.com/mesalock-linux/rust-hex-sgx"}
+
+# rust-sgx-sdk crates
+sgx_tstd          = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
+sgx_types         = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx-crypto-helper = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_tcrypto_helper" }
+sgx_rand          = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+
+[dependencies.protos]
+package = "protos-enclave"
+path = "../protos/enclave"
+
+[patch.'https://github.com/apache/teaclave-sgx-sdk.git']
+sgx_alloc = { path = "../rust-sgx-sdk/sgx_alloc" }
+sgx_build_helper = { path = "../rust-sgx-sdk/sgx_build_helper" }
+sgx_cov = { path = "../rust-sgx-sdk/sgx_cov" }
+sgx_crypto_helper = { path = "../rust-sgx-sdk/sgx_crypto_helper" }
+sgx_libc = { path = "../rust-sgx-sdk/sgx_libc" }
+sgx_rand = { path = "../rust-sgx-sdk/sgx_rand" }
+sgx_rand_derive = { path = "../rust-sgx-sdk/sgx_rand_derive" }
+sgx_serialize = { path = "../rust-sgx-sdk/sgx_serialize" }
+sgx_serialize_derive = { path = "../rust-sgx-sdk/sgx_serialize_derive" }
+sgx_serialize_derive_internals = { path = "../rust-sgx-sdk/sgx_serialize_derive_internals" }
+sgx_tcrypto = { path = "../rust-sgx-sdk/sgx_tcrypto" }
+sgx_tcrypto_helper = { path = "../rust-sgx-sdk/sgx_tcrypto_helper" }
+sgx_tdh = { path = "../rust-sgx-sdk/sgx_tdh" }
+sgx_tkey_exchange = { path = "../rust-sgx-sdk/sgx_tkey_exchange" }
+sgx_tprotected_fs = { path = "../rust-sgx-sdk/sgx_tprotected_fs" }
+sgx_trts = { path = "../rust-sgx-sdk/sgx_trts" }
+sgx_tse = { path = "../rust-sgx-sdk/sgx_tse" }
+sgx_tseal = { path = "../rust-sgx-sdk/sgx_tseal" }
+sgx_tservice = { path = "../rust-sgx-sdk/sgx_tservice" }
+sgx_tstd = { path = "../rust-sgx-sdk/sgx_tstd" }
+sgx_tunittest = { path = "../rust-sgx-sdk/sgx_tunittest" }
+sgx_types = { path = "../rust-sgx-sdk/sgx_types" }
+sgx_ucrypto = { path = "../rust-sgx-sdk/sgx_ucrypto" }
+sgx_unwind = { path = "../rust-sgx-sdk/sgx_unwind" }
+sgx_urts = { path = "../rust-sgx-sdk/sgx_urts" }

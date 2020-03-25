@@ -1,0 +1,44 @@
+[package]
+authors = ["Advanca Authors"]
+build = "build.rs"
+edition = "2018"
+license = "GPL-3.0"
+name = "advanca-worker"
+version = "0.1.0"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.7.1"
+serde_json = "1.0"
+hex = "0.4.2"
+futures = "0.1.16"
+grpcio = "0.4.3"
+protobuf = "~2"
+structopt = "0.3"
+
+sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+
+sgx_types = { git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_urts = { git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tseal = { git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_crypto_helper = { git = "https://github.com/apache/teaclave-sgx-sdk.git"}
+
+[dependencies.codec]
+package = "parity-scale-codec"
+version = "1.0.0"
+
+[dependencies.protos]
+package = "protos-app"
+path = "../protos/app"
+
+[dependencies.substrate-api]
+path = "../substrate-api"
+
+[dependencies.advanca-runtime]
+git = "https://github.com/advanca/advanca-node/"
+version = "~0.1"
+
+[dependencies.advanca-core]
+git = "https://github.com/advanca/advanca-node/"
+version = "~0.1"

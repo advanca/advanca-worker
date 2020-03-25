@@ -1,0 +1,16 @@
+[package]
+authors = ["Advanca Authors"]
+build = "build.rs"
+edition = "2018"
+license = "Apache-2.0"
+name = "protos-app"
+version = "0.1.0"
+
+
+[dependencies]
+futures = "0.1.16"
+grpcio = "0.4.3"
+protobuf = "~2"
+
+[build-dependencies]
+protoc-grpcio = "1.1.0"

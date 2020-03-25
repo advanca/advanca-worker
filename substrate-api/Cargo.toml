@@ -1,0 +1,34 @@
+[package]
+authors = ["Advanca Authors"]
+edition = "2018"
+license = "GPL-3.0"
+name = "substrate-api"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+env_logger = "0.7.0"
+log = "0.4.8"
+hex = "0.4.2"
+
+sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+
+[dependencies.substrate-api-client]
+git = "https://github.com/AdvancaNetwork/substrate-api-client"
+rev = "1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
+
+[dependencies.codec]
+package = "parity-scale-codec"
+version = "1.0.0"
+
+[dependencies.advanca-runtime]
+git = "https://github.com/advanca/advanca-node/"
+version = "~0.1"
+
+[dependencies.advanca-core]
+git = "https://github.com/advanca/advanca-node/"
+version = "~0.1"
+
+[dev-dependencies]
+sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}

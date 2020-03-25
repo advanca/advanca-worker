@@ -1,0 +1,26 @@
+#object file
+*.o
+
+#library
+*.a
+
+#share object
+*.so
+*.so.*
+
+**/target
+
+**/Enclave_*.[c|h]
+
+bin/*
+!bin/.gitignore
+
+lib/*
+!lib/.gitignore
+
+**/Cargo.lock
+!Cargo.lock
+!enclave/Cargo.lock
+
+
+.vscode/
