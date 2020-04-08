@@ -20,17 +20,17 @@ git clone --recursive https://github.com/advanca/advanca-worker.git
 
 ## Build
 
-Install the Intel(R) SGX SDK v2.7.1 (the version supported by rust-sgx-sdk v1.1.0).
+Install the Intel(R) SGX SDK v2.9.100.2 (the version supported by rust-sgx-sdk v1.1.1).
 
-You can download the sdk installer `sgx_linux_x64_sdk_2.7.101.3.bin` directly from [here](https://download.01.org/intel-sgx/sgx-linux/2.7.1/distro/) or manually [build one](https://github.com/intel/linux-sgx/tree/sgx_2.7.1#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
+You can download the sdk installer `sgx_linux_x64_sdk_2.9.100.2.bin` directly from [here](https://download.01.org/intel-sgx/sgx-linux/2.9/distro/) or manually [build one](https://github.com/intel/linux-sgx/tree/sgx_2.9#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
 
 ```console
 # For ubuntu 18.04
-$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.7.1/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.7.101.3.bin
+$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.7.1/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
 
-$ chmod +x sgx_linux_x64_sdk_2.7.101.3.bin
+$ chmod +x sgx_linux_x64_sdk_2.9.100.2.bin
 
-$ sudo ./sgx_linux_x64_sdk_2.7.101.3.bin
+$ sudo ./sgx_linux_x64_sdk_2.9.100.2.bin
 Do you want to install in current directory? [yes/no] : no
 Please input the directory which you want to install in : /opt/intel
 ...

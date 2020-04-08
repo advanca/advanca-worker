@@ -7,10 +7,11 @@ name = "protos-enclave"
 version = "0.1.0"
 
 [dependencies]
-protobuf = { version = "2.8.1", branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
-sgx_tstd = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git"}
-sgx_types = { rev = "v1.1.0", git = "https://github.com/apache/teaclave-sgx-sdk.git"}
+protobuf 	= { version = "2.8.1", branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
+sgx_types 	= { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd 	= { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 [build-dependencies]
-# pin this at the same version of rust-protobuf-sgx
-protoc-rust = "=2.8.1"
+## pin this at the same version of rust-protobuf-sgx
+protoc-rust 	= "=2.8.1"
+
