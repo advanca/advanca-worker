@@ -31,14 +31,14 @@ primitive-types   = { version = "0.6", default-features = false, features = ["co
 
 # mesalock-modified crates
 # NOTE: Have to ensure all the git repos have the same Cargo version
-log               = { rev = "sgx_1.1.1", git = "https://github.com/mesalock-linux/log-sgx" }
-env_logger        = { rev = "sgx_1.1.1", git = "https://github.com/mesalock-linux/env_logger-sgx" }
+log               = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/log-sgx" }
+env_logger        = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/env_logger-sgx" }
+base64            = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-base64-sgx" }
+hex 		  = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-hex-sgx"}
+protobuf          = { branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
 serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
-base64            = { rev = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-base64-sgx" }
-hex 		  = { rev = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-hex-sgx"}
-protobuf          = { branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
 
 # rust-sgx-sdk crates
 sgx_tstd          = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
