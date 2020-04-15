@@ -15,7 +15,7 @@ hex = "0.4.2"
 sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 
 [dependencies.substrate-api-client]
-git = "https://github.com/AdvancaNetwork/substrate-api-client"
+git = "https://github.com/advanca/substrate-api-client"
 rev = "1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
 
 [dependencies.codec]
