@@ -27,11 +27,17 @@ message EncryptedRequest {
   bytes payload = 1;
 }
 
+enum Privacy {
+  ENCRYPTION = 0;
+  SQRTORAM = 1;
+}
+
 message PlainRequest {
   oneof Request {
     GetRequest get_request = 1;
     SetRequest set_request = 2;
-  }
+  };
+  Privacy privacy = 3;
 }
 
 message EncryptedResponse {

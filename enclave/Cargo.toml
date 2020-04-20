@@ -40,6 +40,10 @@ serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
 
+# customized crates
+# TODO: switch to github version
+oram = { version = "0.1.0", path = "../../sroram", default-features = false, features = ["sgx"] }
+
 # rust-sgx-sdk crates
 sgx_tstd          = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
 sgx_types         = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }

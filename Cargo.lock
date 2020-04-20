@@ -36,6 +36,7 @@ dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protos-app",
  "sc-rpc",
+ "serde",
  "serde_json",
  "sgx_crypto_helper",
  "sp-core",
