@@ -16,9 +16,12 @@ jobs:
       with:
         profile: minimal
         components: rustfmt, clippy
+    
     - name: format check
       run: |
-        cargo fmt -- --check
+        cargo fmt --manifest-path client/Cargo.toml -- --check
+        cargo fmt --manifest-path substrate-api/Cargo.toml -- --check
+        cargo fmt --manifest-path app/Cargo.toml -- --check
         cargo fmt --manifest-path enclave/Cargo.toml -- --check
     #TODO: enable this
     # - name: linter
