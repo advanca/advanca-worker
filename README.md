@@ -27,7 +27,7 @@ You can download the sdk installer `sgx_linux_x64_sdk_2.9.100.2.bin` directly fr
 
 ```console
 # For ubuntu 18.04
-$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.7.1/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
+$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.9/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
 
 $ chmod +x sgx_linux_x64_sdk_2.9.100.2.bin
 
