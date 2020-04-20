@@ -8,11 +8,10 @@ ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.9/distro/ubuntu18.
 ARG SGX_SDK_BIN=sgx_linux_x64_sdk_2.9.100.2.bin
 
 RUN curl -sO $SGX_SDK_URL && chmod +x $SGX_SDK_BIN && \
-    echo -e 'no\n/opt/intel' | ./$SGX_SDK_BIN
-
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly-2020-03-12 -y && \
-        export PATH=$PATH:$HOME/.cargo/bin && \
-        rustup target add wasm32-unknown-unknown
+    echo -e 'no\n/opt/intel' | ./$SGX_SDK_BIN && \
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly-2020-03-12 -y && \
+    export PATH=$PATH:$HOME/.cargo/bin && \
+    rustup target add wasm32-unknown-unknown
     
 ENV SGX_DEBUG=1
 ENV SGX_MODE=SW
@@ -21,7 +20,7 @@ COPY . /advanca
 
 WORKDIR /advanca
 
-RUN export PATH=$PATH:$HOME/.cargo/bin && \
+RUN . $HOME/.cargo/env && \
     . /opt/intel/sgxsdk/environment && \
     make
 
@@ -39,6 +38,9 @@ RUN	useradd -m -u 1000 -U -s /bin/sh -d /advanca advanca
 
 COPY --from=builder $SOURCE_PATH/bin/enclave.signed.so /advanca
 
+RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev
+
+WORKDIR /advanca
 USER advanca
 EXPOSE 12345
 
@@ -55,6 +57,7 @@ COPY --from=builder $SOURCE_PATH/bin/advanca-client /usr/local/bin
 
 RUN	useradd -m -u 1000 -U -s /bin/sh -d /advanca advanca
 
+WORKDIR /advanca
 USER advanca
 
 ENTRYPOINT ["/usr/local/bin/advanca-client"]
