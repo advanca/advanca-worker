@@ -26,7 +26,7 @@ use protobuf::Message;
 use protos::storage::*;
 use protos::storage_grpc::StorageClient;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use sgx_crypto_helper::rsa3072::{Rsa3072KeyPair, Rsa3072PubKey};
 use sgx_crypto_helper::RsaKeyPair;
@@ -147,8 +147,18 @@ struct Patient {
 }
 
 impl Patient {
-    fn new(id: &'static str, name: &'static str, birthdate: &'static str, phone: &'static str) -> Self {
-        Patient{id, name, birthdate, phone}
+    fn new(
+        id: &'static str,
+        name: &'static str,
+        birthdate: &'static str,
+        phone: &'static str,
+    ) -> Self {
+        Patient {
+            id,
+            name,
+            birthdate,
+            phone,
+        }
     }
 }
 
@@ -168,9 +178,15 @@ pub fn start_demo(url: &str, enclave_key: Rsa3072PubKey, client_key: Rsa3072KeyP
     client.set_secretly(miranda.id, &serde_json::to_string(&miranda).unwrap(), true);
     thread::sleep(time::Duration::from_secs(2));
 
-    info!("get Thomas's info: {}", client.get_secretly(thomas.id, true));
+    info!(
+        "get Thomas's info: {}",
+        client.get_secretly(thomas.id, true)
+    );
     thread::sleep(time::Duration::from_secs(2));
 
-    info!("get Miranda's info: {}", client.get_secretly(miranda.id, true));
+    info!(
+        "get Miranda's info: {}",
+        client.get_secretly(miranda.id, true)
+    );
     thread::sleep(time::Duration::from_secs(2));
 }

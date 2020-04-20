@@ -21,11 +21,11 @@ use serde_derive::*;
 use serde_json;
 
 use log::trace;
+use oram::SqrtOram;
 use protos::storage::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_tstd::io::ErrorKind;
 use sgx_tstd::untrusted::fs::remove_file;
-use oram::SqrtOram;
 
 use crate::constants::SEALED_STORAGE_FILE;
 use crate::io;
@@ -96,7 +96,7 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
                     None => set_res.set_message("new key and value created".into()),
                     Some(_) => set_res.set_message("new value updated".into()),
                 }
-            },
+            }
             Privacy::SQRTORAM => {
                 let index: u32 = set_req.get_key().parse().unwrap();
                 let value = set_req.get_value().as_bytes().to_vec();
@@ -113,14 +113,12 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
         let mut get_res = GetResponse::new();
 
         match plain_request.get_privacy() {
-            Privacy::ENCRYPTION => {
-                match storage.backend.get(get_req.get_key()) {
-                    Some(k) => {
-                        get_res.set_value(k.clone());
-                        get_res.set_message("key exists, value returned".into());
-                    }
-                    None => get_res.set_message("key not found".into()),
+            Privacy::ENCRYPTION => match storage.backend.get(get_req.get_key()) {
+                Some(k) => {
+                    get_res.set_value(k.clone());
+                    get_res.set_message("key exists, value returned".into());
                 }
+                None => get_res.set_message("key not found".into()),
             },
             Privacy::SQRTORAM => {
                 let index: u32 = get_req.get_key().parse().unwrap();

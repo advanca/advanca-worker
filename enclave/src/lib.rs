@@ -33,6 +33,7 @@ mod utils;
 
 use std::backtrace::{self, PrintFormat};
 
+use oram::SqrtOram;
 use protobuf::parse_from_bytes;
 use protobuf::Message;
 use protos::storage::*;
@@ -40,9 +41,8 @@ use serde_json;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_types::sgx_status_t;
 use std::slice;
+use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 use utils::write_slice_and_whitespace_pad;
-use oram::SqrtOram;
-use storage::{ORAM_SIZE, ORAM_BLOCK_SIZE};
 
 #[no_mangle]
 pub unsafe extern "C" fn init() -> sgx_status_t {
