@@ -8,13 +8,14 @@ See [advanca/advanca](https://github.com/advanca/advanca) for more information.
 
 The project is developmend on Ubuntu 18.04. You may need to install the following packages:
 
-```
+```shell
 sudo apt-get update
 sudo apt-get install -y make build-essential cmake protobuf-compiler golang automake libtool
 ```
+
 The repository contains submodule, make sure you clone the code recursively.
 
-```
+```shell
 git clone --recursive https://github.com/advanca/advanca-worker.git
 ```
 
@@ -26,7 +27,7 @@ You can download the sdk installer `sgx_linux_x64_sdk_2.9.100.2.bin` directly fr
 
 ```console
 # For ubuntu 18.04
-$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.7.1/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
+$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.9/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
 
 $ chmod +x sgx_linux_x64_sdk_2.9.100.2.bin
 
@@ -38,7 +39,7 @@ Please input the directory which you want to install in : /opt/intel
 
 Add this to your shell profile or run it everytime before you build.
 
-```
+```shell
 source /opt/intel/sgxsdk/environment
 ```
 
@@ -52,7 +53,7 @@ curl https://sh.rustup.rs -sSf | sh
 
 Build in simulation mode.
 
-```
+```shell
 export SGX_MODE=SW
 export SGX_DEBUG=1
 make
@@ -64,14 +65,14 @@ As a prerequisite, build and run [`advanca-node`](https://github.com/advanca/adv
 
 Then in a new terminal, run the client
 
-```
+```shell
 cd bin/
 ./advanca-client
 ```
 
 In another new temrinal, run the worker
 
-```
+```shell
 cd bin/
 ./advanca-worker
 ```

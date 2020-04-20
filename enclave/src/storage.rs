@@ -15,12 +15,13 @@
 use sgx_types::*;
 use std::collections::HashMap;
 use std::default::Default;
-use std::string::String;
+use std::string::{String, ToString};
 
 use serde_derive::*;
 use serde_json;
 
 use log::trace;
+use oram::SqrtOram;
 use protos::storage::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_tstd::io::ErrorKind;
@@ -28,6 +29,9 @@ use sgx_tstd::untrusted::fs::remove_file;
 
 use crate::constants::SEALED_STORAGE_FILE;
 use crate::io;
+
+pub const ORAM_BLOCK_SIZE: usize = 1024;
+pub const ORAM_SIZE: usize = 256;
 
 #[derive(Serialize, Deserialize, Default)]
 struct Storage {
@@ -78,16 +82,28 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
     let mut plain_response = PlainResponse::new();
     let mut storage = unseal_storage()?;
 
+    let mut oram = SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
+
     if plain_request.has_set_request() {
         let set_req = plain_request.get_set_request();
-
         let mut set_res = SetResponse::new();
-        match storage
-            .backend
-            .insert(set_req.get_key().into(), set_req.get_value().into())
-        {
-            None => set_res.set_message("new key and value created".into()),
-            Some(_) => set_res.set_message("new value updated".into()),
+        match plain_request.get_privacy() {
+            Privacy::ENCRYPTION => {
+                match storage
+                    .backend
+                    .insert(set_req.get_key().into(), set_req.get_value().into())
+                {
+                    None => set_res.set_message("new key and value created".into()),
+                    Some(_) => set_res.set_message("new value updated".into()),
+                }
+            }
+            Privacy::SQRTORAM => {
+                let index: u32 = set_req.get_key().parse().unwrap();
+                let value = set_req.get_value().as_bytes().to_vec();
+                oram.put(index, value);
+                // TODO: handle put failure
+                set_res.set_message("key inserted".into());
+            }
         }
 
         plain_response.set_set_response(set_res);
@@ -95,12 +111,24 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
         let get_req = plain_request.get_get_request();
 
         let mut get_res = GetResponse::new();
-        match storage.backend.get(get_req.get_key()) {
-            Some(k) => {
-                get_res.set_value(k.clone());
-                get_res.set_message("key exists, value returned".into());
+
+        match plain_request.get_privacy() {
+            Privacy::ENCRYPTION => match storage.backend.get(get_req.get_key()) {
+                Some(k) => {
+                    get_res.set_value(k.clone());
+                    get_res.set_message("key exists, value returned".into());
+                }
+                None => get_res.set_message("key not found".into()),
+            },
+            Privacy::SQRTORAM => {
+                let index: u32 = get_req.get_key().parse().unwrap();
+                if let Some(value) = oram.get(index) {
+                    get_res.set_value(std::str::from_utf8(&value).unwrap().to_string());
+                    get_res.set_message("key exists, value returned".into());
+                } else {
+                    get_res.set_message("key not found".into());
+                }
             }
-            None => get_res.set_message("key not found".into()),
         }
 
         plain_response.set_get_response(get_res);

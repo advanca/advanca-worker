@@ -31,6 +31,9 @@ mod rsa3072;
 mod storage;
 mod utils;
 
+use std::backtrace::{self, PrintFormat};
+
+use oram::SqrtOram;
 use protobuf::parse_from_bytes;
 use protobuf::Message;
 use protos::storage::*;
@@ -38,6 +41,7 @@ use serde_json;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_types::sgx_status_t;
 use std::slice;
+use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 use utils::write_slice_and_whitespace_pad;
 
 #[no_mangle]
@@ -45,6 +49,8 @@ pub unsafe extern "C" fn init() -> sgx_status_t {
     if let Err(status) = rsa3072::create_sealed_if_absent() {
         return status;
     }
+
+    SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
     sgx_status_t::SGX_SUCCESS
@@ -116,6 +122,8 @@ pub unsafe extern "C" fn storage_request(
 ) -> sgx_status_t {
     let request_payload = slice::from_raw_parts(request, request_size as usize);
     let response_payload = slice::from_raw_parts_mut(response, response_capacity as usize);
+
+    let _ = backtrace::enable_backtrace("enclave.signed.so", PrintFormat::Full);
 
     let keypair = match rsa3072::unseal_pair() {
         Ok(keypair) => keypair,

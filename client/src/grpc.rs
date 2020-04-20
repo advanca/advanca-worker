@@ -26,6 +26,8 @@ use protobuf::Message;
 use protos::storage::*;
 use protos::storage_grpc::StorageClient;
 
+use serde::{Deserialize, Serialize};
+
 use sgx_crypto_helper::rsa3072::{Rsa3072KeyPair, Rsa3072PubKey};
 use sgx_crypto_helper::RsaKeyPair;
 
@@ -74,6 +76,7 @@ impl Client {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set(&self, key: &str, value: &str) {
         let mut req = SetRequest::new();
         req.set_key(key.into());
@@ -84,6 +87,7 @@ impl Client {
         trace!("SetResponse: {:?}", &res);
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, key: &str) -> String {
         let mut req = GetRequest::new();
         req.set_key(key.into());
@@ -95,7 +99,8 @@ impl Client {
         res.get_value().into()
     }
 
-    pub fn set_secretly(&self, key: &str, value: &str) {
+    #[allow(dead_code)]
+    pub fn set_secretly(&self, key: &str, value: &str, oram: bool) {
         let mut req = SetRequest::new();
         req.set_key(key.into());
         req.set_value(value.into());
@@ -103,18 +108,26 @@ impl Client {
         let mut plain_req = PlainRequest::new();
         plain_req.set_set_request(req);
 
+        if oram {
+            plain_req.set_privacy(Privacy::SQRTORAM);
+        }
+
         trace!("SetRequest: {:?}", &plain_req);
         let res = self.send_encrypted_request(plain_req);
         let res = res.get_set_response();
         trace!("SetResponse: {:?}", &res);
     }
 
-    pub fn get_secretly(&self, key: &str) -> String {
+    pub fn get_secretly(&self, key: &str, oram: bool) -> String {
         let mut req = GetRequest::new();
         req.set_key(key.into());
 
         let mut plain_req = PlainRequest::new();
         plain_req.set_get_request(req);
+
+        if oram {
+            plain_req.set_privacy(Privacy::SQRTORAM);
+        }
 
         trace!("GetRequest: {:?}", &plain_req);
         let res = self.send_encrypted_request(plain_req);
@@ -125,32 +138,55 @@ impl Client {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Patient {
+    id: &'static str,
+    name: &'static str,
+    birthdate: &'static str,
+    phone: &'static str,
+}
+
+impl Patient {
+    fn new(
+        id: &'static str,
+        name: &'static str,
+        birthdate: &'static str,
+        phone: &'static str,
+    ) -> Self {
+        Patient {
+            id,
+            name,
+            birthdate,
+            phone,
+        }
+    }
+}
+
 pub fn start_demo(url: &str, enclave_key: Rsa3072PubKey, client_key: Rsa3072KeyPair) {
     let client = Client::new(url, client_key, enclave_key);
 
-    info!("accessing unencrypted storage hosted on worker ...");
-    info!("set(apple=pie)");
-    client.set("apple", "pie");
-    thread::sleep(time::Duration::from_secs(2));
-    info!("set(apple=great)");
-    client.set("apple", "great");
+    let thomas = Patient::new("0", "Thomas", "1900-01-01", "11111111");
+    let miranda = Patient::new("1", "Miranda", "1900-02-02", "22222222");
+
+    info!("accessing patient information in ORAM storage");
+
+    info!("put Thomas's info: {:?}", thomas);
+    client.set_secretly(thomas.id, &serde_json::to_string(&thomas).unwrap(), true);
     thread::sleep(time::Duration::from_secs(2));
 
-    info!("get(apple)={}", client.get("apple"));
-    thread::sleep(time::Duration::from_secs(2));
-    info!("get(banana)={}", client.get("banana"));
-    thread::sleep(time::Duration::from_secs(2));
-
-    info!("accessing encrypted storage protected by enclave ...");
-    info!("secretly set(earth=1)");
-    client.set_secretly("earth", "1");
-    thread::sleep(time::Duration::from_secs(2));
-    info!("secretly set(moon=2)");
-    client.set_secretly("moon", "2");
+    info!("put Miranda's info: {:?}", miranda);
+    client.set_secretly(miranda.id, &serde_json::to_string(&miranda).unwrap(), true);
     thread::sleep(time::Duration::from_secs(2));
 
-    info!("secretly get(earth)={}", client.get_secretly("earth"));
+    info!(
+        "get Thomas's info: {}",
+        client.get_secretly(thomas.id, true)
+    );
     thread::sleep(time::Duration::from_secs(2));
-    info!("secretly get(sun)={}", client.get_secretly("sun"));
+
+    info!(
+        "get Miranda's info: {}",
+        client.get_secretly(miranda.id, true)
+    );
     thread::sleep(time::Duration::from_secs(2));
 }

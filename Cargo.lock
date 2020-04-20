@@ -36,6 +36,7 @@ dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protos-app",
  "sc-rpc",
+ "serde",
  "serde_json",
  "sgx_crypto_helper",
  "sp-core",
@@ -5130,7 +5131,7 @@ dependencies = [
 [[package]]
 name = "substrate-api-client"
 version = "2.0.0"
-source = "git+https://github.com/AdvancaNetwork/substrate-api-client?rev=1231a987dcfe5610ddbd32ada6f95aecc4f90ec9#1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
+source = "git+https://github.com/advanca/substrate-api-client?rev=1231a987dcfe5610ddbd32ada6f95aecc4f90ec9#1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
 dependencies = [
  "env_logger",
  "frame-metadata",
