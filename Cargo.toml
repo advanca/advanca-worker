@@ -28,6 +28,3 @@ sgx_types 			= { path = "rust-sgx-sdk/sgx_types" }
 sgx_ucrypto 			= { path = "rust-sgx-sdk/sgx_ucrypto" }
 sgx_unwind 			= { path = "rust-sgx-sdk/sgx_unwind" }
 sgx_urts 			= { path = "rust-sgx-sdk/sgx_urts" }
-
-[patch.'https://github.com/advanca/oram.git']
-oram                            = { path = "../oram" }
