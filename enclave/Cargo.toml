@@ -14,15 +14,15 @@ default = []
 production = []
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
-sgx_tse       = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_tstd      = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs","net","backtrace"] }
-sgx_rand      = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_trts      = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_types     = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_tseal     = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_tcrypto   = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_serialize = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_tunittest = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tse       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd      = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs","net","backtrace"] }
+sgx_rand      = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_trts      = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_types     = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tseal     = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tcrypto   = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_serialize = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tunittest = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 [dependencies]
 # unmodified crates
@@ -31,23 +31,24 @@ primitive-types   = { version = "0.6", default-features = false, features = ["co
 
 # mesalock-modified crates
 # NOTE: Have to ensure all the git repos have the same Cargo version
-log               = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/log-sgx" }
-env_logger        = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/env_logger-sgx" }
-base64            = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-base64-sgx" }
-hex 		  = { tag = "sgx_1.1.1", git = "https://github.com/mesalock-linux/rust-hex-sgx"}
+log               = { tag = "sgx_1.1.2", git = "https://github.com/mesalock-linux/log-sgx" }
+env_logger        = { tag = "sgx_1.1.2", git = "https://github.com/mesalock-linux/env_logger-sgx" }
+base64            = { tag = "sgx_1.1.2", git = "https://github.com/mesalock-linux/rust-base64-sgx" }
+hex 		  = { tag = "sgx_1.1.2", git = "https://github.com/mesalock-linux/rust-hex-sgx"}
 protobuf          = { branch = "v2.8", git = "https://github.com/mesalock-linux/rust-protobuf-sgx" }
 serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
 
 # customized crates
-oram = { version = "0.1.0", tag = "v0.1.0", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
+# oram = { version = "0.1.0", tag = "v0.1.0", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
+oram = { path = "../../oram", default-features = false, features = ["sgx"] }
 
 # rust-sgx-sdk crates
-sgx_tstd          = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
-sgx_types         = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sgx_crypto_helper = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_tcrypto_helper" }
-sgx_rand          = { rev = "v1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd          = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
+sgx_types         = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_crypto_helper = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_tcrypto_helper" }
+sgx_rand          = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 [dependencies.protos]
 package = "protos-enclave"
@@ -72,3 +73,7 @@ sgx_tstd 			= { path = "../rust-sgx-sdk/sgx_tstd" }
 sgx_tunittest 			= { path = "../rust-sgx-sdk/sgx_tunittest" }
 sgx_types 			= { path = "../rust-sgx-sdk/sgx_types" }
 sgx_unwind 			= { path = "../rust-sgx-sdk/sgx_unwind" }
+
+[patch.'https://github.com/advanca/oram.git']
+oram                            = { path = "../../oram" }
+

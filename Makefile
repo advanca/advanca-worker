@@ -81,7 +81,6 @@ CUSTOM_LIBRARY_PATH := ./lib
 CUSTOM_BIN_PATH := ./bin
 CUSTOM_EDL_PATH := $(RUST_SGX_SDK)/edl
 CUSTOM_COMMON_PATH := $(RUST_SGX_SDK)/common
-CUSTOM_COMPILER_RT_PATH := $(RUST_SGX_SDK)/compiler-rt
 CUSTOM_CLIENT_NAME := advanca-client
 CUSTOM_CLIENT_PATH := ./client
 
@@ -117,7 +116,7 @@ RustEnclave_C_Files := $(wildcard $(CUSTOM_ENCLAVE_PATH)/*.c)
 RustEnclave_C_Objects := $(RustEnclave_C_Files:.c=.o)
 RustEnclave_Include_Paths := -I$(CUSTOM_COMMON_PATH)/inc -I$(CUSTOM_EDL_PATH) -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/stlport -I$(SGX_SDK)/include/epid -I $(CUSTOM_ENCLAVE_PATH) -I./include
 
-RustEnclave_Link_Libs := -L$(CUSTOM_LIBRARY_PATH) -lcompiler-rt-patch -lenclave
+RustEnclave_Link_Libs := -L$(CUSTOM_LIBRARY_PATH) -lenclave
 RustEnclave_Compile_Flags := $(SGX_COMMON_CFLAGS) -nostdinc -fvisibility=hidden -fpie -fstack-protector $(RustEnclave_Include_Paths)
 RustEnclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -l$(Service_Library_Name) -Wl,--no-whole-archive \
@@ -177,8 +176,7 @@ $(CUSTOM_ENCLAVE_PATH)/Enclave_t.o: $(Enclave_EDL_Files)
 	@$(CC) $(RustEnclave_Compile_Flags) -c $(CUSTOM_ENCLAVE_PATH)/Enclave_t.c -o $@
 	@echo "CC   <=  $<"
 
-$(RustEnclave_Name): enclave compiler-rt $(CUSTOM_ENCLAVE_PATH)/Enclave_t.o
-	cp $(CUSTOM_COMPILER_RT_PATH)/libcompiler-rt-patch.a $(CUSTOM_LIBRARY_PATH)
+$(RustEnclave_Name): enclave $(CUSTOM_ENCLAVE_PATH)/Enclave_t.o
 	@$(CXX) $(CUSTOM_ENCLAVE_PATH)/Enclave_t.o -o $@ $(RustEnclave_Link_Flags)
 	@echo "LINK =>  $@"
 
@@ -191,9 +189,6 @@ $(Signed_RustEnclave_Name): $(RustEnclave_Name)
 enclave:
 	$(MAKE) -C $(CUSTOM_ENCLAVE_PATH)/
 
-.PHONY: compiler-rt
-compiler-rt:
-	$(MAKE) -C $(CUSTOM_COMPILER_RT_PATH)/ 2> /dev/null
 
 .PHONY: clean
 clean:
