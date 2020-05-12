@@ -39,22 +39,191 @@ use protobuf::Message;
 use protos::storage::*;
 use serde_json;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
-use sgx_types::sgx_status_t;
 use std::slice;
 use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 use utils::write_slice_and_whitespace_pad;
+
+use sgx_types::*;
+use core::mem::size_of;
+
+use std::collections::HashMap;
+use std::boxed::Box;
+
+use sgx_types::*;
+use sgx_tkey_exchange::*;
+
+use sgx_types::sgx_ra_key_type_t::*;
+
+use advanca_crypto_ctypes::{CSgxEphemeralKey, CAasRegRequest};
+use advanca_crypto::sgx_enclave;
+use advanca_crypto::sgx_enclave::sgx_enclave_utils as enclave_utils;
+//use std::sync::Once;
+
+#[derive(Default, Clone, Copy)]
+struct AttestedSession {
+    worker_prvkey : sgx_ec256_private_t,
+    worker_pubkey : sgx_ec256_public_t,
+    // shared_dhkey  : sgx_ec256_dh_shared_t,
+    // kdk           : sgx_key_128bit_t,
+}
+
+// public key for Advanca Attestation Service
+const G_SP_PUB_KEY : sgx_ec256_public_t = sgx_ec256_public_t {
+gx: [
+        0xe3,0x53,0x79,0x5f,0x40,0x5b,0x8a,0x8f,0x34,0x5c,0xd6,0xbc,0x89,0x1c,0x49,0x6e,
+        0x9e,0x56,0x8e,0xcb,0x74,0xee,0x43,0xc1,0x7d,0xed,0xbd,0x04,0x0d,0xea,0x4f,0x1a,
+    ],
+gy: [
+        0x9c,0x98,0x68,0x5c,0xbb,0xb4,0x9b,0x67,0xdd,0x8d,0xd2,0xb6,0x2a,0xb0,0xee,0x09,
+        0x3e,0xcc,0x9c,0x39,0x1d,0xa9,0xc9,0xce,0x45,0xf0,0xcf,0xbc,0x0c,0x0f,0x7d,0x89,
+    ],
+};
+
+// TODO: change this to a mutable attested_session data object
+// and use once_only init to set the value.
+static mut ATTESTED_SESSION: AttestedSession = 
+AttestedSession {
+    worker_prvkey: sgx_ec256_private_t {
+        r: [0;32],
+    },
+    worker_pubkey: sgx_ec256_public_t {
+        gx: [0;32],
+        gy: [0;32],
+    },
+    // shared_dhkey: sgx_ec256_dh_shared_t {
+    //     s: [0;32],
+    // },
+    // kdk: [0;16],
+};
+// static mut ATTESTED_SESSION: Once = Once::new();
+
+#[derive(Default, Clone, Copy)]
+struct TaskInfo {
+    user_pubkey  : sgx_ec256_public_t,
+    shared_dhkey : sgx_ec256_dh_shared_t,
+    kdk          : sgx_key_128bit_t,
+}
+
+static mut TASKS: *mut HashMap<u32, TaskInfo> = 0 as *mut HashMap<u32, TaskInfo>;
+
 
 #[no_mangle]
 pub unsafe extern "C" fn init() -> sgx_status_t {
     if let Err(status) = rsa3072::create_sealed_if_absent() {
         return status;
     }
+    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
+    unsafe { TASKS = Box::into_raw(heap_hashmap) };
 
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
     sgx_status_t::SGX_SUCCESS
 }
+
+#[no_mangle]
+pub extern "C" fn enclave_init_ra (b_pse: i32,
+                                   p_context: &mut sgx_ra_context_t) -> sgx_status_t {
+    let ret: sgx_status_t;
+    match rsgx_ra_init(&G_SP_PUB_KEY, b_pse) {
+        Ok(p) => {
+            *p_context = p;
+            ret = sgx_status_t::SGX_SUCCESS;
+        },
+        Err(x) => {
+            ret = x;
+            return ret;
+        }
+    }
+    ret
+}
+
+#[no_mangle]
+pub extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
+    // we'll reinit the hashmap of accepted jobs
+    // we'll take back ownership of the box
+    // which will be freed when the box is destroyed
+    let _old_tasks = unsafe{Box::from_raw(TASKS)};
+    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
+    unsafe { TASKS = Box::into_raw(heap_hashmap) };
+
+    // Zero out the keys
+    unsafe { ATTESTED_SESSION = AttestedSession::default() };
+
+    match rsgx_ra_close(context) {
+        Ok(()) => {
+            sgx_status_t::SGX_SUCCESS
+        },
+        Err(x) => x
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn gen_worker_ec256_pubkey (
+    ) -> sgx_status_t {
+
+    let mut p_ecc_handle:sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
+
+    // TODO: this is not thread safe!!!
+    // SINGLE THREAD ONLY!!!
+    let p_private = unsafe{&mut ATTESTED_SESSION.worker_prvkey};
+    let p_public  = unsafe{&mut ATTESTED_SESSION.worker_pubkey};
+
+    let mut ret;
+    ret = unsafe {sgx_ecc256_open_context(&mut p_ecc_handle)};
+    if ret == sgx_status_t::SGX_SUCCESS {
+        ret = unsafe {sgx_ecc256_create_key_pair(p_private, p_public, p_ecc_handle)};
+    }
+    if ret == sgx_status_t::SGX_SUCCESS {
+        ret = unsafe {sgx_ecc256_close_context(p_ecc_handle)};
+    }
+    ret
+}
+
+#[no_mangle]
+pub extern "C" fn gen_worker_reg_request(
+    context: sgx_ra_context_t,
+    aas_reg_request: &mut CAasRegRequest,
+) -> sgx_status_t {
+    let p_public_ptr = unsafe{&ATTESTED_SESSION.worker_pubkey as *const sgx_ec256_public_t};
+    let data_slice = unsafe{core::slice::from_raw_parts(p_public_ptr as *const u8, size_of::<sgx_ec256_public_t>())};
+    let mut mac = sgx_cmac_128bit_tag_t::default();
+
+    let ret = enclave_utils::aes128_cmac_sk(context, &data_slice, &mut mac);
+    if ret == sgx_status_t::SGX_SUCCESS {
+        aas_reg_request.pubkey = unsafe{ATTESTED_SESSION.worker_pubkey};
+        aas_reg_request.mac    = mac;
+    }
+    ret
+}
+
+#[no_mangle]
+pub extern "C" fn accept_task (
+    user_pubkey : sgx_ec256_public_t,
+    task_id     : &mut u32,
+) -> sgx_status_t {
+    let mut task_id = 0;
+    loop {
+        // get a random u32 number
+        let mut num_buf = [0;4];
+        let ret = unsafe {sgx_read_rand(num_buf.as_mut_ptr(), 4 as usize)};
+        if ret == sgx_status_t::SGX_SUCCESS {
+            // check if number exists in tasks
+            let random_taskid = u32::from_be_bytes(num_buf);
+            if unsafe{(*TASKS).contains_key(&random_taskid)} {
+                task_id = random_taskid;
+                break;
+            }
+        } else {
+            return ret;
+        }
+    }
+    unsafe {(*TASKS).insert(task_id, TaskInfo::default())};
+    sgx_status_t::SGX_SUCCESS
+}
+
+
+
 
 #[no_mangle]
 pub unsafe extern "C" fn get_sr25519_public_key(
