@@ -18,7 +18,7 @@ checksum = "5d2e7343e7fc9de883d1b0341e0b13970f764c14101234857d2ddafa1cb1cac2"
 
 [[package]]
 name = "advanca-client"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "advanca-core",
  "advanca-runtime",
@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "advanca-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "advanca-core",
  "advanca-runtime",
@@ -3529,7 +3529,7 @@ dependencies = [
 
 [[package]]
 name = "protos-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "futures 0.1.29",
  "grpcio",
@@ -3539,7 +3539,7 @@ dependencies = [
 
 [[package]]
 name = "protos-enclave"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "protobuf 2.8.1 (git+https://github.com/mesalock-linux/rust-protobuf-sgx?branch=v2.8)",
  "protoc-rust",
@@ -6089,7 +6089,3 @@ dependencies = [
  "syn",
  "synstructure",
 ]
-
-[[patch.unused]]
-name = "oram"
-version = "0.1.0"

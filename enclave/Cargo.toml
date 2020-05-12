@@ -73,6 +73,3 @@ sgx_tunittest 			= { path = "../rust-sgx-sdk/sgx_tunittest" }
 sgx_types 			= { path = "../rust-sgx-sdk/sgx_types" }
 sgx_unwind 			= { path = "../rust-sgx-sdk/sgx_unwind" }
 
-[patch.'https://github.com/advanca/oram.git']
-oram                            = { path = "../../oram" }
-
