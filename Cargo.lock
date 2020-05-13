@@ -81,7 +81,6 @@ dependencies = [
 [[package]]
 name = "advanca-crypto"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.1.0#f61baeebab588f1c6dbcec224ce6e3c7f959e844"
 dependencies = [
  "advanca-crypto-ctypes",
  "advanca-crypto-types",
@@ -90,13 +89,11 @@ dependencies = [
  "rand 0.7.3",
  "ring",
  "sgx_types",
- "sgx_ucrypto",
 ]
 
 [[package]]
 name = "advanca-crypto-ctypes"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.1.0#f61baeebab588f1c6dbcec224ce6e3c7f959e844"
 dependencies = [
  "sgx_types",
 ]
@@ -104,7 +101,6 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.1.0#f61baeebab588f1c6dbcec224ce6e3c7f959e844"
 dependencies = [
  "advanca-crypto-ctypes",
  "serde",
@@ -152,9 +148,7 @@ version = "0.1.1"
 dependencies = [
  "aas-protos",
  "advanca-core",
- "advanca-crypto",
  "advanca-crypto-ctypes",
- "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "futures 0.1.29",
@@ -4525,7 +4519,6 @@ dependencies = [
 [[package]]
 name = "sgx-ra"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.1.0#f61baeebab588f1c6dbcec224ce6e3c7f959e844"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-ctypes",
