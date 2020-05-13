@@ -23,6 +23,8 @@ enclave {
 	include "sgx_key_exchange.h"
 	include "sgx_trts.h"
 
+	from "sgx_tkey_exchange.edl" import *;
+
 	struct CSgxEphemeralKey {
 		sgx_ec256_public_t pubkey;
 		sgx_ec256_signature_t signature;
@@ -72,7 +74,7 @@ enclave {
 				);
 
 		public sgx_status_t accept_task (
-				[in] sgx_ec256_public_t user_pubkey,
+				sgx_ec256_public_t user_pubkey,
 				[out] uint32_t *task_id
 				);
 	};
