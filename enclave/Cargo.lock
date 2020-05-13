@@ -446,7 +446,6 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 [[package]]
 name = "oram"
 version = "0.1.1"
-source = "git+https://github.com/advanca/oram.git?tag=v0.1.1#a15af9f2029a7061125e9dfdcf662fdfd74c3c4a"
 dependencies = [
  "bincode 1.2.1 (git+https://github.com/mesalock-linux/bincode-sgx?tag=sgx_1.1.2)",
  "bincode 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
