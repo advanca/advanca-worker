@@ -17,54 +17,72 @@ syntax = "proto3";
 package worker;
 
 service Storage {
-  rpc Send(EncryptedRequest) returns (EncryptedResponse) {}
-  // used for testing
-  rpc Get(GetRequest) returns (GetResponse) {}
-  rpc Set(SetRequest) returns (SetResponse) {}
+	rpc remote_attest(stream Msg) returns (stream Msg) {}
+
+	rpc Send(EncryptedRequest) returns (EncryptedResponse) {}
+	// used for testing
+	rpc Get(GetRequest) returns (GetResponse) {}
+	rpc Set(SetRequest) returns (SetResponse) {}
+}
+
+message Msg {
+	enum MsgType {
+		MSG_UNKNOWN = 0;
+		SGX_RA_MSG0 = 1;
+		SGX_RA_MSG1 = 2;
+		SGX_RA_MSG2 = 3;
+		SGX_RA_MSG3 = 4;
+		SGX_RA_MSG0_REPLY = 5;
+		SGX_RA_MSG3_REPLY = 6;
+		AAS_RA_REG_REQUEST = 7;
+		AAS_RA_REG_REPORT = 8;
+	}
+	MsgType msg_type   = 1;
+	bytes   msg_bytes  = 2;
 }
 
 message EncryptedRequest {
-  bytes payload = 1;
+	bytes payload = 1;
 }
 
 enum Privacy {
-  ENCRYPTION = 0;
-  SQRTORAM = 1;
+	ENCRYPTION = 0;
+	SQRTORAM = 1;
 }
 
 message PlainRequest {
-  oneof Request {
-    GetRequest get_request = 1;
-    SetRequest set_request = 2;
-  };
-  Privacy privacy = 3;
+	oneof Request {
+		GetRequest get_request = 1;
+		SetRequest set_request = 2;
+	};
+	Privacy privacy = 3;
 }
 
 message EncryptedResponse {
-  bytes payload = 1;
+	bytes payload = 1;
 }
 
 message PlainResponse {
-  oneof Response {
-    GetResponse get_response = 1;
-    SetResponse set_response = 2;
-  }
+	oneof Response {
+		GetResponse get_response = 1;
+		SetResponse set_response = 2;
+	}
 }
 
 message GetRequest {
-  string key = 1;
+	string key = 1;
 }
 
 message GetResponse {
-  string message = 1;
-  string value = 2; 
+	string message = 1;
+	string value = 2; 
 }
 
 message SetRequest {
-  string key = 1;
-  string value = 2;
+	string key = 1;
+	string value = 2;
 }
 
 message SetResponse {
-  string message = 1;
+	string message = 1;
 }
