@@ -13,7 +13,6 @@ dependencies = [
 [[package]]
 name = "aas-protos"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-attestation-service?tag=v0.1.0#231f386e8ff1b3202c04dd7bab53d0a9b710dada"
 dependencies = [
  "futures 0.1.29",
  "grpcio",
@@ -148,7 +147,9 @@ version = "0.1.1"
 dependencies = [
  "aas-protos",
  "advanca-core",
+ "advanca-crypto",
  "advanca-crypto-ctypes",
+ "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "futures 0.1.29",
