@@ -85,6 +85,7 @@ pub fn init() -> SgxResult<SgxEnclave> {
     if result != sgx_status_t::SGX_SUCCESS {
         return Err(result);
     }
+    debug!("done!");
     Ok(enclave)
 }
 
