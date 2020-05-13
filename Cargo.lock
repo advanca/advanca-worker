@@ -11,6 +11,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "aas-protos"
+version = "0.1.0"
+dependencies = [
+ "futures 0.1.29",
+ "grpcio",
+ "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "protoc-grpcio",
+]
+
+[[package]]
 name = "adler32"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -130,8 +140,11 @@ dependencies = [
 name = "advanca-worker"
 version = "0.1.1"
 dependencies = [
+ "aas-protos",
  "advanca-core",
+ "advanca-crypto",
  "advanca-crypto-ctypes",
+ "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "futures 0.1.29",
