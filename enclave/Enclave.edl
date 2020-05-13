@@ -62,7 +62,7 @@ enclave {
 				sgx_ra_context_t context
 				);
 
-		public sgx_status_t gen_ec256_pubkey (
+		public sgx_status_t gen_worker_ec256_pubkey (
 				);
 
 		public sgx_status_t gen_worker_reg_request (

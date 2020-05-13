@@ -44,6 +44,8 @@ fn main() {
     println!("cargo:rustc-link-lib=static=sgx_uprotected_fs");
     println!("cargo:rustc-link-lib=static=sgx_ukey_exchange");
 
+    println!("cargo:rustc-link-lib=dylib=sgx_epid");
+
     match sgx_mode.as_ref() {
         "SW" => {
             println!("cargo:rustc-link-lib=dylib=sgx_urts_sim");
