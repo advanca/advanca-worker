@@ -178,14 +178,13 @@ pub unsafe extern "C" fn init() -> sgx_status_t {
     if let Err(status) = rsa3072::create_sealed_if_absent() {
         return status;
     }
-    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
-    unsafe { TASKS = Box::into_raw(heap_hashmap) };
 
+    println!("[ENCLAVE INFO] Before SqrtOram call.");
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
-    let heap_hashmap = Box::new(HashMap::<[u8; 32], TaskInfo>::new());
-    TASKS = Box::into_raw(heap_hashmap);
+    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
+    unsafe { TASKS = Box::into_raw(heap_hashmap) };
     sgx_status_t::SGX_SUCCESS
 }
 
