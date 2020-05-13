@@ -90,12 +90,20 @@ Enclave_EDL_Files := $(CUSTOM_ENCLAVE_PATH)/Enclave_t.c $(CUSTOM_ENCLAVE_PATH)/E
 
 ######## APP Settings ########
 
+ifeq ($(SGX_DEBUG), 1)
+App_Rust_Flags :=
+else
 App_Rust_Flags := --release
+endif
 App_SRC_Files := $(shell find $(CUSTOM_APP_PATH)/ -type f -name '*.rs') $(shell find $(CUSTOM_APP_PATH)/ -type f -name 'Cargo.toml')
 App_Include_Paths := -I $(CUSTOM_APP_PATH) -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
+ifeq ($(SGX_DEBUG), 1)
+App_Build_Path := target/debug
+else
 App_Build_Path := target/release
+endif
 App_Enclave_u_Object := $(CUSTOM_APP_PATH)/libEnclave_u.a
 App_Name := $(CUSTOM_BIN_PATH)/$(CUSTOM_APP_NAME)
 
