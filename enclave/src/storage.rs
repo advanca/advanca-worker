@@ -19,11 +19,13 @@ use std::string::{String, ToString};
 
 use serde_derive::*;
 use serde_json;
+use serde_big_array::big_array;
+
+big_array! { BigArray; }
 
 use log::trace;
 use oram::SqrtOram;
 use protos::storage::*;
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_tstd::io::ErrorKind;
 use sgx_tstd::untrusted::fs::remove_file;
 
@@ -31,15 +33,26 @@ use crate::constants::SEALED_STORAGE_FILE;
 use crate::io;
 
 pub const ORAM_BLOCK_SIZE: usize = 1024;
-pub const ORAM_SIZE: usize = 256;
+//pub const ORAM_SIZE: usize = 256;
+pub const ORAM_SIZE: usize = 8;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 struct Storage {
-    owner: Rsa3072PubKey,
+    #[serde(with = "BigArray")]
+    owner: [u8;64],
     backend: HashMap<String, String>,
 }
 
-pub fn create_sealed_storage(owner: Rsa3072PubKey) -> SgxResult<sgx_status_t> {
+impl Default for Storage {
+    fn default() -> Storage {
+        Storage {
+            owner: [0;64],
+            backend: HashMap::default(),
+        }
+    }
+}
+
+pub fn create_sealed_storage(owner: [u8;64]) -> SgxResult<sgx_status_t> {
     let storage = Storage {
         owner,
         ..Default::default()
@@ -71,11 +84,6 @@ fn seal_storage(storage: &Storage) -> SgxError {
     let storage_json = serde_json::to_string(storage).unwrap();
     io::seal(storage_json.as_bytes(), SEALED_STORAGE_FILE)?;
     Ok(())
-}
-
-pub fn unseal_owner() -> SgxResult<Rsa3072PubKey> {
-    let storage = unseal_storage()?;
-    Ok(storage.owner)
 }
 
 pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> {
