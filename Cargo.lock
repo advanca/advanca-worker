@@ -88,6 +88,7 @@ dependencies = [
  "rand 0.7.3",
  "ring",
  "sgx_types",
+ "sgx_ucrypto",
 ]
 
 [[package]]

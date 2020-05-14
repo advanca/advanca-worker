@@ -36,7 +36,8 @@ use sgx_types::*;
 
 use advanca_crypto_types::*;
 mod aes;
-use advanca_crypto::secp256r1_public;
+use advanca_crypto::{secp256r1_public};
+use sgx_ucrypto::*;
 
 mod grpc;
 
@@ -91,14 +92,19 @@ fn main() {
     let mut prvkey = sgx_ec256_private_t::default();
     let mut ecc_handle: sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
 
-    unsafe {
-        let _ = sgx_ecc256_open_context(&mut ecc_handle);
-        let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
-        let _ = sgx_ecc256_close_context(ecc_handle);
+    unsafe{
+    let _ = sgx_ecc256_open_context(&mut ecc_handle);
+    let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
+    let _ = sgx_ecc256_close_context(ecc_handle);
     }
     info!("generated client ec256 keypair");
-    trace!("generated client ec256 keypair {:?}", prvkey.r);
-    let client_prvkey = Secp256r1PrivateKey { r: prvkey.r };
+    trace!(
+        "generated client ec256 keypair {:?}",
+        prvkey.r
+    );
+    let client_prvkey = Secp256r1PrivateKey {
+        r: prvkey.r
+    };
     let client_pubkey = secp256r1_public::from_sgx_ec256_public(&pubkey);
 
     let mut api = SubstrateApi::new(&opt.ws_url);
@@ -113,6 +119,20 @@ fn main() {
     //let public_key_hex = serde_json::to_string(&public_key).unwrap();
     let hash = api.register_user(1 as u128, public_key);
     info!("registered user (extrinsic={:?})", hash);
+
+    // wait for the worker registration
+    info!("waiting for worker ...");
+    let worker_id = api.listen_for_worker_added();
+    info!("got a new worker (id={})", worker_id);
+
+    info!("querying worker information ...");
+    let worker = api.get_worker(worker_id);
+    info!("received worker information");
+    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
+    debug!("enclave public key is {:?}", enclave_public_key);
+
+    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
+
 
     let (task_in, task_out) = channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
