@@ -170,21 +170,17 @@ struct TaskInfo {
     kdk          : sgx_key_128bit_t,
 }
 
-static mut TASKS: *mut HashMap<u32, TaskInfo> = 0 as *mut HashMap<u32, TaskInfo>;
+static mut TASKS: *mut HashMap<[u8;32], TaskInfo> = 0 as *mut HashMap<[u8;32], TaskInfo>;
 
 
 #[no_mangle]
 pub unsafe extern "C" fn init() -> sgx_status_t {
-    if let Err(status) = rsa3072::create_sealed_if_absent() {
-        return status;
-    }
-
     println!("[ENCLAVE INFO] Before SqrtOram call.");
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
-    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
-    unsafe { TASKS = Box::into_raw(heap_hashmap) };
+    let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
+    TASKS = Box::into_raw(heap_hashmap);
     sgx_status_t::SGX_SUCCESS
 }
 
@@ -211,7 +207,7 @@ pub extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
     // we'll take back ownership of the box
     // which will be freed when the box is destroyed
     let _old_tasks = unsafe{Box::from_raw(TASKS)};
-    let heap_hashmap = Box::new(HashMap::<u32, TaskInfo>::new());
+    let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
     unsafe { TASKS = Box::into_raw(heap_hashmap) };
 
     // Zero out the keys
@@ -227,7 +223,8 @@ pub extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
 
 #[no_mangle]
 pub extern "C" fn gen_worker_ec256_pubkey (
-    ) -> sgx_status_t {
+    worker_pubkey: &mut sgx_ec256_public_t,
+) -> sgx_status_t {
 
     let mut p_ecc_handle:sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
 
@@ -244,6 +241,7 @@ pub extern "C" fn gen_worker_ec256_pubkey (
     if ret == sgx_status_t::SGX_SUCCESS {
         ret = unsafe {sgx_ecc256_close_context(p_ecc_handle)};
     }
+    *worker_pubkey = *p_public;
     ret
 }
 
@@ -266,30 +264,61 @@ pub extern "C" fn gen_worker_reg_request(
 
 #[no_mangle]
 pub extern "C" fn accept_task (
-    user_pubkey : sgx_ec256_public_t,
-    task_id     : &mut u32,
+    task_id     : &[u8;32],
+    p_user_pubkey : &sgx_ec256_public_t,
 ) -> sgx_status_t {
-    let mut task_id = 0;
-    loop {
-        // get a random u32 number
-        let mut num_buf = [0;4];
-        let ret = unsafe {sgx_read_rand(num_buf.as_mut_ptr(), 4 as usize)};
+    let mut ret;
+    let mut gab_x = sgx_ec256_dh_shared_t::default();
+    let mut task_info = TaskInfo::default();
+
+    let worker_prvkey = unsafe{ATTESTED_SESSION.worker_prvkey};
+
+    ret = enclave_utils::derive_ec256_shared_dhkey(p_user_pubkey, &worker_prvkey, &mut gab_x);
+    if ret == sgx_status_t::SGX_SUCCESS {
+        // derive the kdk from the shared dhkey
+        // KDK = AES-CMAC(key0, gab x-coordinate)
+        let key0 = sgx_cmac_128bit_key_t::default();
+        let p_src = &gab_x as *const sgx_ec256_dh_shared_t as *const u8;
+        let src_len = size_of::<sgx_ec256_dh_shared_t>() as u32;
+        let mut mac = sgx_cmac_128bit_key_t::default();
+        ret = unsafe {sgx_rijndael128_cmac_msg(&key0, p_src, src_len, &mut mac)};
         if ret == sgx_status_t::SGX_SUCCESS {
-            // check if number exists in tasks
-            let random_taskid = u32::from_be_bytes(num_buf);
-            if unsafe{(*TASKS).contains_key(&random_taskid)} {
-                task_id = random_taskid;
-                break;
-            }
-        } else {
-            return ret;
+            let task_info = TaskInfo {
+                user_pubkey  : *p_user_pubkey,
+                shared_dhkey : gab_x,
+                kdk          : mac,
+            };
+            unsafe {(*TASKS).insert(*task_id, task_info)};
         }
     }
-    unsafe {(*TASKS).insert(task_id, TaskInfo::default())};
-    sgx_status_t::SGX_SUCCESS
+    ret
 }
 
+#[no_mangle]
+pub extern "C" fn encrypt_msg (
+    task_id : &[u8;32],
+    msg_in  : *const u8,
+    msg_out : *mut u8,
+    msg_len : u32,
+) -> sgx_status_t {
+    let task_info = unsafe {(*TASKS).get(task_id).unwrap()};
+    let kdk = task_info.kdk;
+    // TODO: Add a canary at the end of the 2 buffers to ensure that they are of the correct
+    // length.
+    let slice_data = unsafe{core::slice::from_raw_parts(msg_in, msg_len as usize)};
+    let mut slice_out  = unsafe{core::slice::from_raw_parts_mut(msg_out, 12+msg_len as usize)};
 
+    // for security, all buffers are allocated within the enclave and only copied once all
+    // operations are successful
+    let mut ivcipher = vec![0_u8; 12+msg_len as usize];
+
+    let ret = enclave_utils::aes128_gcm_encrypt(&kdk, &slice_data, &[], &mut ivcipher);
+    if ret != sgx_status_t::SGX_SUCCESS { return ret; }
+
+    slice_out.copy_from_slice(&ivcipher);
+
+    sgx_status_t::SGX_SUCCESS
+}
 
 
 #[no_mangle]
