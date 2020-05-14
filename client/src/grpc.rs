@@ -28,17 +28,17 @@ use protos::storage_grpc::StorageClient;
 
 use serde::{Deserialize, Serialize};
 
-use sgx_crypto_helper::rsa3072::{Rsa3072KeyPair, Rsa3072PubKey};
-use sgx_crypto_helper::RsaKeyPair;
+use advanca_crypto_types::*;
+use crate::aes;
 
 struct Client {
     storage_client: StorageClient,
-    keypair: Rsa3072KeyPair,
-    server_public_key: Rsa3072PubKey,
+    keypair: Secp256r1PrivateKey,
+    server_public_key: Secp256r1PublicKey,
 }
 
 impl Client {
-    pub fn new(url: &str, keypair: Rsa3072KeyPair, server_public_key: Rsa3072PubKey) -> Client {
+    pub fn new(url: &str, keypair: Secp256r1PrivateKey, server_public_key: Secp256r1PublicKey) -> Client {
         let env = Arc::new(EnvBuilder::new().build());
         let ch = ChannelBuilder::new(env).connect(url);
 
@@ -50,28 +50,23 @@ impl Client {
     }
 
     pub fn send_encrypted_request(&self, plain_req: PlainRequest) -> PlainResponse {
+        // TODO: fix this hack... currently we are just deriving the key where-ever we need
+        let key = aes::derive_session_key(&self.server_public_key, &self.keypair);
+
         let mut req = EncryptedRequest::new();
         {
             let plaintext = plain_req.write_to_bytes().unwrap();
-            let mut ciphertext = Vec::new();
-            let ciphertext_len = self
-                .server_public_key
-                .encrypt_buffer(&plaintext, &mut ciphertext)
-                .unwrap();
-            req.set_payload((&ciphertext[..ciphertext_len]).to_vec());
+            let ciphertext = aes::aes128_gcm_encrypt(key, plaintext);
+            req.set_payload(ciphertext);
         }
         trace!("encrypted req {:?}", req);
         let res = self.storage_client.send(&req).unwrap();
         {
             let ciphertext = res.get_payload();
-            let mut plaintext = Vec::new();
             trace!("response payload {:?}", ciphertext);
-            trace!("decryption key {:?}", self.keypair.clone());
-            let plaintext_len = self
-                .keypair
-                .decrypt_buffer(&ciphertext, &mut plaintext)
-                .expect("decryption failed");
-            parse_from_bytes::<PlainResponse>(&(&plaintext[..plaintext_len]).to_vec())
+            trace!("decryption key {:?}", key);
+            let plaintext = aes::aes128_gcm_decrypt(key, ciphertext.to_vec());
+            parse_from_bytes::<PlainResponse>(&plaintext)
                 .expect("parsing failed")
         }
     }
@@ -162,7 +157,7 @@ impl Patient {
     }
 }
 
-pub fn start_demo(url: &str, enclave_key: Rsa3072PubKey, client_key: Rsa3072KeyPair) {
+pub fn start_demo(url: &str, enclave_key: Secp256r1PublicKey, client_key: Secp256r1PrivateKey) {
     let client = Client::new(url, client_key, enclave_key);
 
     let thomas = Patient::new("0", "Thomas", "1900-01-01", "11111111");

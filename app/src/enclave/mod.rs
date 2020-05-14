@@ -22,11 +22,11 @@ use std::{
 
 use log::{debug, info, trace, warn};
 
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
 use advanca_crypto_types::*;
+use advanca_crypto::secp256r1_public;
 
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
 mod ecall;
@@ -109,38 +109,17 @@ pub fn sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
     Ok(public_key)
 }
 
-pub fn rsa3072_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
-    let public_key_size = 8192;
-    let mut public_key = vec![0u8; public_key_size as usize];
-
-    let mut status = sgx_status_t::SGX_SUCCESS;
-    let result = unsafe {
-        ecall::get_rsa3072_public_key(eid, &mut status, public_key.as_mut_ptr(), public_key_size)
-    };
-
-    if status != sgx_status_t::SGX_SUCCESS {
-        return Err(status);
-    }
-    if result != sgx_status_t::SGX_SUCCESS {
-        return Err(result);
-    }
-
-    let rsa_public_key: Rsa3072PubKey = serde_json::from_slice(&public_key[..]).unwrap();
-    trace!("got RSA public key {:?}", rsa_public_key);
-    Ok(public_key)
-}
-
 pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxError {
-    let public_key_str = serde_json::to_string(&owner).unwrap();
-    let public_key = public_key_str.as_bytes();
+    let public_key_bytes = secp256r1_public::to_bytes(&owner);
 
+    // we'll keep the current interface
     let mut status = sgx_status_t::SGX_SUCCESS;
     let result = unsafe {
         ecall::create_storage(
             eid,
             &mut status,
-            public_key.as_ptr(),
-            public_key.len() as u32,
+            public_key_bytes.as_ptr(),
+            public_key_bytes.len() as u32,
         )
     };
 

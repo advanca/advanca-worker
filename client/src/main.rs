@@ -24,14 +24,20 @@ use log::LevelFilter;
 use log::{debug, info, trace};
 use structopt::StructOpt;
 
-use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
-use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::AccountKeyring;
 
 use advanca_core::{Privacy, TaskSpec};
 use advanca_runtime::AccountId;
 use substrate_api::SubstrateApi;
+
+use serde_cbor;
+use sgx_types::*;
+
+use advanca_crypto_types::*;
+mod aes;
+use advanca_crypto::{secp256r1_public};
+use sgx_ucrypto::*;
 
 mod grpc;
 
@@ -81,13 +87,25 @@ fn main() {
     fund_account(&opt.ws_url, &client_account);
     info!("funded account {:?}", client_account);
 
-    // generate rsa3072 keypair for encryption
-    let client_rsa3072_keypair = Rsa3072KeyPair::new().unwrap();
-    info!("generated client rsa3072 keypair");
+    // generate secp256r1 keypair for communication with worker
+    let mut pubkey = sgx_ec256_public_t::default();
+    let mut prvkey = sgx_ec256_private_t::default();
+    let mut ecc_handle: sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
+
+    unsafe{
+    let _ = sgx_ecc256_open_context(&mut ecc_handle);
+    let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
+    let _ = sgx_ecc256_close_context(ecc_handle);
+    }
+    info!("generated client ec256 keypair");
     trace!(
-        "generated client rsa3072 keypair {:?}",
-        client_rsa3072_keypair
+        "generated client ec256 keypair {:?}",
+        prvkey.r
     );
+    let client_prvkey = Secp256r1PrivateKey {
+        r: prvkey.r
+    };
+    let client_pubkey = secp256r1_public::from_sgx_ec256_public(&pubkey);
 
     let mut api = SubstrateApi::new(&opt.ws_url);
     api.set_signer(client_sr25519_keypair.clone());
@@ -95,9 +113,11 @@ fn main() {
 
     // register user
     info!("registering user ...");
-    let public_key = client_rsa3072_keypair.export_pubkey().unwrap();
-    let public_key_hex = serde_json::to_string(&public_key).unwrap();
-    let hash = api.register_user(1 as u128, public_key_hex.into());
+    let public_key = serde_cbor::to_vec(&client_pubkey).unwrap();
+    info!("public_key bytes: {:?}", public_key);
+    // let public_key = client_rsa3072_keypair.export_pubkey().unwrap();
+    //let public_key_hex = serde_json::to_string(&public_key).unwrap();
+    let hash = api.register_user(1 as u128, public_key);
     info!("registered user (extrinsic={:?})", hash);
 
     // wait for the worker registration
@@ -108,8 +128,11 @@ fn main() {
     info!("querying worker information ...");
     let worker = api.get_worker(worker_id);
     info!("received worker information");
-    let enclave_public_key = serde_json::from_slice(&worker.enclave.public_key).unwrap();
+    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
     debug!("enclave public key is {:?}", enclave_public_key);
+
+    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
+
 
     let (task_in, task_out) = channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
@@ -138,22 +161,18 @@ fn main() {
     let task = api.get_task(task_id);
 
     let url_encrypted = task.worker_url.expect("encrypted url should exist");
-    let url = decrypt_url_sgx_crypto(client_rsa3072_keypair, &url_encrypted);
+    debug!("encrypted_url: {:?}", url_encrypted);
+    debug!("key: {:?}", kdk);
+    // let url = decrypt_url_sgx_crypto(client_rsa3072_keypair, &url_encrypted);
+    let url = aes::aes128_gcm_decrypt(kdk, url_encrypted);
+    let url = core::str::from_utf8(&url).unwrap();
     info!("worker url is {:?}", url);
 
     // talk to worker directly
-    grpc::start_demo(&url, enclave_public_key, client_rsa3072_keypair);
+    grpc::start_demo(&url, enclave_public_key, client_prvkey);
 
     // abort the task
     info!("aborting task ...");
     let hash = api.abort_task(task_id);
     info!("task aborted (extrinsic={:?})", hash);
-}
-
-fn decrypt_url_sgx_crypto(keypair: Rsa3072KeyPair, url: &advanca_core::Ciphertext) -> String {
-    let mut plaintext = Vec::new();
-
-    keypair.decrypt_buffer(url, &mut plaintext).unwrap();
-
-    str::from_utf8(&plaintext).unwrap().into()
 }

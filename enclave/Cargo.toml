@@ -39,11 +39,12 @@ protobuf          = { branch = "v2.8", git = "https://github.com/mesalock-linux/
 serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
+serde-big-array   = { git = "https://github.com/mesalock-linux/serde-big-array-sgx" }
 
 # customized crates
+#advanca-crypto-types   = { path = "../../advanca-crypto-types" }
 oram                   = { tag = "v0.1.1", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
 advanca-crypto         = { path = "../../advanca-crypto", features = ["sgx_enclave"] }
-advanca-crypto-types   = { path = "../../advanca-crypto-types" }
 advanca-crypto-ctypes  = { path = "../../advanca-crypto-ctypes" }
 
 # rust-sgx-sdk crates

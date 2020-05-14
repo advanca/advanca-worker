@@ -25,11 +25,6 @@ enclave {
 
 	from "sgx_tkey_exchange.edl" import *;
 
-	struct CSgxEphemeralKey {
-		sgx_ec256_public_t pubkey;
-		sgx_ec256_signature_t signature;
-	};
-
 	struct CSgxAasRequest {
 		sgx_ec256_public_t pubkey;
 		sgx_cmac_128bit_tag_t mac;
@@ -50,9 +45,6 @@ enclave {
 			[out] uint32_t* response_size
 		);
 
-		public sgx_status_t get_rsa3072_public_key(
-			[out, size=public_key_size] uint8_t* public_key, uint32_t public_key_size);
-		
 		public sgx_status_t get_sr25519_public_key(
 			[out, size=public_key_size] uint8_t* public_key, uint32_t public_key_size);
 
@@ -71,12 +63,19 @@ enclave {
 
 		public sgx_status_t gen_worker_reg_request (
 				sgx_ra_context_t context,
-				[out] CSgxAasRequest *aas_request
+				[out] struct CSgxAasRequest *aas_request
 				);
 
 		public sgx_status_t accept_task (
 				[in, size=32] uint8_t *task_id,
 				[in] sgx_ec256_public_t *user_pubkey
+				);
+		public sgx_status_t encrypt_msg (
+				[in, count=32]          uint8_t *task_id,
+				[in, count=msg_in_len]  uint8_t *msg_in,
+				                        uint32_t msg_in_len,
+				[out,count=msg_out_len] uint8_t *msg_out,
+				                        uint32_t msg_out_len
 				);
 	};
 

@@ -18,13 +18,6 @@ use sgx_types::*;
 extern "C" {
     pub fn init(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
 
-    pub fn get_rsa3072_public_key(
-        eid: sgx_enclave_id_t,
-        retval: *mut sgx_status_t,
-        public_key: *mut u8,
-        public_key_size: u32,
-    ) -> sgx_status_t;
-
     pub fn get_sr25519_public_key(
         eid: sgx_enclave_id_t,
         retval: *mut sgx_status_t,

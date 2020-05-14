@@ -140,8 +140,13 @@ Signed_RustEnclave_Name := bin/enclave.signed.so
 
 ###### Client Settings ######
 Client_SRC_Files := $(shell find $(CUSTOM_CLIENT_PATH)/ -type f -name '*.rs') $(shell find $(CUSTOM_CLIENT_PATH)/ -type f -name 'Cargo.toml')
+ifeq ($(SGX_DEBUG), 1)
+Client_Rust_Flags := 
+Client_Build_Path := target/debug
+else
 Client_Rust_Flags := --release
 Client_Build_Path := target/release
+endif
 Client_Name := $(CUSTOM_BIN_PATH)/$(CUSTOM_CLIENT_NAME)
 
 .PHONY: all
@@ -200,7 +205,7 @@ enclave:
 
 .PHONY: clean
 clean:
-	@rm -f $(App_Name) $(RustEnclave_Name) $(Signed_RustEnclave_Name) $(CUSTOM_ENCLAVE_PATH)/*_t.* $(CUSTOM_APP_PATH)/*_u.* $(CUSTOM_LIBRARY_PATH)/*.a
+	@rm -f $(App_Name) $(RustEnclave_Name) $(Signed_RustEnclave_Name) $(Client_Name) $(CUSTOM_ENCLAVE_PATH)/*_t.* $(CUSTOM_APP_PATH)/*_u.* $(CUSTOM_LIBRARY_PATH)/*.a
 	@cd $(CUSTOM_ENCLAVE_PATH) && cargo clean && rm -f Cargo.lock
 	@cd $(CUSTOM_APP_PATH) && cargo clean && rm -f Cargo.lock
 	@cd $(CUSTOM_CLIENT_PATH) && cargo clean && rm -f Cargo.lock

@@ -13,4 +13,3 @@
 // limitations under the License.
 
 pub const SEALED_STORAGE_FILE: &str = "storage_sealed.bin";
-pub const RSA3072_SEALED_KEY_FILE: &str = "rsa3072_key_sealed.bin";

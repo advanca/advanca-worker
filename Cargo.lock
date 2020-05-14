@@ -31,6 +31,8 @@ name = "advanca-client"
 version = "0.1.1"
 dependencies = [
  "advanca-core",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "error-chain",
@@ -47,8 +49,11 @@ dependencies = [
  "protos-app",
  "sc-rpc",
  "serde",
+ "serde_cbor",
  "serde_json",
  "sgx_crypto_helper",
+ "sgx_types",
+ "sgx_ucrypto",
  "sp-core",
  "sp-keyring",
  "sp-runtime",
@@ -83,6 +88,7 @@ dependencies = [
  "rand 0.7.3",
  "ring",
  "sgx_types",
+ "sgx_ucrypto",
 ]
 
 [[package]]
