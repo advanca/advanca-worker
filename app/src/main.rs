@@ -81,7 +81,7 @@ struct Opt {
     #[structopt(
         short = "g",
         long = "grpc-external-url",
-        default_value = "127.0.0.1:12345",
+        default_value = "127.0.0.1:8135",
         help = "set advanca-worker external address and port"
     )]
     grpc_url: String,
@@ -266,6 +266,7 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     if msg0_reply.get_msg_bytes() == 0_u32.to_le_bytes() {
         panic!("Oops! AAS rejected msg0!");
     }
+    info!("[worker] --[msg0]--> [aas]");
 
     // MSG1 contains g_a (public ephermeral key ECDH for App) and gid (EPID Group ID - For SigRL)
     let mut p_msg1_buf = vec![0; size_of::<sgx_ra_msg1_t>()];
@@ -429,18 +430,24 @@ fn main() {
     info!("querying user information ...");
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
+    info!("public_key bytes: {:?}", user.public_key);
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
     let user_pubkey_sgx = secp256r1_public::to_sgx_ec256_public(&user_pubkey);
     let ret = unsafe{accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx)};
     if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("accept_task failed! {:?} - {:?}", ret, retval); }
     debug!("user public key is {:?}", user_pubkey);
     let msg = opt.grpc_url.as_bytes();
+    debug!("url: {:?}", opt.grpc_url);
+    debug!("msg: {:?}", msg);
     let cipher_len = msg.len();
-    let ivcipher_len = 12 + cipher_len;
+    debug!("cipher len: {:?}", cipher_len);
+    let ivcipher_len = 12 + 16 + cipher_len;
+    debug!("ivcipher len: {:?}", ivcipher_len);
     let mut ivcipher = vec![0_u8; ivcipher_len];
-    let ret = unsafe{encrypt_msg(eid, &mut retval, task_id.as_fixed_bytes(), msg.as_ptr(), ivcipher.as_mut_ptr(), cipher_len as u32)};
+    let ret = unsafe{encrypt_msg(eid, &mut retval, task_id.as_fixed_bytes(), msg.as_ptr(), cipher_len as u32, ivcipher.as_mut_ptr(), ivcipher_len as u32)};
     if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("encrypt_msg failed! {:?} - {:?}", ret, retval); }
     let url_encrypted = ivcipher;
+    debug!("url_encrypted: {:?}", url_encrypted);
 
     // accept task
     info!("initializing storage for user {:?} ...", owner);
