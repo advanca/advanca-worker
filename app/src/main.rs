@@ -279,7 +279,6 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
 
     // MSG2 contains g_b (public ephemeral ECDH key for SP), SPID, quote_type,
     // KDF (key derivation function), signed (gb, ga) using SP's non-ephemeral P256 key, MAC, SigRL
-    // hdr: usize which tell use what's the size of the object
     let msg2 = rx.next().unwrap().unwrap();
     let p_msg2_ptr = msg2.get_msg_bytes().as_ptr() as *const sgx_ra_msg2_t;
     let msg2_size = msg2.get_msg_bytes().len();
@@ -304,7 +303,8 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
         let mut aas_request = CAasRegRequest::default();
-        let _ = unsafe {gen_worker_ec256_pubkey(eid, &mut retval)};
+        let mut worker_pubkey = sgx_ec256_public_t::default();
+        let _ = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
         let _ = unsafe {gen_worker_reg_request(eid, &mut retval, ra_context, &mut aas_request)};
         let p_aas_request = &aas_request as *const CAasRegRequest as *const u8;
         let aas_request_byte_slice = unsafe{core::slice::from_raw_parts(p_aas_request, size_of::<CAasRegRequest>())};
@@ -371,6 +371,14 @@ fn main() {
     info!("ra_context: {}", ra_context);
 
     let aas_report = aas_remote_attest(eid, ra_context);
+    // TODO: clean this up when we figure out how to terminate when remote_attest fails
+    // currently if aas_remote_attest returns, we know the report is valid and attestation
+    // is performed and valid.
+    let mut worker_pubkey = sgx_ec256_public_t::default();
+    let sgx_return = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
+    info!("gen_worker_ec256_pubkey: {}", sgx_return);
+    let worker_pubkey = advanca_crypto::secp256r1_public::from_sgx_ec256_public(&worker_pubkey);
+    info!("ec256 pubkey generated {:?}", worker_pubkey);
 
     let (worker_keypair, _) = sr25519::Pair::generate();
     let worker_account: AccountId = worker_keypair.public().as_array_ref().to_owned().into();
@@ -391,8 +399,8 @@ fn main() {
 
     let enclave = Enclave::<AccountId> {
         account_id: sr25519_public_key.as_array_ref().to_owned().into(),
-        public_key: rsa3072_public_key,
-        attestation: serde_cbor::to_vec(&aas_report).unwrap(), 
+        public_key: serde_cbor::to_vec(&worker_pubkey).unwrap(),
+        attestation: serde_cbor::to_vec(&aas_report).unwrap(),
     };
 
     info!("registering worker ...");
@@ -421,38 +429,18 @@ fn main() {
     info!("querying user information ...");
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
-    info!("public_key bytes: {:?}", user.public_key);
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
     let user_pubkey_sgx = secp256r1_public::to_sgx_ec256_public(&user_pubkey);
-    let ret = unsafe { accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx) };
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS {
-        panic!("accept_task failed! {:?} - {:?}", ret, retval);
-    }
+    let ret = unsafe{accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx)};
+    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("accept_task failed! {:?} - {:?}", ret, retval); }
     debug!("user public key is {:?}", user_pubkey);
     let msg = opt.grpc_url.as_bytes();
-    debug!("url: {:?}", opt.grpc_url);
-    debug!("msg: {:?}", msg);
     let cipher_len = msg.len();
-    debug!("cipher len: {:?}", cipher_len);
-    let ivcipher_len = 12 + 16 + cipher_len;
-    debug!("ivcipher len: {:?}", ivcipher_len);
+    let ivcipher_len = 12 + cipher_len;
     let mut ivcipher = vec![0_u8; ivcipher_len];
-    let ret = unsafe {
-        encrypt_msg(
-            eid,
-            &mut retval,
-            task_id.as_fixed_bytes(),
-            msg.as_ptr(),
-            cipher_len as u32,
-            ivcipher.as_mut_ptr(),
-            ivcipher_len as u32,
-        )
-    };
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS {
-        panic!("encrypt_msg failed! {:?} - {:?}", ret, retval);
-    }
+    let ret = unsafe{encrypt_msg(eid, &mut retval, task_id.as_fixed_bytes(), msg.as_ptr(), ivcipher.as_mut_ptr(), cipher_len as u32)};
+    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("encrypt_msg failed! {:?} - {:?}", ret, retval); }
     let url_encrypted = ivcipher;
-    debug!("url_encrypted: {:?}", url_encrypted);
 
     // accept task
     info!("initializing storage for user {:?} ...", owner);
