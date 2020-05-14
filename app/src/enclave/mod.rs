@@ -26,6 +26,8 @@ use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
+use advanca_crypto_types::*;
+
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
 mod ecall;
 
@@ -128,7 +130,7 @@ pub fn rsa3072_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
     Ok(public_key)
 }
 
-pub fn create_storage(eid: sgx_enclave_id_t, owner: Rsa3072PubKey) -> SgxError {
+pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxError {
     let public_key_str = serde_json::to_string(&owner).unwrap();
     let public_key = public_key_str.as_bytes();
 
@@ -151,6 +153,30 @@ pub fn create_storage(eid: sgx_enclave_id_t, owner: Rsa3072PubKey) -> SgxError {
 
     Ok(())
 }
+
+//pub fn create_storage(eid: sgx_enclave_id_t, owner: Rsa3072PubKey) -> SgxError {
+//    let public_key_str = serde_json::to_string(&owner).unwrap();
+//    let public_key = public_key_str.as_bytes();
+//
+//    let mut status = sgx_status_t::SGX_SUCCESS;
+//    let result = unsafe {
+//        ecall::create_storage(
+//            eid,
+//            &mut status,
+//            public_key.as_ptr(),
+//            public_key.len() as u32,
+//        )
+//    };
+//
+//    if status != sgx_status_t::SGX_SUCCESS {
+//        return Err(status);
+//    }
+//    if result != sgx_status_t::SGX_SUCCESS {
+//        return Err(result);
+//    }
+//
+//    Ok(())
+//}
 
 pub fn storage_request(eid: sgx_enclave_id_t, payload: &[u8]) -> SgxResult<Vec<u8>> {
     let mut output = [0 as u8; PAYLOAD_MAX_SIZE];
