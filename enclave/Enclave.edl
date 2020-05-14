@@ -66,6 +66,7 @@ enclave {
 				);
 
 		public sgx_status_t gen_worker_ec256_pubkey (
+				[out] sgx_ec256_public_t *worker_pubkey
 				);
 
 		public sgx_status_t gen_worker_reg_request (
@@ -74,8 +75,8 @@ enclave {
 				);
 
 		public sgx_status_t accept_task (
-				sgx_ec256_public_t user_pubkey,
-				[out] uint32_t *task_id
+				[in, size=32] uint8_t *task_id,
+				[in] sgx_ec256_public_t *user_pubkey
 				);
 	};
 
