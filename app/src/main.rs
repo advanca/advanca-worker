@@ -101,8 +101,8 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
 
     let mut extended_epid_gid: u32 = 10;
     let sgx_return = unsafe { sgx_get_extended_epid_group_id(&mut extended_epid_gid) };
-    info!("sgx_get_extended_epid_group_id: {}", sgx_return);
-    info!("epid_gid  : {}", extended_epid_gid);
+    debug!("sgx_get_extended_epid_group_id: {}", sgx_return);
+    debug!("epid_gid  : {}", extended_epid_gid);
 
     // MSG0 is p_extended_epid_group_id 
     // isv_app -> service_provider
@@ -110,13 +110,14 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     msg.set_msg_type(MsgType::SGX_RA_MSG0);
     msg.set_msg_bytes(extended_epid_gid.to_le_bytes().to_vec());
     tx.send((msg,WriteFlags::default())).unwrap();
+    info!("[worker]---[msg0]------------->[aas]                      [ias]");
 
     let msg0_reply = rx.next().unwrap().unwrap();
     assert_eq!(msg0_reply.get_msg_type(), MsgType::SGX_RA_MSG0_REPLY);
     if msg0_reply.get_msg_bytes() == 0_u32.to_le_bytes() {
         panic!("Oops! AAS rejected msg0!");
     }
-    info!("[worker] --[msg0]--> [aas]");
+    info!("[worker]<--[msg0_reply]--------[aas]                      [ias]");
 
     // MSG1 contains g_a (public ephermeral key ECDH for App) and gid (EPID Group ID - For SigRL)
     let mut p_msg1_buf = vec![0; size_of::<sgx_ra_msg1_t>()];
@@ -126,19 +127,22 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     msg.set_msg_type(MsgType::SGX_RA_MSG1);
     msg.set_msg_bytes(p_msg1_buf);
     tx.send((msg,WriteFlags::default())).unwrap();
+    info!("[worker]---[msg1]------------->[aas]                      [ias]");
 
 
     // MSG2 contains g_b (public ephemeral ECDH key for SP), SPID, quote_type,
     // KDF (key derivation function), signed (gb, ga) using SP's non-ephemeral P256 key, MAC, SigRL
     let msg2 = rx.next().unwrap().unwrap();
+    info!("[worker]<--[msg2]--------------[aas]                      [ias]");
+
     let p_msg2_ptr = msg2.get_msg_bytes().as_ptr() as *const sgx_ra_msg2_t;
     let msg2_size = msg2.get_msg_bytes().len();
     // prepare pointer to recv p_msg3 and its size.
     let mut p_msg3_ptr: *mut sgx_ra_msg3_t = 0 as *mut sgx_ra_msg3_t;
     let mut msg3_size = 0_u32;
     let sgx_return = unsafe {sgx_ra_proc_msg2(ra_context, eid, sgx_ra_proc_msg2_trusted, sgx_ra_get_msg3_trusted, p_msg2_ptr, msg2_size as u32 , &mut p_msg3_ptr, &mut msg3_size)};
-    info!("sgx_ra_proc_msg2: {}", sgx_return);
-    info!("msg3_size: {}", msg3_size);
+    debug!("sgx_ra_proc_msg2: {}", sgx_return);
+    debug!("msg3_size: {}", msg3_size);
 
     // send msg3 to attestation server
     let msg3_vec = unsafe {core::slice::from_raw_parts(p_msg3_ptr as *const u8, msg3_size as usize).to_vec()};
@@ -146,10 +150,13 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     msg.set_msg_type(MsgType::SGX_RA_MSG3);
     msg.set_msg_bytes(msg3_vec);
     tx.send((msg,WriteFlags::default())).unwrap();
+    info!("[worker]---[msg3]------------->[aas]                      [ias]");
 
     let msg3_reply = rx.next().unwrap().unwrap();
+    info!("[worker]<--[attest_result]-----[aas]                      [ias]");
+
     assert_eq!(msg3_reply.get_msg_type(), MsgType::SGX_RA_MSG3_REPLY);
-    info!("msg3 mac: {:02x?}", unsafe{(*p_msg3_ptr).mac});
+    debug!("msg3 mac: {:02x?}", unsafe{(*p_msg3_ptr).mac});
 
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
@@ -164,12 +171,14 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
         msg.set_msg_type(MsgType::AAS_RA_REG_REQUEST);
         msg.set_msg_bytes(aas_request_byte_slice.to_vec());
         tx.send((msg, WriteFlags::default())).unwrap();
+        info!("[worker]---[aas_reg_request]-->[aas]                      [ias]");
 
         let msg_aas_report = rx.next().unwrap().unwrap();
+        info!("[worker]<--[aas_reg_report]----[aas]                      [ias]");
+
         assert_eq!(msg_aas_report.get_msg_type(), MsgType::AAS_RA_REG_REPORT);
         let aas_report_bytes = msg_aas_report.get_msg_bytes();
         let aas_report: AasRegReport = serde_cbor::from_slice(aas_report_bytes).unwrap();
-
         // 04:1a:4f:ea:0d:04:bd:ed:7d:c1:43:ee:74:cb:8e:
         // 56:9e:6e:49:1c:89:bc:d6:5c:34:8f:8a:5b:40:5f:
         // 79:53:e3:89:7d:0f:0c:bc:cf:f0:45:ce:c9:a9:1d:
@@ -180,8 +189,8 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
             gy:[156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62, 204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137],
         };
         let report_verify = aas_utils::verify_aas_reg_report(&aas_report, &srv_pubkey);
-        info!("report verified: {:?}", report_verify);
-        info!("{:?}", srv_pubkey);
+        debug!("report verified: {:?}", report_verify);
+        debug!("{:?}", srv_pubkey);
         if report_verify {
             return  aas_report;
         } else {
@@ -222,6 +231,9 @@ fn main() {
     info!("ra_context: {}", ra_context);
 
     let aas_report = aas_remote_attest(eid, ra_context);
+    info!("Remote attestation complete!");
+    info!("AAS Report: {:?}", aas_report);
+
     // TODO: clean this up when we figure out how to terminate when remote_attest fails
     // currently if aas_remote_attest returns, we know the report is valid and attestation
     // is performed and valid.
