@@ -12,14 +12,14 @@ git clone --recursive https://github.com/advanca/advanca-worker.git
 
 To build and run the project, there are some requirements listed below. You may choose to install some of them according to your need.
 
-|                                                   |       Build        |  Run (Simulation)  |   Run (Hardware)   |
-|---------------------------------------------------|:------------------:|:------------------:|:------------------:|
-| [Rust Toolchain](#rust-toolchain)                 | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_minus_sign: |
-| [System Packages](#system-packages)               | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
-| [Intel SGX Linux SDK](#intel-sgx-linux)           | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
-| [Intel SGX Linux Driver](#intel-sgx-linux-driver) | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_plus_sign:  |
-| [Intel SGX Linux PSW](#intel-sgx-linux)           | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
-| [SGX Hardware](#sgx-hardware)                     | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
+|                                                     |       Build        |  Run (Simulation)  |   Run (Hardware)   |
+|-----------------------------------------------------|:------------------:|:------------------:|:------------------:|
+| [Rust Toolchain](#rust-toolchain)                   | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_minus_sign: |
+| [System Packages](#system-packages)                 | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
+| [Intel SGX Linux SDK](#intel-sgx-linux-sdk-and-psw) | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
+| [Intel SGX Linux Driver](#intel-sgx-linux-driver)   | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_plus_sign:  |
+| [Intel SGX Linux PSW](#intel-sgx-linux-sdk-and-psw) | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
+| [SGX Hardware](#sgx-hardware)                       | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
 
 **Notes**
 
@@ -34,10 +34,13 @@ Install Rust toolchain through [**rustup**](https://rustup.rs/) and complete the
 curl https://sh.rustup.rs -sSf | sh
 ```
 
-The repository contains a [`rust-toolchain`](rust-toolchain) file which tells rust toolchain which version will be used for the entire directory. Run the following command in the repository directory.
+The repository contains a [`rust-toolchain`](rust-toolchain) that specifies a different version from the default toolchain installation.
+
+To install the required version, go to the directory and run:
 
 ```bash
 cd advanca-worker/
+# This installs WASM, but it also triggers an installation of the said version in `rust-toolchain`.
 rustup target add wasm32-unknown-unknown
 ```
 
@@ -50,7 +53,7 @@ sudo apt-get update
 sudo apt-get install -y make build-essential cmake protobuf-compiler golang automake libtool libssl-dev
 ```
 
-For other Linux distributions, there are no instructions available yet. However, you may install similar packages and get them working with the project after some modifications.
+> For other Linux distributions, there are no instructions available yet. However, you may install similar packages and get them working with the project.
 
 ### Intel SGX for Linux
 
@@ -61,11 +64,11 @@ The project relies on the following SGX dependencies on specific versions, which
 
 #### Intel SGX Linux Driver
 
-Follow the [offical guideline](https://github.com/intel/linux-sgx-driver/tree/sgx_driver_2.6#build-and-install-the-intelr-sgx-driver) to build and install **Intel SGX Linux Driver v2.6.0**.
+Follow the [offical install instructions](https://github.com/intel/linux-sgx-driver/tree/sgx_driver_2.6#build-and-install-the-intelr-sgx-driver) to build and install **Intel SGX Linux Driver v2.6.0**.
 
 #### Intel SGX Linux SDK and PSW
 
-You can build SDK and PSW installers from the source code following its [build documentation](https://github.com/intel/linux-sgx/tree/sgx_2.9.1#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
+You can build SDK and PSW installers from the source code following its [offical build instructions](https://github.com/intel/linux-sgx/tree/sgx_2.9.1#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
 
 Alternatively, you can obtain the ready-to-use installers from [Intel's website](https://download.01.org/intel-sgx/sgx-linux/2.9.1/).
 
@@ -83,8 +86,8 @@ A [community-maintained list](https://github.com/ayeks/SGX-hardware) of SGX-capa
 Add this to your shell profile or run it everytime before you build.
 
 ```bash
-source /opt/intel/sgxsdk/environment
 # The script path may differ on your machine. It's located inside the SDK installtion destination
+source /opt/intel/sgxsdk/environment
 ```
 
 You may also use the following environment variables to set the build options.
@@ -124,7 +127,7 @@ The built artifacts can be found under `./bin` directory.
 
 ## Run
 
-The Advanca Worker needs to work with [`Advanca Node`](https://github.com/advanca/advanca-node). See the umbrella project [github.com/advanca/advanca](https://github.com/advanca/advanca) for more information
+The Advanca Worker needs to work with [`Advanca Node`](https://github.com/advanca/advanca-node). See the umbrella project [github.com/advanca/advanca](https://github.com/advanca/advanca) for more information.
 
 ## License
 
