@@ -1,81 +1,130 @@
 # Advanca Worker
 
-This repository contains the source code of Advanca Worker.
+This repository contains the source code of Advanca Worker. See [advanca/advanca](https://github.com/advanca/advanca) for more information.
 
-See [advanca/advanca](https://github.com/advanca/advanca) for more information.
-
-## Requirements
-
-The project is developmend on Ubuntu 18.04. You may need to install the following packages:
-
-```shell
-sudo apt-get update
-sudo apt-get install -y make build-essential cmake protobuf-compiler golang automake libtool
-```
-
-The repository contains submodule, make sure you clone the code recursively.
+Before you start, make sure you clone the repository recursively.
 
 ```shell
 git clone --recursive https://github.com/advanca/advanca-worker.git
 ```
 
-## Build
+## Requirements
 
-Install the Intel(R) SGX SDK v2.9.100.2 (the version supported by rust-sgx-sdk v1.1.1).
+To build and run the project, there are some requirements listed below. You may choose to install some of them according to your need.
 
-You can download the sdk installer `sgx_linux_x64_sdk_2.9.100.2.bin` directly from [here](https://download.01.org/intel-sgx/sgx-linux/2.9/distro/) or manually [build one](https://github.com/intel/linux-sgx/tree/sgx_2.9#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
+|                                                   |       Build        |  Run (Simulation)  |   Run (Hardware)   |
+|---------------------------------------------------|:------------------:|:------------------:|:------------------:|
+| [Rust Toolchain](#rust-toolchain)                 | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_minus_sign: |
+| [System Packages](#system-packages)               | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
+| [Intel SGX Linux SDK](#intel-sgx-linux)           | :heavy_plus_sign:  | :heavy_plus_sign:  | :heavy_plus_sign:  |
+| [Intel SGX Linux Driver](#intel-sgx-linux-driver) | :heavy_plus_sign:  | :heavy_minus_sign: | :heavy_plus_sign:  |
+| [Intel SGX Linux PSW](#intel-sgx-linux)           | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
+| [SGX Hardware](#sgx-hardware)                     | :heavy_minus_sign: | :heavy_minus_sign: | :heavy_plus_sign:  |
 
-```console
-# For ubuntu 18.04
-$ curl -sO https://download.01.org/intel-sgx/sgx-linux/2.9/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.100.2.bin
+**Notes**
 
-$ chmod +x sgx_linux_x64_sdk_2.9.100.2.bin
+* :heavy_plus_sign:  Required
+* :heavy_plus_sign:  Not required
 
-$ sudo ./sgx_linux_x64_sdk_2.9.100.2.bin
-Do you want to install in current directory? [yes/no] : no
-Please input the directory which you want to install in : /opt/intel
-...
-```
+### Rust Toolchain
 
-Add this to your shell profile or run it everytime before you build.
-
-```shell
-source /opt/intel/sgxsdk/environment
-```
-
-Install Rust.
-
-> Note the version specified by [`rust-toolchain`](rust-toolchain) will be used for this repository.
+Install Rust toolchain through [**rustup**](https://rustup.rs/) and complete the installation following the prompted instructions from command line.
 
 ```bash
 curl https://sh.rustup.rs -sSf | sh
 ```
 
-Build in simulation mode.
+The repository contains a [`rust-toolchain`](rust-toolchain) file which tells rust toolchain which version will be used for the entire directory. Run the following command in the repository directory.
+
+```bash
+cd advanca-worker/
+rustup target add wasm32-unknown-unknown
+```
+
+### System Packages
+
+The project is developmend on **Ubuntu 18.04**. You may need to install the following packages:
 
 ```shell
-export SGX_MODE=SW
-export SGX_DEBUG=1
-make
+sudo apt-get update
+sudo apt-get install -y make build-essential cmake protobuf-compiler golang automake libtool libssl-dev
 ```
+
+For other Linux distributions, there are no instructions available yet. However, you may install similar packages and get them working with the project after some modifications.
+
+### Intel SGX for Linux
+
+The project relies on the following SGX dependencies on specific versions, which work best with [Rust SGX SDK v1.1.2](https://github.com/apache/incubator-teaclave-sgx-sdk/tree/v1.1.2#v112):
+
+* **Intel SGX Linux Driver v2.6.0** (out-of-tree version, not [DCAP driver](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver))
+* **Intel SGX Linux SDK and PSW v2.9.1**
+
+#### Intel SGX Linux Driver
+
+Follow the [offical guideline](https://github.com/intel/linux-sgx-driver/tree/sgx_driver_2.6#build-and-install-the-intelr-sgx-driver) to build and install **Intel SGX Linux Driver v2.6.0**.
+
+#### Intel SGX Linux SDK and PSW
+
+You can build SDK and PSW installers from the source code following its [build documentation](https://github.com/intel/linux-sgx/tree/sgx_2.9.1#build-the-intelr-sgx-sdk-and-intelr-sgx-psw-package).
+
+Alternatively, you can obtain the ready-to-use installers from [Intel's website](https://download.01.org/intel-sgx/sgx-linux/2.9.1/).
+
+Once you have the installers, follow these guides for installation:
+
+* [Install Intel SGX SDK](https://github.com/intel/linux-sgx/tree/sgx_2.9.1#install-the-intelr-sgx-sdk)
+* [Install Intel SGX PSW](https://github.com/intel/linux-sgx/tree/sgx_2.9.1#install-the-intelr-sgx-psw-1)
+
+### SGX Hardware
+
+A [community-maintained list](https://github.com/ayeks/SGX-hardware) of SGX-capable machines is available. It is only need when running the project in hardware mode.
+
+## Build
+
+Add this to your shell profile or run it everytime before you build.
+
+```bash
+source /opt/intel/sgxsdk/environment
+# The script path may differ on your machine. It's located inside the SDK installtion destination
+```
+
+You may also use the following environment variables to set the build options.
+
+| Environment Variable | Default |           Accepted Values           |                                                Description                                                 |
+|:--------------------:|:-------:|:-----------------------------------:|:----------------------------------------------------------------------------------------------------------:|
+|     `SGX_DEBUG`      |   `0`   |  <ul><li>`0`</li><li>`1`</li></ul>  | If the Debug mode is enabled (`1`) or not (`0`). It also affects cargo build targets in the subdirectories |
+|      `SGX_MODE`      |  `HW`   | <ul><li>`HW`</li><li>`SW`</li></ul> |                     If the built artifact is for hardware (`HW`) or simulation (`SW`)                      |
+
+### Build in Simulation Mode
+
+```bash
+# set the environment variable SGX_MODE=SW
+SGX_MODE=SW make
+# or with DEBUG symbols
+SGX_MODE=SW SGX_DEBUG=1 make
+```
+
+### Build in Hardware Mode
+
+```bash
+# implicilty ask for a hardware build
+make
+# or set the environment variable SGX_MODE=HW
+SGX_MODE=HW make
+# or with DEBUG symbols
+SGX_MODE=SW SGX_DEBUG=1 make
+```
+
+### Built Artifacts
+
+The built artifacts can be found under `./bin` directory.
+
+* `advanca-client`: The client which executes the demo introduced in [github.com/advanca/advanca](https://github.com/advanca/advanca).
+* `advanca-worker`: The worker that loads the `enclave.signed.so`. See more at [github.com/advanca/advanca](https://github.com/advanca/advanca).
+* `enclave.signed.so`: The signed enclave dynamic library.
 
 ## Run
 
-As a prerequisite, build and run [`advanca-node`](https://github.com/advanca/advanca-node) first, and ensure its WebSocket RPC port is listening at `127.0.0.1:9944`.
-
-Then in a new terminal, run the client
-
-```shell
-cd bin/
-./advanca-client
-```
-
-In another new temrinal, run the worker
-
-```shell
-cd bin/
-./advanca-worker
-```
+The Advanca Worker needs to work with [`Advanca Node`](https://github.com/advanca/advanca-node). See the umbrella project [github.com/advanca/advanca](https://github.com/advanca/advanca) for more information
 
 ## License
 
