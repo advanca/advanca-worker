@@ -114,7 +114,7 @@ make
 # or set the environment variable SGX_MODE=HW
 SGX_MODE=HW make
 # or with DEBUG symbols
-SGX_MODE=SW SGX_DEBUG=1 make
+SGX_MODE=HW SGX_DEBUG=1 make
 ```
 
 ### Built Artifacts
