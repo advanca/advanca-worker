@@ -58,24 +58,31 @@ enclave {
 				);
 
 		public sgx_status_t gen_worker_ec256_pubkey (
-				[out] sgx_ec256_public_t *worker_pubkey
+				);
+
+		public sgx_status_t get_worker_ec256_pubkey (
+				[user_check]            uint8_t            *ubuf,
+				[in,out]                size_t             *ubuf_size
 				);
 
 		public sgx_status_t gen_worker_reg_request (
-				sgx_ra_context_t context,
-				[out] struct CSgxAasRequest *aas_request
+				[user_check]            uint8_t            *ubuf,
+				[in,out]                size_t             *ubuf_size
+				                        sgx_ra_context_t    context,
 				);
 
 		public sgx_status_t accept_task (
-				[in, size=32] uint8_t *task_id,
-				[in] sgx_ec256_public_t *user_pubkey
+				[in, size=32]           uint8_t            *task_id,
+				[in]                    uint8_t            *user_pubkey,
+				                        size_t              user_pubkey_size
 				);
+
 		public sgx_status_t encrypt_msg (
-				[in, count=32]          uint8_t *task_id,
-				[in, count=msg_in_len]  uint8_t *msg_in,
-				                        uint32_t msg_in_len,
-				[out,count=msg_out_len] uint8_t *msg_out,
-				                        uint32_t msg_out_len
+				[user_check]            uint8_t            *ubuf,
+				[out]                   size_t             *ubuf_size,
+				[in, count=32]          uint8_t            *task_id,
+				[in, count=msg_in_len]  uint8_t            *msg_in,
+				                        uint32_t            msg_in_len,
 				);
 	};
 

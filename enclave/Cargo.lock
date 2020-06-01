@@ -2,10 +2,13 @@
 # It is not intended for manual editing.
 [[package]]
 name = "advanca-crypto"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "advanca-crypto-ctypes",
- "sgx_tkey_exchange 1.1.2 (git+https://github.com/apache/teaclave-sgx-sdk.git)",
+ "advanca-crypto-types",
+ "advanca-macros",
+ "sgx_tcrypto",
+ "sgx_tkey_exchange",
  "sgx_tstd",
  "sgx_types",
 ]
@@ -18,11 +21,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "advanca-crypto-types"
+version = "0.2.0"
+dependencies = [
+ "serde 1.0.106",
+ "serde-big-array",
+ "serde_json",
+ "sgx_tstd",
+ "sgx_types",
+]
+
+[[package]]
+name = "advanca-macros"
+version = "0.1.0"
+dependencies = [
+ "advanca-crypto-types",
+ "sgx_types",
+]
+
+[[package]]
 name = "advanca-worker-enclave"
 version = "0.1.1"
 dependencies = [
  "advanca-crypto",
- "advanca-crypto-ctypes",
+ "advanca-crypto-types",
+ "advanca-macros",
  "base64",
  "env_logger",
  "hex",
@@ -34,13 +57,14 @@ dependencies = [
  "protos-enclave",
  "serde 1.0.106",
  "serde-big-array",
+ "serde_cbor",
  "serde_derive 1.0.106 (git+https://github.com/mesalock-linux/serde-sgx)",
  "serde_json",
  "sgx_rand",
  "sgx_serialize",
  "sgx_tcrypto",
  "sgx_tcrypto_helper",
- "sgx_tkey_exchange 1.1.2 (git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2)",
+ "sgx_tkey_exchange",
  "sgx_trts",
  "sgx_tse",
  "sgx_tseal",
@@ -161,9 +185,9 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "cc"
-version = "1.0.53"
+version = "1.0.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "404b1fe4f65288577753b17e3b36a04596ee784493ec249bf81c7f2d2acd751c"
+checksum = "7bbb73db36c1246e9034e307d0fba23f9a2e251faa47ade70c1bd252220c8311"
 
 [[package]]
 name = "cfg-if"
@@ -249,7 +273,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b480f641ccf0faf324e20c1d3e53d81b7484c698b42ea677f6907ae4db195371"
 dependencies = [
  "errno-dragonfly",
- "libc 0.2.70",
+ "libc 0.2.71",
  "winapi",
 ]
 
@@ -260,7 +284,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14ca354e36190500e1e1fb267c647932382b54053c50b14970856c0b00a35067"
 dependencies = [
  "gcc",
- "libc 0.2.70",
+ "libc 0.2.71",
 ]
 
 [[package]]
@@ -304,9 +328,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"
 dependencies = [
  "cfg-if",
- "libc 0.2.70",
+ "libc 0.2.71",
  "wasi",
 ]
+
+[[package]]
+name = "half"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d36fab90f82edc3c747f9d438e06cf0a491055896f2a279638bb5beed6c40177"
 
 [[package]]
 name = "hashbrown_tstd"
@@ -380,9 +410,9 @@ source = "git+https://github.com/mesalock-linux/libc-sgx#b718c0bdf0cf19764559586
 
 [[package]]
 name = "libc"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3baa92041a6fec78c687fa0cc2b3fae8884f743d672cf551bed1d6dac6988d0f"
+checksum = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
 
 [[package]]
 name = "log"
@@ -429,8 +459,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "oram"
-version = "0.1.1"
-source = "git+https://github.com/advanca/oram.git?tag=v0.1.1#a15af9f2029a7061125e9dfdcf662fdfd74c3c4a"
+version = "0.1.2"
 dependencies = [
  "bincode 1.2.1 (git+https://github.com/mesalock-linux/bincode-sgx?tag=sgx_1.1.2)",
  "bincode 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -584,9 +613,9 @@ source = "git+https://github.com/mesalock-linux/quick-error-sgx#c77b8867336fff70
 
 [[package]]
 name = "quote"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42934bc9c8ab0d3b273a16d8551c8f0fcff46be73276ca083ec2414c15c4ba5e"
+checksum = "54a21852a652ad6f610c9510194f398ff6f8692e334fd1145fed931f7fbe44ea"
 dependencies = [
  "proc-macro2",
 ]
@@ -598,7 +627,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
 dependencies = [
  "getrandom",
- "libc 0.2.70",
+ "libc 0.2.71",
  "rand_chacha",
  "rand_core 0.5.1",
  "rand_hc",
@@ -697,7 +726,6 @@ dependencies = [
  "errno",
  "fs2",
  "integer-encoding",
- "libc 0.2.70",
  "rand",
  "snap",
 ]
@@ -713,6 +741,7 @@ name = "serde"
 version = "1.0.106"
 source = "git+https://github.com/mesalock-linux/serde-sgx#58ff0793d46f96124132110880d0f4d44050d6ee"
 dependencies = [
+ "serde_derive 1.0.106 (git+https://github.com/mesalock-linux/serde-sgx)",
  "sgx_tstd",
 ]
 
@@ -732,6 +761,16 @@ source = "git+https://github.com/mesalock-linux/serde-big-array-sgx#580cfb3c78fe
 dependencies = [
  "serde 1.0.106",
  "serde_derive 1.0.106 (git+https://github.com/mesalock-linux/serde-sgx)",
+]
+
+[[package]]
+name = "serde_cbor"
+version = "0.11.1"
+source = "git+https://github.com/mesalock-linux/cbor-sgx#463d759988cf333549b9a3792dd67d2d62d81c5e"
+dependencies = [
+ "half",
+ "serde 1.0.106",
+ "sgx_tstd",
 ]
 
 [[package]]
@@ -850,14 +889,6 @@ dependencies = [
 [[package]]
 name = "sgx_tkey_exchange"
 version = "1.1.2"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git#253b3ac982b2d09d32f5fa5a2011e3c36bcbed1e"
-dependencies = [
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_tkey_exchange"
-version = "1.1.2"
 source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2#253b3ac982b2d09d32f5fa5a2011e3c36bcbed1e"
 dependencies = [
  "sgx_types",
@@ -963,9 +994,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.21"
+version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4696caa4048ac7ce2bcd2e484b3cef88c1004e41b8e945a277e2c25dc0b72060"
+checksum = "93a56fabc59dce20fe48b6c832cc249c713e7ed88fa28b0ee0a3bfcaae5fe4e2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -979,7 +1010,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a6e24d9338a0a5be79593e2fa15a648add6138caa803e2d5bc782c371732ca9"
 dependencies = [
  "cfg-if",
- "libc 0.2.70",
+ "libc 0.2.71",
  "rand",
  "redox_syscall",
  "remove_dir_all",
