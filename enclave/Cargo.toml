@@ -40,12 +40,13 @@ serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde-big-array   = { git = "https://github.com/mesalock-linux/serde-big-array-sgx" }
+serde_cbor        = { git = "https://github.com/mesalock-linux/cbor-sgx" }
 
 # customized crates
-#advanca-crypto-types   = { path = "../../advanca-crypto-types" }
-oram                   = { tag = "v0.1.1", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
-advanca-crypto         = { path = "../../advanca-crypto", features = ["sgx_enclave"] }
-advanca-crypto-ctypes  = { path = "../../advanca-crypto-ctypes" }
+advanca-macros         = { path = "../../advanca-sgx-helper/advanca-macros" }
+advanca-crypto         = { path = "../../advanca-sgx-helper/advanca-crypto", features = ["sgx_enclave"] }
+advanca-crypto-types   = { path = "../../advanca-sgx-helper/advanca-crypto-types", features = ["sgx_enclave"]}
+oram                   = { git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
 
 # rust-sgx-sdk crates
 sgx_tstd          = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_fs"] }
@@ -58,6 +59,9 @@ sgx_tkey_exchange = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 [dependencies.protos]
 package = "protos-enclave"
 path = "../protos/enclave"
+
+[patch.'https://github.com/advanca/oram.git']
+oram                            = { path = "../../oram" }
 
 [patch.'https://github.com/apache/teaclave-sgx-sdk.git']
 sgx_alloc 			= { path = "../rust-sgx-sdk/sgx_alloc" }

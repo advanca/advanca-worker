@@ -40,23 +40,29 @@ use protos::storage::*;
 use core::slice;
 use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 
-use core::mem::size_of;
-
 use std::collections::HashMap;
 use std::boxed::Box;
 
 use sgx_types::*;
 use sgx_tkey_exchange::*;
 
-use advanca_crypto_ctypes::{CAasRegRequest};
-use advanca_crypto::sgx_enclave::sgx_enclave_utils as enclave_utils;
+use advanca_crypto_types::*;
+use advanca_crypto::*;
+
+use serde::Serialize;
+use serde_cbor;
+use serde_cbor::Serializer;
+use serde_cbor::ser::SliceWrite;
+use serde_cbor::de::from_slice_with_scratch;
+
+use advanca_macros::{enclave_ret, enclave_cryptoerr};
 
 //use std::sync::Once;
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
-    worker_prvkey : sgx_ec256_private_t,
-    worker_pubkey : sgx_ec256_public_t,
+    worker_prvkey : Secp256r1PrivateKey,
+    worker_pubkey : Secp256r1PublicKey,
     // shared_dhkey  : sgx_ec256_dh_shared_t,
     // kdk           : sgx_key_128bit_t,
 }
@@ -77,38 +83,32 @@ gy: [
 // and use once_only init to set the value.
 static mut ATTESTED_SESSION: AttestedSession = 
 AttestedSession {
-    worker_prvkey: sgx_ec256_private_t {
+    worker_prvkey: Secp256r1PrivateKey {
         r: [0;32],
     },
-    worker_pubkey: sgx_ec256_public_t {
+    worker_pubkey: Secp256r1PublicKey {
         gx: [0;32],
         gy: [0;32],
     },
-    // shared_dhkey: sgx_ec256_dh_shared_t {
-    //     s: [0;32],
-    // },
-    // kdk: [0;16],
 };
 // static mut ATTESTED_SESSION: Once = Once::new();
 
 #[derive(Default, Clone, Copy)]
 struct TaskInfo {
-    user_pubkey  : sgx_ec256_public_t,
-    shared_dhkey : sgx_ec256_dh_shared_t,
-    kdk          : sgx_key_128bit_t,
+    user_pubkey  : Secp256r1PublicKey,
+    kdk          : Aes128Key,
 }
 
 static mut TASKS: *mut HashMap<[u8;32], TaskInfo> = 0 as *mut HashMap<[u8;32], TaskInfo>;
 static mut SINGLE_TASK: TaskInfo =
 TaskInfo {
-    user_pubkey: sgx_ec256_public_t {
+    user_pubkey: Secp256r1PublicKey {
         gx: [0;32],
         gy: [0;32],
     },
-    shared_dhkey: sgx_ec256_dh_shared_t {
-        s: [0;32],
+    kdk: Aes128Key {
+        key: [0;16],
     },
-    kdk: [0;16],
 };
 
 
@@ -124,7 +124,7 @@ pub unsafe extern "C" fn init() -> sgx_status_t {
 }
 
 #[no_mangle]
-pub extern "C" fn enclave_init_ra (b_pse: i32,
+pub unsafe extern "C" fn enclave_init_ra (b_pse: i32,
                                    p_context: &mut sgx_ra_context_t) -> sgx_status_t {
     let ret: sgx_status_t;
     match rsgx_ra_init(&G_SP_PUB_KEY, b_pse) {
@@ -141,16 +141,16 @@ pub extern "C" fn enclave_init_ra (b_pse: i32,
 }
 
 #[no_mangle]
-pub extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
+pub unsafe extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
     // we'll reinit the hashmap of accepted jobs
     // we'll take back ownership of the box
     // which will be freed when the box is destroyed
-    let _old_tasks = unsafe{Box::from_raw(TASKS)};
+    let _old_tasks = Box::from_raw(TASKS);
     let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
-    unsafe { TASKS = Box::into_raw(heap_hashmap) };
+    TASKS = Box::into_raw(heap_hashmap);
 
     // Zero out the keys
-    unsafe { ATTESTED_SESSION = AttestedSession::default() };
+    ATTESTED_SESSION = AttestedSession::default();
 
     match rsgx_ra_close(context) {
         Ok(()) => {
@@ -161,111 +161,86 @@ pub extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
 }
 
 #[no_mangle]
-pub extern "C" fn gen_worker_ec256_pubkey (
-    worker_pubkey: &mut sgx_ec256_public_t,
+pub unsafe extern "C" fn gen_worker_ec256_pubkey (
 ) -> sgx_status_t {
-
-    let mut p_ecc_handle:sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
-
-    // TODO: this is not thread safe!!!
-    // SINGLE THREAD ONLY!!!
-    let p_private = unsafe{&mut ATTESTED_SESSION.worker_prvkey};
-    let p_public  = unsafe{&mut ATTESTED_SESSION.worker_pubkey};
-
-    let mut ret;
-    ret = unsafe {sgx_ecc256_open_context(&mut p_ecc_handle)};
-    if ret == sgx_status_t::SGX_SUCCESS {
-        ret = unsafe {sgx_ecc256_create_key_pair(p_private, p_public, p_ecc_handle)};
+    match secp256r1_gen_keypair() {
+        Ok((prvkey, pubkey)) => {
+            ATTESTED_SESSION.worker_prvkey = prvkey;
+            ATTESTED_SESSION.worker_pubkey = pubkey;
+            return sgx_status_t::SGX_SUCCESS;
+        },
+        Err(CryptoError::SgxError(i, _)) => {
+            return sgx_status_t::from_repr(i).unwrap();
+        },
+        _ => unreachable!(),
     }
-    if ret == sgx_status_t::SGX_SUCCESS {
-        ret = unsafe {sgx_ecc256_close_context(p_ecc_handle)};
-    }
-    *worker_pubkey = *p_public;
-    ret
 }
 
 #[no_mangle]
-pub extern "C" fn gen_worker_reg_request(
+pub unsafe extern "C" fn get_worker_ec256_pubkey (
+    ubuf: *mut u8,
+    ubuf_size: &mut usize,
+) -> sgx_status_t {
+    enclave_ret!(ATTESTED_SESSION.worker_pubkey, ubuf, ubuf_size);
+    sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn gen_worker_reg_request(
+    ubuf: *mut u8,
+    ubuf_size: &mut usize,
     context: sgx_ra_context_t,
-    aas_reg_request: &mut CAasRegRequest,
 ) -> sgx_status_t {
-    let p_public_ptr = unsafe{&ATTESTED_SESSION.worker_pubkey as *const sgx_ec256_public_t};
-    let data_slice = unsafe{core::slice::from_raw_parts(p_public_ptr as *const u8, size_of::<sgx_ec256_public_t>())};
-    let mut mac = sgx_cmac_128bit_tag_t::default();
-
-    let ret = enclave_utils::aes128_cmac_sk(context, &data_slice, &mut mac);
-    if ret == sgx_status_t::SGX_SUCCESS {
-        aas_reg_request.pubkey = unsafe{ATTESTED_SESSION.worker_pubkey};
-        aas_reg_request.mac    = mac;
-    }
-    ret
+    let pubkey = ATTESTED_SESSION.worker_pubkey;
+    let sk_key = enclave_cryptoerr!(enclave_get_sk_key(context));
+    let data = pubkey.to_raw_bytes();
+    let mac = enclave_cryptoerr!(aes128cmac_mac(&sk_key, &data));
+    let req = AasRegRequest {
+        worker_pubkey: pubkey,
+        mac: mac,
+    };
+    enclave_ret!(req, ubuf, ubuf_size);
+    sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
-pub extern "C" fn accept_task (
-    task_id     : &[u8;32],
-    p_user_pubkey : &sgx_ec256_public_t,
+pub unsafe extern "C" fn accept_task (
+    task_id              : &[u8;32],
+    user_pubkey_buf      : *const u8,
+    user_pubkey_buf_size : usize,
 ) -> sgx_status_t {
-    let mut ret;
-    let mut gab_x = sgx_ec256_dh_shared_t::default();
+    let mut scratch = [0_u8;4096];
+    let pubkey_buf_slice = core::slice::from_raw_parts(user_pubkey_buf, user_pubkey_buf_size);
 
-    let worker_prvkey = unsafe{ATTESTED_SESSION.worker_prvkey};
-
-    ret = enclave_utils::derive_ec256_shared_dhkey(p_user_pubkey, &worker_prvkey, &mut gab_x);
-    if ret == sgx_status_t::SGX_SUCCESS {
-        // derive the kdk from the shared dhkey
-        // KDK = AES-CMAC(key0, gab x-coordinate)
-        let key0 = sgx_cmac_128bit_key_t::default();
-        let p_src = &gab_x as *const sgx_ec256_dh_shared_t as *const u8;
-        let src_len = size_of::<sgx_ec256_dh_shared_t>() as u32;
-        let mut mac = sgx_cmac_128bit_key_t::default();
-        ret = unsafe {sgx_rijndael128_cmac_msg(&key0, p_src, src_len, &mut mac)};
-        if ret == sgx_status_t::SGX_SUCCESS {
-            let task_info = TaskInfo {
-                user_pubkey  : *p_user_pubkey,
-                shared_dhkey : gab_x,
-                kdk          : mac,
-            };
-            unsafe {(*TASKS).insert(*task_id, task_info)};
-
-            // TODO! hack for single task demo
-            unsafe{SINGLE_TASK.user_pubkey = *p_user_pubkey;}
-            unsafe{SINGLE_TASK.shared_dhkey = gab_x;}
-            unsafe{SINGLE_TASK.kdk = mac;}
-        }
-    }
-    ret
+    let user_pubkey: Secp256r1PublicKey = from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
+    let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
+    let kdk = enclave_cryptoerr!(derive_kdk(&worker_prvkey, &user_pubkey));
+    let task_info = TaskInfo {
+        user_pubkey : user_pubkey,
+        kdk : kdk,
+    };
+    (*TASKS).insert(*task_id, task_info);
+    // TODO! hack for single task demo
+    SINGLE_TASK.user_pubkey = user_pubkey;
+    SINGLE_TASK.kdk = kdk;
+    sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
-pub extern "C" fn encrypt_msg (
-    task_id : &[u8;32],
-    msg_in  : *const u8,
-    msg_in_len: u32,
-    msg_out : *mut u8,
-    msg_out_len : u32,
+pub unsafe extern "C" fn encrypt_msg (
+    ubuf             : *mut u8,
+    ubuf_size        : *mut usize,
+    task_id          : &[u8;32],
+    msg_in           : *const u8,
+    msg_in_len       : usize,
 ) -> sgx_status_t {
-    let task_info = unsafe {(*TASKS).get(task_id).unwrap()};
+    let task_info = (*TASKS).get(task_id).unwrap();
     let kdk = task_info.kdk;
     // TODO: Add a canary at the end of the 2 buffers to ensure that they are of the correct
     // length.
-    let slice_data = unsafe{core::slice::from_raw_parts(msg_in, msg_in_len as usize)};
-    let slice_out  = unsafe{core::slice::from_raw_parts_mut(msg_out, msg_out_len as usize)};
-
-    // for security, all buffers are allocated within the enclave and only copied once all
-    // operations are successful
-    let mut ivcipher = vec![0_u8; msg_out_len as usize];
-
-    println!("slice_data: {:?}", slice_data);
-    println!("key: {:?}", kdk);
-
-    let ret = enclave_utils::aes128_gcm_encrypt(&kdk, &slice_data, &[], &mut ivcipher);
-    if ret != sgx_status_t::SGX_SUCCESS { return ret; }
-
-    slice_out.copy_from_slice(&ivcipher);
-    println!("done!: {:?}", slice_data);
-    println!("done!: {:?}", slice_out);
-
+    let data_slice = core::slice::from_raw_parts(msg_in, msg_in_len as usize);
+    let encrypted_msg = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &data_slice));
+    enclave_ret!(encrypted_msg, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
 
@@ -317,19 +292,16 @@ pub unsafe extern "C" fn storage_request(
 ) -> sgx_status_t {
     let kdk = SINGLE_TASK.kdk;
 
-    let request_payload = slice::from_raw_parts(request, request_size as usize);
+    let encrypted_msg_slice = slice::from_raw_parts(request, request_size as usize);
     let response_payload = slice::from_raw_parts_mut(response, response_capacity as usize);
 
     let _ = backtrace::enable_backtrace("enclave.signed.so", PrintFormat::Full);
 
-    let cipher_len = request_size - 12 - 16;
-    let mut decrypted = vec![0_u8; cipher_len as usize];
+    let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_slice).unwrap();
+    let decrypted_msg = enclave_cryptoerr!(aes128gcm_decrypt(&kdk, &encrypted_msg));
 
-    let ret = enclave_utils::aes128_gcm_decrypt(&kdk, request_payload, &[], &mut decrypted);
-    if ret != sgx_status_t::SGX_SUCCESS {panic!("Decryption failure! {:?}", ret);}
-    let request_decrypted = decrypted;
+    let request_decrypted = decrypted_msg;
 
-    //let request_decrypted = rsa3072::decrypt(request_payload, &keypair);
     let request_decoded = parse_from_bytes::<PlainRequest>(&request_decrypted).unwrap();
     println!("[ENCLAVE DEBUG] <PlainRequest> {:?}", request_decoded);
     let response = match storage::storage_request(request_decoded) {
@@ -339,13 +311,12 @@ pub unsafe extern "C" fn storage_request(
     println!("[ENCLAVE DEBUG] <PlainResponse> {:?}", response);
 
     let response_encoded = response.write_to_bytes().unwrap();
-    let mut response_encrypted = vec![0_u8; 12+16+response_encoded.len()];
-    let ret = enclave_utils::aes128_gcm_encrypt(&kdk, &response_encoded, &[], &mut response_encrypted);
-    if ret != sgx_status_t::SGX_SUCCESS {panic!("Encryption failure! {:?}", ret);}
+    let response_encrypted = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &response_encoded));
+    let response_encrypted_bytes = serde_cbor::to_vec(&response_encrypted).unwrap();
 
-    let (first, _) = response_payload.split_at_mut(response_encrypted.len());
-    first.clone_from_slice(&response_encrypted);
-    *response_size = response_encrypted.len() as u32;
+    let (first, _) = response_payload.split_at_mut(response_encrypted_bytes.len());
+    first.clone_from_slice(&response_encrypted_bytes);
+    *response_size = response_encrypted_bytes.len() as u32;
 
     sgx_status_t::SGX_SUCCESS
 }
