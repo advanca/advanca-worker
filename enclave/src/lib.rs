@@ -238,7 +238,7 @@ pub unsafe extern "C" fn encrypt_msg (
 ) -> sgx_status_t {
     let mut task_id = [0_u8; 32];
     task_id.copy_from_slice(core::slice::from_raw_parts(p_task_id, 32));
-    let task_info = (*TASKS).get(task_id).unwrap();
+    let task_info = (*TASKS).get(&task_id).unwrap();
     let kdk = task_info.kdk;
     // TODO: Add a canary at the end of the 2 buffers to ensure that they are of the correct
     // length.
