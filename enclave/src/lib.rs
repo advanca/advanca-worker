@@ -204,12 +204,15 @@ pub unsafe extern "C" fn gen_worker_reg_request(
 
 #[no_mangle]
 pub unsafe extern "C" fn accept_task (
-    task_id              : &[u8;32],
-    user_pubkey_buf      : *const u8,
+    p_task_id              : *const u8,
+    p_user_pubkey_buf      : *const u8,
     user_pubkey_buf_size : usize,
 ) -> sgx_status_t {
     let mut scratch = [0_u8;4096];
-    let pubkey_buf_slice = core::slice::from_raw_parts(user_pubkey_buf, user_pubkey_buf_size);
+    let mut task_id = [0_u8;32];
+    let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
+    task_id.copy_from_slice(&task_id_slice);
+    let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
 
     let user_pubkey: Secp256r1PublicKey = from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
     let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
@@ -218,7 +221,7 @@ pub unsafe extern "C" fn accept_task (
         user_pubkey : user_pubkey,
         kdk : kdk,
     };
-    (*TASKS).insert(*task_id, task_info);
+    (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
     SINGLE_TASK.user_pubkey = user_pubkey;
     SINGLE_TASK.kdk = kdk;
@@ -227,19 +230,21 @@ pub unsafe extern "C" fn accept_task (
 
 #[no_mangle]
 pub unsafe extern "C" fn encrypt_msg (
-    ubuf             : *mut u8,
-    ubuf_size        : *mut usize,
-    task_id          : &[u8;32],
-    msg_in           : *const u8,
+    p_ubuf             : *mut u8,
+    p_ubuf_size        : *mut usize,
+    p_task_id          : *const u8,
+    p_msg_in           : *const u8,
     msg_in_len       : usize,
 ) -> sgx_status_t {
+    let mut task_id = [0_u8; 32];
+    task_id.copy_from_slice(core::slice::from_raw_parts(p_task_id, 32));
     let task_info = (*TASKS).get(task_id).unwrap();
     let kdk = task_info.kdk;
     // TODO: Add a canary at the end of the 2 buffers to ensure that they are of the correct
     // length.
-    let data_slice = core::slice::from_raw_parts(msg_in, msg_in_len as usize);
+    let data_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len as usize);
     let encrypted_msg = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &data_slice));
-    enclave_ret!(encrypted_msg, ubuf, ubuf_size);
+    enclave_ret!(encrypted_msg, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
 

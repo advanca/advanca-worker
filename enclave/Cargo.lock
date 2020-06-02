@@ -4,19 +4,11 @@
 name = "advanca-crypto"
 version = "0.2.0"
 dependencies = [
- "advanca-crypto-ctypes",
  "advanca-crypto-types",
  "advanca-macros",
  "sgx_tcrypto",
  "sgx_tkey_exchange",
  "sgx_tstd",
- "sgx_types",
-]
-
-[[package]]
-name = "advanca-crypto-ctypes"
-version = "0.1.0"
-dependencies = [
  "sgx_types",
 ]
 
