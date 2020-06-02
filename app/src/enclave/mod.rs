@@ -26,10 +26,13 @@ pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
 use advanca_crypto_types::*;
-use advanca_crypto::secp256r1_public;
+
+use crate::aas_teaclave_ecall::*;
+use crate::aas_teaclave_ecall as enclave_ecall;
+use advanca_macros::*;
+
 
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
-mod ecall;
 
 pub static ENCLAVE_TOKEN: &'static str = "enclave.token";
 pub static ENCLAVE_FILE: &'static str = "enclave.signed.so";
@@ -77,16 +80,8 @@ pub fn init() -> SgxResult<SgxEnclave> {
         }
     }
 
-    let mut status = sgx_status_t::SGX_SUCCESS;
-
     debug!("initializaing enclave ...");
-    let result = unsafe { ecall::init(enclave.geteid(), &mut status) };
-    if status != sgx_status_t::SGX_SUCCESS {
-        return Err(status);
-    }
-    if result != sgx_status_t::SGX_SUCCESS {
-        return Err(result);
-    }
+    let _ = unsafe {handle_ecall!(enclave.geteid(), enclave_init()).unwrap()};
     debug!("done!");
     Ok(enclave)
 }
@@ -95,27 +90,20 @@ pub fn sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
     let public_key_size = 32;
     let mut public_key = vec![0u8; public_key_size as usize];
 
-    let mut status = sgx_status_t::SGX_SUCCESS;
-    let result = unsafe {
-        ecall::get_sr25519_public_key(eid, &mut status, public_key.as_mut_ptr(), public_key_size)
+    let _ = unsafe {
+        handle_ecall!(eid, get_sr25519_public_key(public_key.as_mut_ptr(), public_key_size)).unwrap()
     };
 
-    if status != sgx_status_t::SGX_SUCCESS {
-        return Err(status);
-    }
-    if result != sgx_status_t::SGX_SUCCESS {
-        return Err(result);
-    }
     Ok(public_key)
 }
 
 pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxError {
-    let public_key_bytes = secp256r1_public::to_bytes(&owner);
+    let public_key_bytes = serde_cbor::to_vec(&owner).unwrap();
 
     // we'll keep the current interface
     let mut status = sgx_status_t::SGX_SUCCESS;
     let result = unsafe {
-        ecall::create_storage(
+        enclave_ecall::create_storage(
             eid,
             &mut status,
             public_key_bytes.as_ptr(),
@@ -133,36 +121,12 @@ pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxEr
     Ok(())
 }
 
-//pub fn create_storage(eid: sgx_enclave_id_t, owner: Rsa3072PubKey) -> SgxError {
-//    let public_key_str = serde_json::to_string(&owner).unwrap();
-//    let public_key = public_key_str.as_bytes();
-//
-//    let mut status = sgx_status_t::SGX_SUCCESS;
-//    let result = unsafe {
-//        ecall::create_storage(
-//            eid,
-//            &mut status,
-//            public_key.as_ptr(),
-//            public_key.len() as u32,
-//        )
-//    };
-//
-//    if status != sgx_status_t::SGX_SUCCESS {
-//        return Err(status);
-//    }
-//    if result != sgx_status_t::SGX_SUCCESS {
-//        return Err(result);
-//    }
-//
-//    Ok(())
-//}
-
 pub fn storage_request(eid: sgx_enclave_id_t, payload: &[u8]) -> SgxResult<Vec<u8>> {
     let mut output = [0 as u8; PAYLOAD_MAX_SIZE];
     let mut response_size: u32 = 0;
     let mut status = sgx_status_t::SGX_SUCCESS;
     let result = unsafe {
-        ecall::storage_request(
+        enclave_ecall::storage_request(
             eid,
             &mut status,
             payload.as_ptr(),
