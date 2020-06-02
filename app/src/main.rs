@@ -35,8 +35,6 @@ use advanca_runtime::AccountId;
 mod enclave;
 mod grpc;
 
-use grpc::format_payload;
-
 use sgx_types::*;
 // use sgx_urts::*;
 
@@ -57,9 +55,10 @@ use aas_protos::aas_grpc::AasServerClient;
 
 use futures::{Sink, Stream};
 
-use advanca_crypto_ctypes::CAasRegRequest;
 use advanca_crypto_types::*;
 use advanca_crypto::*;
+
+use advanca_macros::handle_ecall;
 
 /// helper function to fund the account
 fn fund_account(ws_url: &str, account: &AccountId) {
@@ -160,16 +159,14 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
 
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
-        let mut aas_request = CAasRegRequest::default();
-        let mut worker_pubkey = sgx_ec256_public_t::default();
-        let _ = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
-        let _ = unsafe {gen_worker_reg_request(eid, &mut retval, ra_context, &mut aas_request)};
-        let p_aas_request = &aas_request as *const CAasRegRequest as *const u8;
-        let aas_request_byte_slice = unsafe{core::slice::from_raw_parts(p_aas_request, size_of::<CAasRegRequest>())};
+        let mut buf = [0_u8;4096];
+        let mut buf_size: usize = 0;
+        let _ = unsafe {handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap()};
+        let _ = unsafe {handle_ecall!(eid, gen_worker_reg_request(buf.as_mut_ptr(), &mut buf_size, ra_context)).unwrap()};
 
         let mut msg = Msg::new();
         msg.set_msg_type(MsgType::AAS_RA_REG_REQUEST);
-        msg.set_msg_bytes(aas_request_byte_slice.to_vec());
+        msg.set_msg_bytes(buf[..buf_size].to_vec());
         tx.send((msg, WriteFlags::default())).unwrap();
         info!("[worker]---[aas_reg_request]-->[aas]                      [ias]");
 
@@ -188,7 +185,7 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
             gx:[227, 83, 121, 95, 64, 91, 138, 143, 52, 92, 214, 188, 137, 28, 73, 110, 158, 86, 142, 203, 116, 238, 67, 193, 125, 237, 189, 4, 13, 234, 79, 26],
             gy:[156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62, 204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137],
         };
-        let report_verify = aas_utils::verify_aas_reg_report(&aas_report, &srv_pubkey);
+        let report_verify = aas_verify_reg_report(&srv_pubkey, &aas_report).unwrap();
         debug!("report verified: {:?}", report_verify);
         debug!("{:?}", srv_pubkey);
         if report_verify {
@@ -237,10 +234,10 @@ fn main() {
     // TODO: clean this up when we figure out how to terminate when remote_attest fails
     // currently if aas_remote_attest returns, we know the report is valid and attestation
     // is performed and valid.
-    let mut worker_pubkey = sgx_ec256_public_t::default();
-    let sgx_return = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
-    info!("gen_worker_ec256_pubkey: {}", sgx_return);
-    let worker_pubkey = advanca_crypto::secp256r1_public::from_sgx_ec256_public(&worker_pubkey);
+    let mut buf = [0_u8;4096];
+    let mut buf_size: usize = 0;
+    let _ = unsafe{handle_ecall!(eid, get_worker_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size)).unwrap()};
+    let worker_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     info!("ec256 pubkey generated {:?}", worker_pubkey);
 
     let (worker_keypair, _) = sr25519::Pair::generate();
@@ -294,21 +291,15 @@ fn main() {
     info!("received user information (id={})", owner.clone());
     info!("public_key bytes: {:?}", user.public_key);
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
-    let user_pubkey_sgx = secp256r1_public::to_sgx_ec256_public(&user_pubkey);
-    let ret = unsafe{accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx)};
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("accept_task failed! {:?} - {:?}", ret, retval); }
+    let _ = unsafe {handle_ecall!(eid, accept_task(task_id.as_ptr(), user.public_key.as_ptr(), user.public_key.len())).unwrap()};
     debug!("user public key is {:?}", user_pubkey);
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
     debug!("msg: {:?}", msg);
-    let cipher_len = msg.len();
-    debug!("cipher len: {:?}", cipher_len);
-    let ivcipher_len = 12 + 16 + cipher_len;
-    debug!("ivcipher len: {:?}", ivcipher_len);
-    let mut ivcipher = vec![0_u8; ivcipher_len];
-    let ret = unsafe{encrypt_msg(eid, &mut retval, task_id.as_fixed_bytes(), msg.as_ptr(), cipher_len as u32, ivcipher.as_mut_ptr(), ivcipher_len as u32)};
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("encrypt_msg failed! {:?} - {:?}", ret, retval); }
-    let url_encrypted = ivcipher;
+    let _ = unsafe{handle_ecall!(eid, encrypt_msg(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr(), msg.as_ptr(), msg.len())).unwrap()};
+    let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
+    debug!("msg len: {:?}", msg.len());
+    debug!("ivcipher len: {:?}", buf_size);
     debug!("url_encrypted: {:?}", url_encrypted);
 
     // accept task
@@ -318,11 +309,11 @@ fn main() {
         return;
     }
     info!(
-        "accpeting task (id={}) with encrypted url {} ...",
+        "accpeting task (id={}) with encrypted url {:?} ...",
         &task_id,
-        format_payload(&url_encrypted.clone())
+        url_encrypted,
     );
-    let hash = api.accept_task(task_id, url_encrypted);
+    let hash = api.accept_task(task_id, serde_cbor::to_vec(&url_encrypted).unwrap());
     info!("accepted task (extrinsic={:?})", hash);
 
     info!("waiting for task termination by user ...");
