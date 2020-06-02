@@ -112,7 +112,7 @@ TaskInfo {
 
 
 #[no_mangle]
-pub unsafe extern "C" fn init() -> sgx_status_t {
+pub unsafe extern "C" fn enclave_init() -> sgx_status_t {
     println!("[ENCLAVE INFO] Before SqrtOram call.");
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
