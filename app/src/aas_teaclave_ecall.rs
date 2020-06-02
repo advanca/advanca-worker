@@ -1,10 +1,14 @@
 use sgx_types::*;
-use advanca_crypto_ctypes::*;
 extern "C" {
+    pub fn init (eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+    pub fn create_storage (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, public_key: *const u8, public_key_size: u32) -> sgx_status_t;
+    pub fn storage_request (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, request: *const u8, request_size: u32, response: *mut u8, response_capacity: u32, response_size: *mut u32) -> sgx_status_t;
+    pub fn get_sr25519_public_key (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, public_key: *mut u8, public_key_size: u32) -> sgx_status_t;
     pub fn enclave_init_ra (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, b_pse: i32, p_context: *mut sgx_ra_context_t) -> sgx_status_t;
     pub fn enclave_ra_close (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, context: sgx_ra_context_t) -> sgx_status_t;
-    pub fn gen_worker_ec256_pubkey (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, worker_pubkey: &mut sgx_ec256_public_t) -> sgx_status_t;
-    pub fn gen_worker_reg_request (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, context: sgx_ra_context_t, aas_request: *mut CAasRegRequest) -> sgx_status_t;
-    pub fn accept_task (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, task_id: &[u8;32], user_pubkey: &sgx_ec256_public_t) -> sgx_status_t;
-    pub fn encrypt_msg (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, task_id: &[u8;32], msg_in: *const u8, msg_in_len: u32, msg_out: *mut u8, msg_out_len: u32) -> sgx_status_t;
+    pub fn gen_worker_ec256_pubkey (eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+    pub fn get_worker_ec256_pubkey (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, ubuf: *mut u8, ubuf_size: *mut usize) -> sgx_status_t;
+    pub fn gen_worker_reg_request (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, ubuf: *mut u8, ubuf_size: *mut usize, context: sgx_ra_context_t) -> sgx_status_t;
+    pub fn accept_task (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, task_id: *const u8, user_pubkey: *const u8, user_pubkey_size: usize) -> sgx_status_t;
+    pub fn encrypt_msg (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, ubuf: *mut u8, ubuf_size: *mut usize, task_id: *const u8, msg_in: *const u8, msg_in_len: usize) -> sgx_status_t;
 }
