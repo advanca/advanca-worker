@@ -1,6 +1,6 @@
 use sgx_types::*;
 extern "C" {
-    pub fn init (eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+    pub fn enclave_init (eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
     pub fn create_storage (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, public_key: *const u8, public_key_size: u32) -> sgx_status_t;
     pub fn storage_request (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, request: *const u8, request_size: u32, response: *mut u8, response_capacity: u32, response_size: *mut u32) -> sgx_status_t;
     pub fn get_sr25519_public_key (eid: sgx_enclave_id_t, retval: *mut sgx_status_t, public_key: *mut u8, public_key_size: u32) -> sgx_status_t;
