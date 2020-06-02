@@ -13,23 +13,17 @@
 // limitations under the License.
 
 enclave {
+	include "sgx_key_exchange.h"
+	include "sgx_trts.h"
+	include "sgx_quote.h"
+
+	from "sgx_tkey_exchange.edl" import *;
+
 	from "sgx_tstd.edl" import *;
 	from "sgx_stdio.edl" import *;
 	from "sgx_backtrace.edl" import *;
 	from "sgx_tstdc.edl" import *;
 	from "sgx_tprotected_fs.edl" import *;
-
-	include "sgx_quote.h"
-	include "sgx_key_exchange.h"
-	include "sgx_trts.h"
-
-	from "sgx_tkey_exchange.edl" import *;
-
-	struct CSgxAasRequest {
-		sgx_ec256_public_t pubkey;
-		sgx_cmac_128bit_tag_t mac;
-	};
-
 
 	trusted {
 		/* define ECALLs here. */
@@ -67,8 +61,8 @@ enclave {
 
 		public sgx_status_t gen_worker_reg_request (
 				[user_check]            uint8_t            *ubuf,
-				[in,out]                size_t             *ubuf_size
-				                        sgx_ra_context_t    context,
+				[in,out]                size_t             *ubuf_size,
+				                        sgx_ra_context_t    context
 				);
 
 		public sgx_status_t accept_task (
@@ -82,7 +76,7 @@ enclave {
 				[out]                   size_t             *ubuf_size,
 				[in, count=32]          uint8_t            *task_id,
 				[in, count=msg_in_len]  uint8_t            *msg_in,
-				                        uint32_t            msg_in_len,
+				                        size_t              msg_in_len
 				);
 	};
 
