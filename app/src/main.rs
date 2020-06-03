@@ -158,7 +158,7 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
         let mut buf = [0_u8;4096];
-        let mut buf_size: usize = 0;
+        let mut buf_size: usize = buf.len();
         let _ = unsafe {handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap()};
         let _ = unsafe {handle_ecall!(eid, gen_worker_reg_request(buf.as_mut_ptr(), &mut buf_size, ra_context)).unwrap()};
 
@@ -233,7 +233,7 @@ fn main() {
     // currently if aas_remote_attest returns, we know the report is valid and attestation
     // is performed and valid.
     let mut buf = [0_u8;4096];
-    let mut buf_size: usize = 0;
+    let mut buf_size: usize = buf.len();
     let _ = unsafe{handle_ecall!(eid, get_worker_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size)).unwrap()};
     let worker_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     info!("ec256 pubkey generated {:?}", worker_pubkey);
@@ -294,6 +294,7 @@ fn main() {
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
     debug!("msg: {:?}", msg);
+    buf_size = buf.len();
     let _ = unsafe{handle_ecall!(eid, encrypt_msg(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr(), msg.as_ptr(), msg.len())).unwrap()};
     let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     debug!("msg len: {:?}", msg.len());
