@@ -40,8 +40,8 @@ name = "advanca-client"
 version = "0.1.1"
 dependencies = [
  "advanca-core",
- "advanca-crypto 0.1.0",
- "advanca-crypto-types 0.1.0",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "error-chain",
@@ -88,23 +88,9 @@ dependencies = [
 
 [[package]]
 name = "advanca-crypto"
-version = "0.1.0"
-dependencies = [
- "advanca-crypto-ctypes",
- "advanca-crypto-types 0.1.0",
- "aes",
- "cmac",
- "rand 0.7.3",
- "ring",
- "sgx_types",
- "sgx_ucrypto",
-]
-
-[[package]]
-name = "advanca-crypto"
 version = "0.2.0"
 dependencies = [
- "advanca-crypto-types 0.2.0",
+ "advanca-crypto-types",
  "advanca-macros",
  "aes",
  "cmac",
@@ -112,23 +98,6 @@ dependencies = [
  "ring",
  "sgx_types",
  "sgx_ucrypto",
-]
-
-[[package]]
-name = "advanca-crypto-ctypes"
-version = "0.1.0"
-dependencies = [
- "sgx_types",
-]
-
-[[package]]
-name = "advanca-crypto-types"
-version = "0.1.0"
-dependencies = [
- "advanca-crypto-ctypes",
- "serde",
- "serde-big-array 0.3.0",
- "serde_json",
 ]
 
 [[package]]
@@ -148,7 +117,7 @@ dependencies = [
 name = "advanca-macros"
 version = "0.1.0"
 dependencies = [
- "advanca-crypto-types 0.2.0",
+ "advanca-crypto-types",
  "sgx_types",
 ]
 
@@ -192,8 +161,8 @@ version = "0.1.1"
 dependencies = [
  "aas-protos",
  "advanca-core",
- "advanca-crypto 0.2.0",
- "advanca-crypto-types 0.2.0",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "advanca-macros",
  "advanca-runtime",
  "env_logger",
@@ -4631,8 +4600,8 @@ dependencies = [
 name = "sgx-ra"
 version = "0.2.0"
 dependencies = [
- "advanca-crypto 0.2.0",
- "advanca-crypto-types 0.2.0",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "aes",
  "base16",
  "base64 0.12.1",
