@@ -32,12 +32,9 @@ use advanca_runtime::AccountId;
 use substrate_api::SubstrateApi;
 
 use serde_cbor;
-use sgx_types::*;
 
 use advanca_crypto_types::*;
-mod aes;
-use advanca_crypto::{secp256r1_public};
-use sgx_ucrypto::*;
+use advanca_crypto::*;
 
 mod grpc;
 
@@ -88,24 +85,13 @@ fn main() {
     info!("funded account {:?}", client_account);
 
     // generate secp256r1 keypair for communication with worker
-    let mut pubkey = sgx_ec256_public_t::default();
-    let mut prvkey = sgx_ec256_private_t::default();
-    let mut ecc_handle: sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
+    let (prvkey, pubkey) = secp256r1_gen_keypair().unwrap();
 
-    unsafe{
-    let _ = sgx_ecc256_open_context(&mut ecc_handle);
-    let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
-    let _ = sgx_ecc256_close_context(ecc_handle);
-    }
     info!("generated client ec256 keypair");
     trace!(
         "generated client ec256 keypair {:?}",
         prvkey.r
     );
-    let client_prvkey = Secp256r1PrivateKey {
-        r: prvkey.r
-    };
-    let client_pubkey = secp256r1_public::from_sgx_ec256_public(&pubkey);
 
     let mut api = SubstrateApi::new(&opt.ws_url);
     api.set_signer(client_sr25519_keypair.clone());
@@ -113,7 +99,7 @@ fn main() {
 
     // register user
     info!("registering user ...");
-    let public_key = serde_cbor::to_vec(&client_pubkey).unwrap();
+    let public_key = serde_cbor::to_vec(&pubkey).unwrap();
     info!("public_key bytes: {:?}", public_key);
     // let public_key = client_rsa3072_keypair.export_pubkey().unwrap();
     //let public_key_hex = serde_json::to_string(&public_key).unwrap();
@@ -131,7 +117,7 @@ fn main() {
     let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
     debug!("enclave public key is {:?}", enclave_public_key);
 
-    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
+    let kdk: Aes128Key = derive_kdk(&prvkey, &enclave_public_key).unwrap();
 
 
     let (task_in, task_out) = channel();
@@ -160,26 +146,16 @@ fn main() {
 
     let task = api.get_task(task_id);
 
-    let worker_id = task.worker.expect("There should be a worker ID");
-
-    info!("querying worker information ...");
-    let worker = api.get_worker(worker_id);
-    info!("received worker information");
-    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
-    debug!("enclave public key is {:?}", enclave_public_key);
-
-    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
-
-    let url_encrypted = task.worker_url.expect("encrypted url should exist");
+    let url_encrypted = serde_cbor::from_slice(&task.worker_url.expect("encrypted url should exist")).unwrap();
     debug!("encrypted_url: {:?}", url_encrypted);
     debug!("key: {:?}", kdk);
     // let url = decrypt_url_sgx_crypto(client_rsa3072_keypair, &url_encrypted);
-    let url = aes::aes128_gcm_decrypt(kdk, url_encrypted);
+    let url = aes128gcm_decrypt(&kdk, &url_encrypted).unwrap();
     let url = core::str::from_utf8(&url).unwrap();
     info!("worker url is {:?}", url);
 
     // talk to worker directly
-    grpc::start_demo(&url, enclave_public_key, client_prvkey);
+    grpc::start_demo(&url, enclave_public_key, prvkey);
 
     // abort the task
     info!("aborting task ...");
