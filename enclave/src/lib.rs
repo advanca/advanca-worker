@@ -244,7 +244,6 @@ pub unsafe extern "C" fn encrypt_msg (
     // length.
     let data_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len as usize);
     let encrypted_msg = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &data_slice));
-    println!("p_ubuf_size: {}", *p_ubuf_size);
     enclave_ret!(encrypted_msg, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
