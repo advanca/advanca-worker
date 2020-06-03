@@ -37,7 +37,6 @@ use sgx_types::*;
 use advanca_crypto_types::*;
 mod aes;
 use advanca_crypto::{secp256r1_public};
-use sgx_ucrypto::*;
 
 mod grpc;
 

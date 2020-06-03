@@ -81,18 +81,24 @@ struct Opt {
     #[structopt(
         short = "g",
         long = "grpc-external-url",
-        default_value = "127.0.0.1:8135",
+        default_value = "127.0.0.1:12345",
         help = "set advanca-worker external address and port"
     )]
     grpc_url: String,
+    #[structopt(
+        long = "aas-url",
+        default_value = "127.0.0.1:11800",
+        help = "set advanca-attestation-service address and port"
+    )]
+    aas_url: String,
 }
 
-fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> AasRegReport {
+fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> AasRegReport {
     let mut retval = sgx_status_t::SGX_SUCCESS;
 
     // We'll try to connect to the service provider
     let env = Arc::new(Environment::new(2));
-    let channel = ChannelBuilder::new(env).connect("127.0.0.1:12345");
+    let channel = ChannelBuilder::new(env).connect(aas_url);
     let client = AasServerClient::new(channel);
     let (tx,rx) = client.remote_attest().unwrap();
     // convert to blocking communication
@@ -230,7 +236,7 @@ fn main() {
     info!("enclave_init_ra: {}", sgx_return);
     info!("ra_context: {}", ra_context);
 
-    let aas_report = aas_remote_attest(eid, ra_context);
+    let aas_report = aas_remote_attest(&opt.aas_url, eid, ra_context);
     info!("Remote attestation complete!");
     info!("AAS Report: {:?}", aas_report);
 
