@@ -208,7 +208,7 @@ pub unsafe extern "C" fn accept_task (
     p_user_pubkey_buf      : *const u8,
     user_pubkey_buf_size : usize,
 ) -> sgx_status_t {
-    let mut scratch = [0_u8;4096];
+    let mut scratch = [0_u8;8196];
     let mut task_id = [0_u8;32];
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
@@ -244,6 +244,7 @@ pub unsafe extern "C" fn encrypt_msg (
     // length.
     let data_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len as usize);
     let encrypted_msg = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &data_slice));
+    println!("p_ubuf_size: {}", *p_ubuf_size);
     enclave_ret!(encrypted_msg, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -267,10 +268,10 @@ pub unsafe extern "C" fn create_storage(
     public_key_size: u32,
 ) -> sgx_status_t {
     println!("[ENCLAVE INFO] creating storage ...");
-    assert_eq!(64, public_key_size);
     let key_bytes_slice = slice::from_raw_parts(public_key, public_key_size as usize);
+    let pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&key_bytes_slice).unwrap();
     let mut key_bytes = [0_u8;64];
-    key_bytes.copy_from_slice(key_bytes_slice);
+    key_bytes.copy_from_slice(&pubkey.to_raw_bytes());
     if let Err(status) = storage::create_sealed_storage(key_bytes) {
         println!("[ENCLAVE ERROR] create sealed storage failed");
         return status;

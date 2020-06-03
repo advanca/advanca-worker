@@ -67,13 +67,13 @@ enclave {
 
 		public sgx_status_t accept_task (
 				[in, size=32]           uint8_t            *task_id,
-				[in]                    uint8_t            *user_pubkey,
+				[in, size=user_pubkey_size] uint8_t            *user_pubkey,
 				                        size_t              user_pubkey_size
 				);
 
 		public sgx_status_t encrypt_msg (
 				[user_check]            uint8_t            *ubuf,
-				[out]                   size_t             *ubuf_size,
+				[in,out]                size_t             *ubuf_size,
 				[in, count=32]          uint8_t            *task_id,
 				[in, count=msg_in_len]  uint8_t            *msg_in,
 				                        size_t              msg_in_len
