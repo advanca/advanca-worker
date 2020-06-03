@@ -29,7 +29,7 @@ use protos::storage_grpc::StorageClient;
 use serde::{Deserialize, Serialize};
 
 use advanca_crypto_types::*;
-use crate::aes;
+use advanca_crypto::*;
 
 struct Client {
     storage_client: StorageClient,
@@ -51,21 +51,23 @@ impl Client {
 
     pub fn send_encrypted_request(&self, plain_req: PlainRequest) -> PlainResponse {
         // TODO: fix this hack... currently we are just deriving the key where-ever we need
-        let key = aes::derive_session_key(&self.server_public_key, &self.keypair);
+        let key = derive_kdk(&self.keypair, &self.server_public_key).unwrap();
 
         let mut req = EncryptedRequest::new();
         {
             let plaintext = plain_req.write_to_bytes().unwrap();
-            let ciphertext = aes::aes128_gcm_encrypt(key, plaintext);
-            req.set_payload(ciphertext);
+            let encrypted_msg = aes128gcm_encrypt(&key, &plaintext).unwrap();
+            req.set_payload(serde_cbor::to_vec(&encrypted_msg).unwrap());
         }
         trace!("encrypted req {:?}", req);
         let res = self.storage_client.send(&req).unwrap();
         {
             let ciphertext = res.get_payload();
+            let encrypted_msg_bytes = ciphertext.to_vec();
+            let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_bytes).unwrap();
             trace!("response payload {:?}", ciphertext);
             trace!("decryption key {:?}", key);
-            let plaintext = aes::aes128_gcm_decrypt(key, ciphertext.to_vec());
+            let plaintext = aes128gcm_decrypt(&key, &encrypted_msg).unwrap();
             parse_from_bytes::<PlainResponse>(&plaintext)
                 .expect("parsing failed")
         }

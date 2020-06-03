@@ -33,8 +33,8 @@ sgx_crypto_helper = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 sgx_types         = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_ucrypto       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-crypto-types = { path = "../../advanca-crypto-types" }
-advanca-crypto = { path = "../../advanca-crypto", features=["untrusted"] }
+advanca-crypto-types = { path = "../../advanca-sgx-helper/advanca-crypto-types" }
+advanca-crypto       = { path = "../../advanca-sgx-helper/advanca-crypto", features=["std_env"] }
 
 [dependencies.protos]
 package = "protos-app"
