@@ -40,6 +40,20 @@ COPY --from=builder $SOURCE_PATH/bin/enclave.signed.so /advanca
 
 RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev
 
+ARG PSW_PKG_VERSION=2.9.101.2-bionic1
+RUN apt-get install -y dkms gnupg2 apt-transport-https software-properties-common curl && \
+    curl -fsSL  https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - && \
+    add-apt-repository "deb https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main" && \
+    apt-get update && \
+    apt-get install -y \
+        libsgx-aesm-launch-plugin=$PSW_PKG_VERSION \
+        libsgx-enclave-common=$PSW_PKG_VERSION \
+        libsgx-epid=$PSW_PKG_VERSION \
+        libsgx-launch=$PSW_PKG_VERSION \
+        libsgx-quote-ex=$PSW_PKG_VERSION \
+        libsgx-uae-service=$PSW_PKG_VERSION \
+        libsgx-urts=$PSW_PKG_VERSION
+
 WORKDIR /advanca
 USER advanca
 EXPOSE 12345
