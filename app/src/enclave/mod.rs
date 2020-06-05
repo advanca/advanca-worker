@@ -25,8 +25,8 @@ use log::{debug, info, trace, warn};
 pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
-use advanca_crypto_types::*;
 use advanca_crypto::secp256r1_public;
+use advanca_crypto_types::*;
 
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
 mod ecall;

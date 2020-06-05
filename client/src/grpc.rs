@@ -28,8 +28,8 @@ use protos::storage_grpc::StorageClient;
 
 use serde::{Deserialize, Serialize};
 
-use advanca_crypto_types::*;
 use crate::aes;
+use advanca_crypto_types::*;
 
 struct Client {
     storage_client: StorageClient,
@@ -38,7 +38,11 @@ struct Client {
 }
 
 impl Client {
-    pub fn new(url: &str, keypair: Secp256r1PrivateKey, server_public_key: Secp256r1PublicKey) -> Client {
+    pub fn new(
+        url: &str,
+        keypair: Secp256r1PrivateKey,
+        server_public_key: Secp256r1PublicKey,
+    ) -> Client {
         let env = Arc::new(EnvBuilder::new().build());
         let ch = ChannelBuilder::new(env).connect(url);
 
@@ -66,8 +70,7 @@ impl Client {
             trace!("response payload {:?}", ciphertext);
             trace!("decryption key {:?}", key);
             let plaintext = aes::aes128_gcm_decrypt(key, ciphertext.to_vec());
-            parse_from_bytes::<PlainResponse>(&plaintext)
-                .expect("parsing failed")
+            parse_from_bytes::<PlainResponse>(&plaintext).expect("parsing failed")
         }
     }
 

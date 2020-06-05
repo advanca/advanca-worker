@@ -40,7 +40,7 @@ use grpc::format_payload;
 use sgx_types::*;
 // use sgx_urts::*;
 
-use std::mem::{size_of};
+use std::mem::size_of;
 
 mod aas_teaclave_ecall;
 use aas_teaclave_ecall::*;
@@ -48,18 +48,17 @@ use aas_teaclave_ecall::*;
 mod trusted_key_exchange_ecall;
 use trusted_key_exchange_ecall::*;
 
-
-use std::sync::Arc;
-use grpcio::*;
 use aas_protos::aas::Msg;
 use aas_protos::aas::Msg_MsgType as MsgType;
 use aas_protos::aas_grpc::AasServerClient;
+use grpcio::*;
+use std::sync::Arc;
 
 use futures::{Sink, Stream};
 
+use advanca_crypto::*;
 use advanca_crypto_ctypes::CAasRegRequest;
 use advanca_crypto_types::*;
-use advanca_crypto::*;
 
 /// helper function to fund the account
 fn fund_account(ws_url: &str, account: &AccountId) {
@@ -93,14 +92,18 @@ struct Opt {
     aas_url: String,
 }
 
-fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> AasRegReport {
+fn aas_remote_attest(
+    aas_url: &str,
+    eid: sgx_enclave_id_t,
+    ra_context: sgx_ra_context_t,
+) -> AasRegReport {
     let mut retval = sgx_status_t::SGX_SUCCESS;
 
     // We'll try to connect to the service provider
     let env = Arc::new(Environment::new(2));
     let channel = ChannelBuilder::new(env).connect(aas_url);
     let client = AasServerClient::new(channel);
-    let (tx,rx) = client.remote_attest().unwrap();
+    let (tx, rx) = client.remote_attest().unwrap();
     // convert to blocking communication
     let mut tx = tx.wait();
     let mut rx = rx.wait();
@@ -110,12 +113,12 @@ fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_co
     debug!("sgx_get_extended_epid_group_id: {}", sgx_return);
     debug!("epid_gid  : {}", extended_epid_gid);
 
-    // MSG0 is p_extended_epid_group_id 
+    // MSG0 is p_extended_epid_group_id
     // isv_app -> service_provider
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG0);
     msg.set_msg_bytes(extended_epid_gid.to_le_bytes().to_vec());
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg0]------------->[aas]                      [ias]");
 
     let msg0_reply = rx.next().unwrap().unwrap();
@@ -127,14 +130,20 @@ fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_co
 
     // MSG1 contains g_a (public ephermeral key ECDH for App) and gid (EPID Group ID - For SigRL)
     let mut p_msg1_buf = vec![0; size_of::<sgx_ra_msg1_t>()];
-    let sgx_return = unsafe { sgx_ra_get_msg1(ra_context, eid, sgx_ra_get_ga, p_msg1_buf.as_mut_ptr() as *mut sgx_ra_msg1_t) };
+    let sgx_return = unsafe {
+        sgx_ra_get_msg1(
+            ra_context,
+            eid,
+            sgx_ra_get_ga,
+            p_msg1_buf.as_mut_ptr() as *mut sgx_ra_msg1_t,
+        )
+    };
     info!("sgx_ra_get_msg1: {}", sgx_return);
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG1);
     msg.set_msg_bytes(p_msg1_buf);
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg1]------------->[aas]                      [ias]");
-
 
     // MSG2 contains g_b (public ephemeral ECDH key for SP), SPID, quote_type,
     // KDF (key derivation function), signed (gb, ga) using SP's non-ephemeral P256 key, MAC, SigRL
@@ -146,32 +155,46 @@ fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_co
     // prepare pointer to recv p_msg3 and its size.
     let mut p_msg3_ptr: *mut sgx_ra_msg3_t = 0 as *mut sgx_ra_msg3_t;
     let mut msg3_size = 0_u32;
-    let sgx_return = unsafe {sgx_ra_proc_msg2(ra_context, eid, sgx_ra_proc_msg2_trusted, sgx_ra_get_msg3_trusted, p_msg2_ptr, msg2_size as u32 , &mut p_msg3_ptr, &mut msg3_size)};
+    let sgx_return = unsafe {
+        sgx_ra_proc_msg2(
+            ra_context,
+            eid,
+            sgx_ra_proc_msg2_trusted,
+            sgx_ra_get_msg3_trusted,
+            p_msg2_ptr,
+            msg2_size as u32,
+            &mut p_msg3_ptr,
+            &mut msg3_size,
+        )
+    };
     debug!("sgx_ra_proc_msg2: {}", sgx_return);
     debug!("msg3_size: {}", msg3_size);
 
     // send msg3 to attestation server
-    let msg3_vec = unsafe {core::slice::from_raw_parts(p_msg3_ptr as *const u8, msg3_size as usize).to_vec()};
+    let msg3_vec = unsafe {
+        core::slice::from_raw_parts(p_msg3_ptr as *const u8, msg3_size as usize).to_vec()
+    };
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG3);
     msg.set_msg_bytes(msg3_vec);
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg3]------------->[aas]                      [ias]");
 
     let msg3_reply = rx.next().unwrap().unwrap();
     info!("[worker]<--[attest_result]-----[aas]                      [ias]");
 
     assert_eq!(msg3_reply.get_msg_type(), MsgType::SGX_RA_MSG3_REPLY);
-    debug!("msg3 mac: {:02x?}", unsafe{(*p_msg3_ptr).mac});
+    debug!("msg3 mac: {:02x?}", unsafe { (*p_msg3_ptr).mac });
 
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
         let mut aas_request = CAasRegRequest::default();
         let mut worker_pubkey = sgx_ec256_public_t::default();
-        let _ = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
-        let _ = unsafe {gen_worker_reg_request(eid, &mut retval, ra_context, &mut aas_request)};
+        let _ = unsafe { gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey) };
+        let _ = unsafe { gen_worker_reg_request(eid, &mut retval, ra_context, &mut aas_request) };
         let p_aas_request = &aas_request as *const CAasRegRequest as *const u8;
-        let aas_request_byte_slice = unsafe{core::slice::from_raw_parts(p_aas_request, size_of::<CAasRegRequest>())};
+        let aas_request_byte_slice =
+            unsafe { core::slice::from_raw_parts(p_aas_request, size_of::<CAasRegRequest>()) };
 
         let mut msg = Msg::new();
         msg.set_msg_type(MsgType::AAS_RA_REG_REQUEST);
@@ -190,15 +213,21 @@ fn aas_remote_attest(aas_url: &str, eid: sgx_enclave_id_t, ra_context: sgx_ra_co
         // 79:53:e3:89:7d:0f:0c:bc:cf:f0:45:ce:c9:a9:1d:
         // 39:9c:cc:3e:09:ee:b0:2a:b6:d2:8d:dd:67:9b:b4:
         // bb:5c:68:98:9c
-        let srv_pubkey = Secp256r1PublicKey{
-            gx:[227, 83, 121, 95, 64, 91, 138, 143, 52, 92, 214, 188, 137, 28, 73, 110, 158, 86, 142, 203, 116, 238, 67, 193, 125, 237, 189, 4, 13, 234, 79, 26],
-            gy:[156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62, 204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137],
+        let srv_pubkey = Secp256r1PublicKey {
+            gx: [
+                227, 83, 121, 95, 64, 91, 138, 143, 52, 92, 214, 188, 137, 28, 73, 110, 158, 86,
+                142, 203, 116, 238, 67, 193, 125, 237, 189, 4, 13, 234, 79, 26,
+            ],
+            gy: [
+                156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62,
+                204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137,
+            ],
         };
         let report_verify = aas_utils::verify_aas_reg_report(&aas_report, &srv_pubkey);
         debug!("report verified: {:?}", report_verify);
         debug!("{:?}", srv_pubkey);
         if report_verify {
-            return  aas_report;
+            return aas_report;
         } else {
             panic!("Report mac verification failed!\nReport might be modified!");
         }
@@ -232,7 +261,7 @@ fn main() {
     let mut retval = sgx_status_t::SGX_SUCCESS;
     let mut ra_context: sgx_ra_context_t = 10;
 
-    let sgx_return = unsafe {enclave_init_ra(eid, &mut retval, 0, &mut ra_context)};
+    let sgx_return = unsafe { enclave_init_ra(eid, &mut retval, 0, &mut ra_context) };
     info!("enclave_init_ra: {}", sgx_return);
     info!("ra_context: {}", ra_context);
 
@@ -244,7 +273,7 @@ fn main() {
     // currently if aas_remote_attest returns, we know the report is valid and attestation
     // is performed and valid.
     let mut worker_pubkey = sgx_ec256_public_t::default();
-    let sgx_return = unsafe {gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey)};
+    let sgx_return = unsafe { gen_worker_ec256_pubkey(eid, &mut retval, &mut worker_pubkey) };
     info!("gen_worker_ec256_pubkey: {}", sgx_return);
     let worker_pubkey = advanca_crypto::secp256r1_public::from_sgx_ec256_public(&worker_pubkey);
     info!("ec256 pubkey generated {:?}", worker_pubkey);
@@ -301,8 +330,10 @@ fn main() {
     info!("public_key bytes: {:?}", user.public_key);
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
     let user_pubkey_sgx = secp256r1_public::to_sgx_ec256_public(&user_pubkey);
-    let ret = unsafe{accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx)};
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("accept_task failed! {:?} - {:?}", ret, retval); }
+    let ret = unsafe { accept_task(eid, &mut retval, task_id.as_fixed_bytes(), &user_pubkey_sgx) };
+    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS {
+        panic!("accept_task failed! {:?} - {:?}", ret, retval);
+    }
     debug!("user public key is {:?}", user_pubkey);
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
@@ -312,8 +343,20 @@ fn main() {
     let ivcipher_len = 12 + 16 + cipher_len;
     debug!("ivcipher len: {:?}", ivcipher_len);
     let mut ivcipher = vec![0_u8; ivcipher_len];
-    let ret = unsafe{encrypt_msg(eid, &mut retval, task_id.as_fixed_bytes(), msg.as_ptr(), cipher_len as u32, ivcipher.as_mut_ptr(), ivcipher_len as u32)};
-    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS { panic!("encrypt_msg failed! {:?} - {:?}", ret, retval); }
+    let ret = unsafe {
+        encrypt_msg(
+            eid,
+            &mut retval,
+            task_id.as_fixed_bytes(),
+            msg.as_ptr(),
+            cipher_len as u32,
+            ivcipher.as_mut_ptr(),
+            ivcipher_len as u32,
+        )
+    };
+    if ret != sgx_status_t::SGX_SUCCESS || retval != sgx_status_t::SGX_SUCCESS {
+        panic!("encrypt_msg failed! {:?} - {:?}", ret, retval);
+    }
     let url_encrypted = ivcipher;
     debug!("url_encrypted: {:?}", url_encrypted);
 
@@ -335,7 +378,7 @@ fn main() {
     api.wait_all_task_aborted(vec![task_id]);
     info!("task aborted");
 
-    let sgx_return = unsafe{enclave_ra_close(eid, &mut retval, ra_context)};
+    let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);
     info!("freeing ra_context: {}", ra_context);
 

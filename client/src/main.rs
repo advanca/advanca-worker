@@ -36,7 +36,7 @@ use sgx_types::*;
 
 use advanca_crypto_types::*;
 mod aes;
-use advanca_crypto::{secp256r1_public};
+use advanca_crypto::secp256r1_public;
 
 mod grpc;
 
@@ -91,19 +91,14 @@ fn main() {
     let mut prvkey = sgx_ec256_private_t::default();
     let mut ecc_handle: sgx_ecc_state_handle_t = 0 as sgx_ecc_state_handle_t;
 
-    unsafe{
-    let _ = sgx_ecc256_open_context(&mut ecc_handle);
-    let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
-    let _ = sgx_ecc256_close_context(ecc_handle);
+    unsafe {
+        let _ = sgx_ecc256_open_context(&mut ecc_handle);
+        let _ = sgx_ecc256_create_key_pair(&mut prvkey, &mut pubkey, ecc_handle);
+        let _ = sgx_ecc256_close_context(ecc_handle);
     }
     info!("generated client ec256 keypair");
-    trace!(
-        "generated client ec256 keypair {:?}",
-        prvkey.r
-    );
-    let client_prvkey = Secp256r1PrivateKey {
-        r: prvkey.r
-    };
+    trace!("generated client ec256 keypair {:?}", prvkey.r);
+    let client_prvkey = Secp256r1PrivateKey { r: prvkey.r };
     let client_pubkey = secp256r1_public::from_sgx_ec256_public(&pubkey);
 
     let mut api = SubstrateApi::new(&opt.ws_url);
