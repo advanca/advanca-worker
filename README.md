@@ -1,5 +1,7 @@
 # Advanca Worker
 
+[![rust-badge](https://github.com/advanca/advanca-worker/workflows/Rust/badge.svg)](https://github.com/advanca/advanca-worker/actions?query=workflow%3ARust)
+
 This repository contains the source code of Advanca Worker. See [advanca/advanca](https://github.com/advanca/advanca) for more information.
 
 Before you start, make sure you clone the repository recursively.
