@@ -26,7 +26,7 @@ To build and run the project, there are some requirements listed below. You may 
 **Notes**
 
 * :heavy_plus_sign:  Required
-* :heavy_plus_sign:  Not required
+* :heavy_minus_sign:  Not required
 
 ### Rust Toolchain
 
