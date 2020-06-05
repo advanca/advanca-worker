@@ -13,8 +13,8 @@ RUN curl -sO $SGX_SDK_URL && chmod +x $SGX_SDK_BIN && \
     export PATH=$PATH:$HOME/.cargo/bin && \
     rustup target add wasm32-unknown-unknown
     
-ENV SGX_DEBUG=1
-ENV SGX_MODE=SW
+ENV SGX_DEBUG=0
+ENV SGX_MODE=HW
 
 COPY . /advanca 
 
