@@ -29,7 +29,7 @@ advanca-crypto-types    = { tag = "v0.1.0", git = "https://github.com/advanca/ad
 advanca-crypto-ctypes   = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 sgx-ra                  = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 serde_cbor              = { version = "0.11.1"}
-aas-protos              = { rev = "release-v0.1-original", git = "https://github.com/advanca/advanca-attestation-service" }
+aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
 
 [dependencies.codec]
 package = "parity-scale-codec"
