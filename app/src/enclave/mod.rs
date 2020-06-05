@@ -133,30 +133,6 @@ pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxEr
     Ok(())
 }
 
-//pub fn create_storage(eid: sgx_enclave_id_t, owner: Rsa3072PubKey) -> SgxError {
-//    let public_key_str = serde_json::to_string(&owner).unwrap();
-//    let public_key = public_key_str.as_bytes();
-//
-//    let mut status = sgx_status_t::SGX_SUCCESS;
-//    let result = unsafe {
-//        ecall::create_storage(
-//            eid,
-//            &mut status,
-//            public_key.as_ptr(),
-//            public_key.len() as u32,
-//        )
-//    };
-//
-//    if status != sgx_status_t::SGX_SUCCESS {
-//        return Err(status);
-//    }
-//    if result != sgx_status_t::SGX_SUCCESS {
-//        return Err(result);
-//    }
-//
-//    Ok(())
-//}
-
 pub fn storage_request(eid: sgx_enclave_id_t, payload: &[u8]) -> SgxResult<Vec<u8>> {
     let mut output = [0 as u8; PAYLOAD_MAX_SIZE];
     let mut response_size: u32 = 0;
