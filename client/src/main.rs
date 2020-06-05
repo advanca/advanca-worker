@@ -119,20 +119,6 @@ fn main() {
     let hash = api.register_user(1 as u128, public_key);
     info!("registered user (extrinsic={:?})", hash);
 
-    // wait for the worker registration
-    info!("waiting for worker ...");
-    let worker_id = api.listen_for_worker_added();
-    info!("got a new worker (id={})", worker_id);
-
-    info!("querying worker information ...");
-    let worker = api.get_worker(worker_id);
-    info!("received worker information");
-    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
-    debug!("enclave public key is {:?}", enclave_public_key);
-
-    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
-
-
     let (task_in, task_out) = channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
         let listener_api = SubstrateApi::new(&opt.ws_url);
@@ -158,6 +144,16 @@ fn main() {
     info!("task accepted, moving forward");
 
     let task = api.get_task(task_id);
+
+    let worker_id = task.worker.expect("There should be a worker ID");
+
+    info!("querying worker information ...");
+    let worker = api.get_worker(worker_id);
+    info!("received worker information");
+    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
+    debug!("enclave public key is {:?}", enclave_public_key);
+
+    let kdk = aes::derive_session_key(&enclave_public_key, &client_prvkey);
 
     let url_encrypted = task.worker_url.expect("encrypted url should exist");
     debug!("encrypted_url: {:?}", url_encrypted);
