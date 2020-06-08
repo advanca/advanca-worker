@@ -29,6 +29,7 @@ use log::{debug, error, info, trace};
 use protos::storage::{
     EncryptedRequest, EncryptedResponse, GetRequest, GetResponse, SetRequest, SetResponse,
 };
+use protos::storage::{HeartbeatRequest, HeartbeatResponse};
 use protos::storage_grpc::{self, Storage};
 
 #[derive(Clone)]
@@ -55,6 +56,9 @@ pub fn format_payload(payload: &[u8]) -> String {
 }
 
 impl Storage for StorageService {
+    fn heartbeat(&mut self, ctx: RpcContext, req: HeartbeatRequest, sink: UnarySink<HeartbeatResponse>) {
+    }
+
     fn send(&mut self, ctx: RpcContext, req: EncryptedRequest, sink: UnarySink<EncryptedResponse>) {
         trace!("received encrypted request: {:?}", req.get_payload());
         debug!(

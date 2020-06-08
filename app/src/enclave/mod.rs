@@ -25,6 +25,7 @@ use log::{debug, info, trace, warn};
 pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
+use advanca_crypto::*;
 use advanca_crypto_types::*;
 
 use crate::aas_teaclave_ecall::*;
@@ -36,6 +37,9 @@ pub const PAYLOAD_MAX_SIZE: usize = 4196;
 
 pub static ENCLAVE_TOKEN: &'static str = "enclave.token";
 pub static ENCLAVE_FILE: &'static str = "enclave.signed.so";
+
+pub fn heartbeat_challenge(encrypted_msg: Aes128EncryptedMsg) -> () {
+}
 
 pub fn init() -> SgxResult<SgxEnclave> {
     const LAUNCH_TOKEN_LENGTH: usize = 1024;

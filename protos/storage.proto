@@ -21,6 +21,15 @@ service Storage {
   // used for testing
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc Set(SetRequest) returns (SetResponse) {}
+  rpc heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+}
+
+message HeartbeatRequest {
+	bytes challenge = 1;
+}
+
+message HeartbeatResponse {
+	bytes response  = 1;
 }
 
 message EncryptedRequest {
