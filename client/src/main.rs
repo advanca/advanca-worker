@@ -119,7 +119,6 @@ fn main() {
 
     let kdk: Aes128Key = derive_kdk(&prvkey, &enclave_public_key).unwrap();
 
-
     let (task_in, task_out) = channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
         let listener_api = SubstrateApi::new(&opt.ws_url);

@@ -24,12 +24,12 @@ sgx_urts 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk
 sgx_tseal 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_crypto_helper 	= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-crypto          = { path = "../../advanca-sgx-helper/advanca-crypto" }
-advanca-crypto-types    = { path = "../../advanca-sgx-helper/advanca-crypto-types" }
-advanca-macros          = { path = "../../advanca-sgx-helper/advanca-macros" }
-sgx-ra                  = { path = "../../advanca-sgx-helper/sgx-ra" }
+advanca-crypto          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto-types    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto-ctypes   = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
+sgx-ra                  = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 serde_cbor              = { version = "0.11.1"}
-aas-protos              = { path = "../../advanca-attestation-service/aas-protos" }
+aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
 
 [dependencies.codec]
 package = "parity-scale-codec"

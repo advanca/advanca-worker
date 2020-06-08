@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+
 #![feature(structural_match)]
 #![feature(rustc_attrs)]
 #![feature(core_intrinsics)]
@@ -32,11 +34,12 @@ mod utils;
 
 use std::backtrace::{self, PrintFormat};
 
+use core::slice;
 use oram::SqrtOram;
 use protobuf::parse_from_bytes;
 use protobuf::Message;
 use protos::storage::*;
-use core::slice;
+
 use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 
 use std::collections::HashMap;
@@ -117,14 +120,13 @@ pub unsafe extern "C" fn enclave_init() -> sgx_status_t {
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
-    let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
+    let heap_hashmap = Box::new(HashMap::<[u8; 32], TaskInfo>::new());
     TASKS = Box::into_raw(heap_hashmap);
     sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn enclave_init_ra (b_pse: i32,
-                                   p_context: &mut sgx_ra_context_t) -> sgx_status_t {
+pub extern "C" fn enclave_init_ra(b_pse: i32, p_context: &mut sgx_ra_context_t) -> sgx_status_t {
     let ret: sgx_status_t;
     match rsgx_ra_init(&G_SP_PUB_KEY, b_pse) {
         Ok(p) => {
