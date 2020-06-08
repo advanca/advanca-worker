@@ -288,6 +288,30 @@ pub unsafe extern "C" fn create_storage(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn proc_heartbeat(
+    p_ubuf: *mut u8,
+    p_ubuf_size: &mut usize,
+    p_task_id: *const u8,
+    p_msg_in: *const u8,
+    msg_in_len: usize,
+) -> sgx_status_t {
+    let mut task_id = [0_u8; 32];
+    task_id.copy_from_slice(core::slice::from_raw_parts(p_task_id, 32));
+    let task_info = (*TASKS).get(&task_id).unwrap();
+    let kdk = task_info.kdk;
+
+    let encrypted_msg_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
+    let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_slice).unwrap();
+    let heartbeat_req_bytes = aes128gcm_decrypt(&kdk, &encrypted_msg).unwrap();
+    let mut response_bytes: [u8;16] = [0;16];
+    response_bytes[..4].copy_from_slice(&heartbeat_req_bytes);
+    response_bytes[4..].copy_from_slice(b"heartbeatmsg");
+    let encrypted_response = aes128gcm_encrypt(&kdk, &response_bytes).unwrap();
+    enclave_ret!(encrypted_response, p_ubuf, p_ubuf_size);
+    sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn storage_request(
     request: *const u8,
     request_size: u32,
