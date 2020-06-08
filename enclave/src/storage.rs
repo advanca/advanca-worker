@@ -17,12 +17,9 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::string::{String, ToString};
 
-use serde_big_array::big_array;
 use serde_derive::*;
 use serde_json;
 use serde_big_array::big_array;
-
-big_array! { BigArray; }
 
 big_array! { BigArray; }
 
