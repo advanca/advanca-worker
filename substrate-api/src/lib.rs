@@ -203,9 +203,9 @@ impl SubstrateApi {
         self.send_extrinsic(extrinsic.hex_encode())
     }
 
-    pub fn accept_task(&self, task_id: TaskId, url: Ciphertext) -> Hash {
+    pub fn accept_task(&self, task_id: TaskId, signed_eph_pubkey: Vec<u8>, url: Ciphertext) -> Hash {
         let extrinsic =
-            compose_extrinsic!(self.0.clone(), "AdvancaCore", "accept_task", task_id, url);
+            compose_extrinsic!(self.0.clone(), "AdvancaCore", "accept_task", task_id, signed_eph_pubkey, url);
         trace!("composed extrinsic {:?}", extrinsic);
         self.send_extrinsic(extrinsic.hex_encode())
     }
