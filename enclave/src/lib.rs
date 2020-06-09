@@ -97,13 +97,22 @@ AttestedSession {
 
 #[derive(Default, Clone, Copy)]
 struct TaskInfo {
-    user_pubkey  : Secp256r1PublicKey,
-    kdk          : Aes128Key,
+    task_prvkey : Secp256r1PrivateKey,
+    task_pubkey : Secp256r1PublicKey,
+    user_pubkey   : Secp256r1PublicKey,
+    kdk           : Aes128Key,
 }
 
 static mut TASKS: *mut HashMap<[u8;32], TaskInfo> = 0 as *mut HashMap<[u8;32], TaskInfo>;
 static mut SINGLE_TASK: TaskInfo =
 TaskInfo {
+    task_prvkey: Secp256r1PrivateKey {
+        r: [0;32],
+    },
+    task_pubkey: Secp256r1PublicKey {
+        gx: [0;32],
+        gy: [0;32],
+    },
     user_pubkey: Secp256r1PublicKey {
         gx: [0;32],
         gy: [0;32],
@@ -187,6 +196,23 @@ pub unsafe extern "C" fn get_worker_ec256_pubkey (
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn get_task_ec256_pubkey (
+    ubuf: *mut u8,
+    ubuf_size: &mut usize,
+    p_task_id : *const u8,
+) -> sgx_status_t {
+    let mut task_id = [0_u8;32];
+    let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
+    task_id.copy_from_slice(&task_id_slice);
+    let task_info = (*TASKS).get(&task_id).unwrap();
+    let task_pubkey = task_info.task_pubkey;
+    let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
+    let signed_pubkey: Secp256r1SignedMsg = secp256r1_sign_msg(&worker_prvkey, &serde_cbor::to_vec(&task_pubkey).unwrap()).unwrap();
+    enclave_ret!(signed_pubkey, ubuf, ubuf_size);
+    sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn gen_worker_reg_request(
     ubuf: *mut u8,
     ubuf_size: &mut usize,
@@ -215,16 +241,20 @@ pub unsafe extern "C" fn accept_task (
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
-
     let user_pubkey: Secp256r1PublicKey = from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
-    let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
-    let kdk = enclave_cryptoerr!(derive_kdk(&worker_prvkey, &user_pubkey));
+    let (task_prvkey, task_pubkey) = secp256r1_gen_keypair().unwrap();
+
+    let kdk = enclave_cryptoerr!(derive_kdk(&task_prvkey, &user_pubkey));
     let task_info = TaskInfo {
+        task_prvkey : task_prvkey,
+        task_pubkey : task_pubkey,
         user_pubkey : user_pubkey,
         kdk : kdk,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
+    SINGLE_TASK.task_prvkey = task_prvkey;
+    SINGLE_TASK.task_pubkey = task_pubkey;
     SINGLE_TASK.user_pubkey = user_pubkey;
     SINGLE_TASK.kdk = kdk;
     sgx_status_t::SGX_SUCCESS
