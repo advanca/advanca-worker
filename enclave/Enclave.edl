@@ -66,6 +66,12 @@ enclave {
 				[in,out]                size_t             *ubuf_size
 				);
 
+		public sgx_status_t get_task_ec256_pubkey (
+				[user_check]            uint8_t            *ubuf,
+				[in,out]                size_t             *ubuf_size,
+				[in, count=32]          uint8_t            *task_id
+				);
+
 		public sgx_status_t gen_worker_reg_request (
 				[user_check]            uint8_t            *ubuf,
 				[in,out]                size_t             *ubuf_size,
