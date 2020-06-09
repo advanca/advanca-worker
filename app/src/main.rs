@@ -290,7 +290,12 @@ fn main() {
     info!("public_key bytes: {:?}", user.public_key);
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
     let _ = unsafe {handle_ecall!(eid, accept_task(task_id.as_ptr(), user.public_key.as_ptr(), user.public_key.len())).unwrap()};
+    buf_size = buf.len();
+    let _ = unsafe {handle_ecall!(eid, get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr()))};
+    let signed_task_pubkey: Secp256r1SignedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
+    let signed_task_pubkey_bytes = serde_cbor::to_vec(&signed_task_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
+    debug!("signed task public key is {:?}", signed_task_pubkey);
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
     debug!("msg: {:?}", msg);
@@ -312,7 +317,7 @@ fn main() {
         &task_id,
         url_encrypted,
     );
-    let hash = api.accept_task(task_id, serde_cbor::to_vec(&url_encrypted).unwrap());
+    let hash = api.accept_task(task_id, signed_task_pubkey_bytes, serde_cbor::to_vec(&url_encrypted).unwrap());
     info!("accepted task (extrinsic={:?})", hash);
 
     info!("waiting for task termination by user ...");
