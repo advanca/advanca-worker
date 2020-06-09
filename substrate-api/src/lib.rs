@@ -191,11 +191,12 @@ impl SubstrateApi {
         self.send_extrinsic(extrinsic.hex_encode())
     }
 
-    pub fn submit_task(&self, lease: Duration, task_spec: TaskSpec<Privacy>) -> Hash {
+    pub fn submit_task(&self, signed_user_task_pubkey: Vec<u8>, lease: Duration, task_spec: TaskSpec<Privacy>) -> Hash {
         let extrinsic = compose_extrinsic!(
             self.0.clone(),
             "AdvancaCore",
             "submit_task",
+            signed_user_task_pubkey,
             lease,
             task_spec
         );
