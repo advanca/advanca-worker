@@ -287,18 +287,28 @@ fn main() {
     info!("querying user information ...");
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
-    info!("public_key bytes: {:?}", user.public_key);
+
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
-    let _ = unsafe {handle_ecall!(eid, accept_task(task_id.as_ptr(), user.public_key.as_ptr(), user.public_key.len())).unwrap()};
+    info!("user public_key: {:?}", user_pubkey);
+    let signed_owner_task_pubkey : Secp256r1SignedMsg = serde_cbor::from_slice(&task.signed_owner_task_pubkey).unwrap();
+    let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
+    info!("verifying owner task pubkey ... {:?}", verified);
+    assert_eq!(verified, true);
+
+    let owner_task_pubkey_bytes = signed_owner_task_pubkey.msg;
+    let _ = unsafe {handle_ecall!(eid, accept_task(task_id.as_ptr(), owner_task_pubkey_bytes.as_ptr(), owner_task_pubkey_bytes.len())).unwrap()};
+
     buf_size = buf.len();
     let _ = unsafe {handle_ecall!(eid, get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr()))};
     let signed_task_pubkey: Secp256r1SignedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     let signed_task_pubkey_bytes = serde_cbor::to_vec(&signed_task_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
     debug!("signed task public key is {:?}", signed_task_pubkey);
+
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
     debug!("msg: {:?}", msg);
+
     buf_size = buf.len();
     let _ = unsafe{handle_ecall!(eid, encrypt_msg(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr(), msg.as_ptr(), msg.len())).unwrap()};
     let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
