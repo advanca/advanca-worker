@@ -89,7 +89,7 @@ struct Opt {
 fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> AasRegReport {
     // We'll try to connect to the service provider
     let env = Arc::new(Environment::new(2));
-    let channel = ChannelBuilder::new(env).connect("127.0.0.1:12345");
+    let channel = ChannelBuilder::new(env).connect("127.0.0.1:11800");
     let client = AasServerClient::new(channel);
     let (tx,rx) = client.remote_attest().unwrap();
     // convert to blocking communication
