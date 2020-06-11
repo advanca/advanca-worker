@@ -28,6 +28,9 @@ advanca-crypto          = { tag = "v0.2.0", git = "https://github.com/advanca/ad
 advanca-crypto-types    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 advanca-crypto-ctypes   = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 sgx-ra                  = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-runtime         = { git = "https://github.com/advanca/advanca-node/" }
+advanca-core            = { git = "https://github.com/advanca/advanca-node/" }
+
 serde_cbor              = { version = "0.11.1"}
 aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
 
@@ -41,11 +44,3 @@ path = "../protos/app"
 
 [dependencies.substrate-api]
 path = "../substrate-api"
-
-[dependencies.advanca-runtime]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
-
-[dependencies.advanca-core]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
