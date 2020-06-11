@@ -23,12 +23,14 @@ package = "parity-scale-codec"
 version = "1.0.0"
 
 [dependencies.advanca-runtime]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
+#git = "https://github.com/advanca/advanca-node/"
+#version = "~0.1"
+path = "../../advanca-node/runtime"
 
 [dependencies.advanca-core]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
+#git = "https://github.com/advanca/advanca-node/"
+#version = "~0.1"
+path = "../../advanca-node/pallets/advanca-core"
 
 [dev-dependencies]
 sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
