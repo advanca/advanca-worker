@@ -31,7 +31,7 @@ advanca-runtime         = { git = "https://github.com/advanca/advanca-node/" }
 advanca-core            = { git = "https://github.com/advanca/advanca-node/" }
 
 serde_cbor              = { version = "0.11.1"}
-aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
+aas-protos              = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-attestation-service" }
 
 [dependencies.codec]
 package = "parity-scale-codec"

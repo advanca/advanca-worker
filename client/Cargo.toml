@@ -35,6 +35,8 @@ sgx_ucrypto       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 
 advanca-crypto-types = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 advanca-crypto       = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper", features=["std_env"] }
+advanca-core         = { git = "https://github.com/advanca/advanca-node/" }
+advanca-runtime      = { git = "https://github.com/advanca/advanca-node/" }
 
 [dependencies.protos]
 package = "protos-app"
@@ -43,14 +45,6 @@ path = "../protos/app"
 [dependencies.substrate-api-client]
 git = "https://github.com/advanca/substrate-api-client"
 rev = "1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
-
-[dependencies.advanca-core]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
-
-[dependencies.advanca-runtime]
-git = "https://github.com/advanca/advanca-node/"
-version = "~0.1"
 
 [dependencies.codec]
 package = "parity-scale-codec"
