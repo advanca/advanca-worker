@@ -17,9 +17,9 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::string::{String, ToString};
 
+use serde_big_array::big_array;
 use serde_derive::*;
 use serde_json;
-use serde_big_array::big_array;
 
 big_array! { BigArray; }
 
@@ -39,20 +39,20 @@ pub const ORAM_SIZE: usize = 8;
 #[derive(Serialize, Deserialize)]
 struct Storage {
     #[serde(with = "BigArray")]
-    owner: [u8;64],
+    owner: [u8; 64],
     backend: HashMap<String, String>,
 }
 
 impl Default for Storage {
     fn default() -> Storage {
         Storage {
-            owner: [0;64],
+            owner: [0; 64],
             backend: HashMap::default(),
         }
     }
 }
 
-pub fn create_sealed_storage(owner: [u8;64]) -> SgxResult<sgx_status_t> {
+pub fn create_sealed_storage(owner: [u8; 64]) -> SgxResult<sgx_status_t> {
     let storage = Storage {
         owner,
         ..Default::default()
