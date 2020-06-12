@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #![feature(structural_match)]
 #![feature(rustc_attrs)]
 #![feature(core_intrinsics)]
@@ -40,86 +41,79 @@ use protos::storage::*;
 use core::slice;
 use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 
-use std::collections::HashMap;
 use std::boxed::Box;
+use std::collections::HashMap;
 
-use sgx_types::*;
 use sgx_tkey_exchange::*;
+use sgx_types::*;
 
-use advanca_crypto_types::*;
 use advanca_crypto::*;
+use advanca_crypto_types::*;
 
 use serde::Serialize;
 use serde_cbor;
-use serde_cbor::Serializer;
-use serde_cbor::ser::SliceWrite;
 use serde_cbor::de::from_slice_with_scratch;
+use serde_cbor::ser::SliceWrite;
+use serde_cbor::Serializer;
 
-use advanca_macros::{enclave_ret, enclave_cryptoerr};
+use advanca_macros::{enclave_cryptoerr, enclave_ret};
 
 //use std::sync::Once;
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
-    worker_prvkey : Secp256r1PrivateKey,
-    worker_pubkey : Secp256r1PublicKey,
+    worker_prvkey: Secp256r1PrivateKey,
+    worker_pubkey: Secp256r1PublicKey,
     // shared_dhkey  : sgx_ec256_dh_shared_t,
     // kdk           : sgx_key_128bit_t,
 }
 
 // public key for Advanca Attestation Service
-const G_SP_PUB_KEY : sgx_ec256_public_t = sgx_ec256_public_t {
-gx: [
-        0xe3,0x53,0x79,0x5f,0x40,0x5b,0x8a,0x8f,0x34,0x5c,0xd6,0xbc,0x89,0x1c,0x49,0x6e,
-        0x9e,0x56,0x8e,0xcb,0x74,0xee,0x43,0xc1,0x7d,0xed,0xbd,0x04,0x0d,0xea,0x4f,0x1a,
+const G_SP_PUB_KEY: sgx_ec256_public_t = sgx_ec256_public_t {
+    gx: [
+        0xe3, 0x53, 0x79, 0x5f, 0x40, 0x5b, 0x8a, 0x8f, 0x34, 0x5c, 0xd6, 0xbc, 0x89, 0x1c, 0x49,
+        0x6e, 0x9e, 0x56, 0x8e, 0xcb, 0x74, 0xee, 0x43, 0xc1, 0x7d, 0xed, 0xbd, 0x04, 0x0d, 0xea,
+        0x4f, 0x1a,
     ],
-gy: [
-        0x9c,0x98,0x68,0x5c,0xbb,0xb4,0x9b,0x67,0xdd,0x8d,0xd2,0xb6,0x2a,0xb0,0xee,0x09,
-        0x3e,0xcc,0x9c,0x39,0x1d,0xa9,0xc9,0xce,0x45,0xf0,0xcf,0xbc,0x0c,0x0f,0x7d,0x89,
+    gy: [
+        0x9c, 0x98, 0x68, 0x5c, 0xbb, 0xb4, 0x9b, 0x67, 0xdd, 0x8d, 0xd2, 0xb6, 0x2a, 0xb0, 0xee,
+        0x09, 0x3e, 0xcc, 0x9c, 0x39, 0x1d, 0xa9, 0xc9, 0xce, 0x45, 0xf0, 0xcf, 0xbc, 0x0c, 0x0f,
+        0x7d, 0x89,
     ],
 };
 
 // TODO: change this to a mutable attested_session data object
 // and use once_only init to set the value.
-static mut ATTESTED_SESSION: AttestedSession = 
-AttestedSession {
-    worker_prvkey: Secp256r1PrivateKey {
-        r: [0;32],
-    },
+static mut ATTESTED_SESSION: AttestedSession = AttestedSession {
+    worker_prvkey: Secp256r1PrivateKey { r: [0; 32] },
     worker_pubkey: Secp256r1PublicKey {
-        gx: [0;32],
-        gy: [0;32],
+        gx: [0; 32],
+        gy: [0; 32],
     },
 };
 // static mut ATTESTED_SESSION: Once = Once::new();
 
 #[derive(Default, Clone, Copy)]
 struct TaskInfo {
-    task_prvkey : Secp256r1PrivateKey,
-    task_pubkey : Secp256r1PublicKey,
-    user_pubkey   : Secp256r1PublicKey,
-    kdk           : Aes128Key,
+    task_prvkey: Secp256r1PrivateKey,
+    task_pubkey: Secp256r1PublicKey,
+    user_pubkey: Secp256r1PublicKey,
+    kdk: Aes128Key,
 }
 
-static mut TASKS: *mut HashMap<[u8;32], TaskInfo> = 0 as *mut HashMap<[u8;32], TaskInfo>;
-static mut SINGLE_TASK: TaskInfo =
-TaskInfo {
-    task_prvkey: Secp256r1PrivateKey {
-        r: [0;32],
-    },
+static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
+static mut SINGLE_TASK: TaskInfo = TaskInfo {
+    task_prvkey: Secp256r1PrivateKey { r: [0; 32] },
     task_pubkey: Secp256r1PublicKey {
-        gx: [0;32],
-        gy: [0;32],
+        gx: [0; 32],
+        gy: [0; 32],
     },
     user_pubkey: Secp256r1PublicKey {
-        gx: [0;32],
-        gy: [0;32],
+        gx: [0; 32],
+        gy: [0; 32],
     },
-    kdk: Aes128Key {
-        key: [0;16],
-    },
+    kdk: Aes128Key { key: [0; 16] },
 };
-
 
 #[no_mangle]
 pub unsafe extern "C" fn enclave_init() -> sgx_status_t {
@@ -140,7 +134,7 @@ pub unsafe extern "C" fn enclave_init_ra (b_pse: i32,
         Ok(p) => {
             *p_context = p;
             ret = sgx_status_t::SGX_SUCCESS;
-        },
+        }
         Err(x) => {
             ret = x;
             return ret;
@@ -150,43 +144,40 @@ pub unsafe extern "C" fn enclave_init_ra (b_pse: i32,
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn enclave_ra_close (context: sgx_ra_context_t) -> sgx_status_t {
+pub unsafe extern "C" fn enclave_ra_close(context: sgx_ra_context_t) -> sgx_status_t {
     // we'll reinit the hashmap of accepted jobs
     // we'll take back ownership of the box
     // which will be freed when the box is destroyed
     let _old_tasks = Box::from_raw(TASKS);
-    let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
+    let heap_hashmap = Box::new(HashMap::<[u8; 32], TaskInfo>::new());
     TASKS = Box::into_raw(heap_hashmap);
 
     // Zero out the keys
     ATTESTED_SESSION = AttestedSession::default();
 
     match rsgx_ra_close(context) {
-        Ok(()) => {
-            sgx_status_t::SGX_SUCCESS
-        },
-        Err(x) => x
+        Ok(()) => sgx_status_t::SGX_SUCCESS,
+        Err(x) => x,
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn gen_worker_ec256_pubkey (
-) -> sgx_status_t {
+pub unsafe extern "C" fn gen_worker_ec256_pubkey() -> sgx_status_t {
     match secp256r1_gen_keypair() {
         Ok((prvkey, pubkey)) => {
             ATTESTED_SESSION.worker_prvkey = prvkey;
             ATTESTED_SESSION.worker_pubkey = pubkey;
             return sgx_status_t::SGX_SUCCESS;
-        },
+        }
         Err(CryptoError::SgxError(i, _)) => {
             return sgx_status_t::from_repr(i).unwrap();
-        },
+        }
         _ => unreachable!(),
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_worker_ec256_pubkey (
+pub unsafe extern "C" fn get_worker_ec256_pubkey(
     ubuf: *mut u8,
     ubuf_size: &mut usize,
 ) -> sgx_status_t {
@@ -195,18 +186,19 @@ pub unsafe extern "C" fn get_worker_ec256_pubkey (
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_task_ec256_pubkey (
+pub unsafe extern "C" fn get_task_ec256_pubkey(
     ubuf: *mut u8,
     ubuf_size: &mut usize,
-    p_task_id : *const u8,
+    p_task_id: *const u8,
 ) -> sgx_status_t {
-    let mut task_id = [0_u8;32];
+    let mut task_id = [0_u8; 32];
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let task_info = (*TASKS).get(&task_id).unwrap();
     let task_pubkey = task_info.task_pubkey;
     let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
-    let signed_pubkey: Secp256r1SignedMsg = secp256r1_sign_msg(&worker_prvkey, &serde_cbor::to_vec(&task_pubkey).unwrap()).unwrap();
+    let signed_pubkey: Secp256r1SignedMsg =
+        secp256r1_sign_msg(&worker_prvkey, &serde_cbor::to_vec(&task_pubkey).unwrap()).unwrap();
     enclave_ret!(signed_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -230,25 +222,26 @@ pub unsafe extern "C" fn gen_worker_reg_request(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn accept_task (
-    p_task_id              : *const u8,
-    p_user_pubkey_buf      : *const u8,
-    user_pubkey_buf_size : usize,
+pub unsafe extern "C" fn accept_task(
+    p_task_id: *const u8,
+    p_user_pubkey_buf: *const u8,
+    user_pubkey_buf_size: usize,
 ) -> sgx_status_t {
-    let mut scratch = [0_u8;8196];
-    let mut task_id = [0_u8;32];
+    let mut scratch = [0_u8; 8196];
+    let mut task_id = [0_u8; 32];
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
-    let user_pubkey: Secp256r1PublicKey = from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
+    let user_pubkey: Secp256r1PublicKey =
+        from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
     let (task_prvkey, task_pubkey) = secp256r1_gen_keypair().unwrap();
 
     let kdk = enclave_cryptoerr!(derive_kdk(&task_prvkey, &user_pubkey));
     let task_info = TaskInfo {
-        task_prvkey : task_prvkey,
-        task_pubkey : task_pubkey,
-        user_pubkey : user_pubkey,
-        kdk : kdk,
+        task_prvkey: task_prvkey,
+        task_pubkey: task_pubkey,
+        user_pubkey: user_pubkey,
+        kdk: kdk,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
@@ -260,12 +253,12 @@ pub unsafe extern "C" fn accept_task (
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn encrypt_msg (
-    p_ubuf             : *mut u8,
-    p_ubuf_size        : *mut usize,
-    p_task_id          : *const u8,
-    p_msg_in           : *const u8,
-    msg_in_len       : usize,
+pub unsafe extern "C" fn encrypt_msg(
+    p_ubuf: *mut u8,
+    p_ubuf_size: *mut usize,
+    p_task_id: *const u8,
+    p_msg_in: *const u8,
+    msg_in_len: usize,
 ) -> sgx_status_t {
     let mut task_id = [0_u8; 32];
     task_id.copy_from_slice(core::slice::from_raw_parts(p_task_id, 32));
@@ -278,7 +271,6 @@ pub unsafe extern "C" fn encrypt_msg (
     enclave_ret!(encrypted_msg, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
-
 
 #[no_mangle]
 pub unsafe extern "C" fn get_sr25519_public_key(
@@ -307,7 +299,7 @@ pub unsafe extern "C" fn create_storage(
     println!("[ENCLAVE INFO] creating storage ...");
     let key_bytes_slice = slice::from_raw_parts(public_key, public_key_size as usize);
     let pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&key_bytes_slice).unwrap();
-    let mut key_bytes = [0_u8;64];
+    let mut key_bytes = [0_u8; 64];
     key_bytes.copy_from_slice(&pubkey.to_raw_bytes());
     if let Err(status) = storage::create_sealed_storage(key_bytes) {
         println!("[ENCLAVE ERROR] create sealed storage failed");
@@ -333,7 +325,7 @@ pub unsafe extern "C" fn proc_heartbeat(
     let encrypted_msg_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
     let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_slice).unwrap();
     let heartbeat_req_bytes = aes128gcm_decrypt(&kdk, &encrypted_msg).unwrap();
-    let mut response_bytes: [u8;16] = [0;16];
+    let mut response_bytes: [u8; 16] = [0; 16];
     response_bytes[..4].copy_from_slice(&heartbeat_req_bytes);
     response_bytes[4..].copy_from_slice(b"heartbeatmsg");
     let encrypted_response = aes128gcm_encrypt(&kdk, &response_bytes).unwrap();
