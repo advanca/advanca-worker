@@ -3,6 +3,7 @@
 [[package]]
 name = "advanca-crypto"
 version = "0.2.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -15,6 +16,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.2.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
 dependencies = [
  "serde 1.0.106",
  "serde-big-array",
@@ -26,6 +28,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.1.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
@@ -33,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "advanca-worker-enclave"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
@@ -452,6 +455,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 [[package]]
 name = "oram"
 version = "0.1.2"
+source = "git+https://github.com/advanca/oram.git?tag=v0.1.2#a9424d596b383aeec9a95b92988488bb996f939c"
 dependencies = [
  "bincode 1.2.1 (git+https://github.com/mesalock-linux/bincode-sgx?tag=sgx_1.1.2)",
  "bincode 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -605,9 +609,9 @@ source = "git+https://github.com/mesalock-linux/quick-error-sgx#c77b8867336fff70
 
 [[package]]
 name = "quote"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54a21852a652ad6f610c9510194f398ff6f8692e334fd1145fed931f7fbe44ea"
+checksum = "aa563d17ecb180e500da1cfd2b028310ac758de548efdd203e18f283af693f37"
 dependencies = [
  "proc-macro2",
 ]
@@ -881,7 +885,7 @@ dependencies = [
 [[package]]
 name = "sgx_tkey_exchange"
 version = "1.1.2"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2#253b3ac982b2d09d32f5fa5a2011e3c36bcbed1e"
+source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2#fdc2ea93caecaa7f69a3edc9cf840607d0628ff3"
 dependencies = [
  "sgx_types",
 ]
@@ -986,9 +990,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93a56fabc59dce20fe48b6c832cc249c713e7ed88fa28b0ee0a3bfcaae5fe4e2"
+checksum = "b5304cfdf27365b7585c25d4af91b35016ed21ef88f17ced89c7093b43dba8b6"
 dependencies = [
  "proc-macro2",
  "quote",
