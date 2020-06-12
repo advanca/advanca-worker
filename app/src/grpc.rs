@@ -56,7 +56,12 @@ pub fn format_payload(payload: &[u8]) -> String {
 }
 
 impl Storage for StorageService {
-    fn heartbeat(&mut self, ctx: RpcContext, req: HeartbeatRequest, sink: UnarySink<HeartbeatResponse>) {
+    fn heartbeat(
+        &mut self,
+        ctx: RpcContext,
+        req: HeartbeatRequest,
+        sink: UnarySink<HeartbeatResponse>,
+    ) {
     }
 
     fn send(&mut self, ctx: RpcContext, req: EncryptedRequest, sink: UnarySink<EncryptedResponse>) {
