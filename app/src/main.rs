@@ -38,7 +38,7 @@ mod grpc;
 use sgx_types::*;
 // use sgx_urts::*;
 
-use std::mem::{size_of};
+use std::mem::size_of;
 
 mod aas_teaclave_ecall;
 use aas_teaclave_ecall::*;
@@ -46,17 +46,16 @@ use aas_teaclave_ecall::*;
 mod trusted_key_exchange_ecall;
 use trusted_key_exchange_ecall::*;
 
-
-use std::sync::Arc;
-use grpcio::*;
 use aas_protos::aas::Msg;
 use aas_protos::aas::Msg_MsgType as MsgType;
 use aas_protos::aas_grpc::AasServerClient;
+use grpcio::*;
+use std::sync::Arc;
 
 use futures::{Sink, Stream};
 
-use advanca_crypto_types::*;
 use advanca_crypto::*;
+use advanca_crypto_types::*;
 
 use advanca_macros::handle_ecall;
 
@@ -91,7 +90,7 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     let env = Arc::new(Environment::new(2));
     let channel = ChannelBuilder::new(env).connect("127.0.0.1:11800");
     let client = AasServerClient::new(channel);
-    let (tx,rx) = client.remote_attest().unwrap();
+    let (tx, rx) = client.remote_attest().unwrap();
     // convert to blocking communication
     let mut tx = tx.wait();
     let mut rx = rx.wait();
@@ -101,12 +100,12 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     debug!("sgx_get_extended_epid_group_id: {}", sgx_return);
     debug!("epid_gid  : {}", extended_epid_gid);
 
-    // MSG0 is p_extended_epid_group_id 
+    // MSG0 is p_extended_epid_group_id
     // isv_app -> service_provider
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG0);
     msg.set_msg_bytes(extended_epid_gid.to_le_bytes().to_vec());
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg0]------------->[aas]                      [ias]");
 
     let msg0_reply = rx.next().unwrap().unwrap();
@@ -118,14 +117,20 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
 
     // MSG1 contains g_a (public ephermeral key ECDH for App) and gid (EPID Group ID - For SigRL)
     let mut p_msg1_buf = vec![0; size_of::<sgx_ra_msg1_t>()];
-    let sgx_return = unsafe { sgx_ra_get_msg1(ra_context, eid, sgx_ra_get_ga, p_msg1_buf.as_mut_ptr() as *mut sgx_ra_msg1_t) };
+    let sgx_return = unsafe {
+        sgx_ra_get_msg1(
+            ra_context,
+            eid,
+            sgx_ra_get_ga,
+            p_msg1_buf.as_mut_ptr() as *mut sgx_ra_msg1_t,
+        )
+    };
     info!("sgx_ra_get_msg1: {}", sgx_return);
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG1);
     msg.set_msg_bytes(p_msg1_buf);
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg1]------------->[aas]                      [ias]");
-
 
     // MSG2 contains g_b (public ephemeral ECDH key for SP), SPID, quote_type,
     // KDF (key derivation function), signed (gb, ga) using SP's non-ephemeral P256 key, MAC, SigRL
@@ -137,30 +142,49 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
     // prepare pointer to recv p_msg3 and its size.
     let mut p_msg3_ptr: *mut sgx_ra_msg3_t = 0 as *mut sgx_ra_msg3_t;
     let mut msg3_size = 0_u32;
-    let sgx_return = unsafe {sgx_ra_proc_msg2(ra_context, eid, sgx_ra_proc_msg2_trusted, sgx_ra_get_msg3_trusted, p_msg2_ptr, msg2_size as u32 , &mut p_msg3_ptr, &mut msg3_size)};
+    let sgx_return = unsafe {
+        sgx_ra_proc_msg2(
+            ra_context,
+            eid,
+            sgx_ra_proc_msg2_trusted,
+            sgx_ra_get_msg3_trusted,
+            p_msg2_ptr,
+            msg2_size as u32,
+            &mut p_msg3_ptr,
+            &mut msg3_size,
+        )
+    };
     debug!("sgx_ra_proc_msg2: {}", sgx_return);
     debug!("msg3_size: {}", msg3_size);
 
     // send msg3 to attestation server
-    let msg3_vec = unsafe {core::slice::from_raw_parts(p_msg3_ptr as *const u8, msg3_size as usize).to_vec()};
+    let msg3_vec = unsafe {
+        core::slice::from_raw_parts(p_msg3_ptr as *const u8, msg3_size as usize).to_vec()
+    };
     let mut msg = Msg::new();
     msg.set_msg_type(MsgType::SGX_RA_MSG3);
     msg.set_msg_bytes(msg3_vec);
-    tx.send((msg,WriteFlags::default())).unwrap();
+    tx.send((msg, WriteFlags::default())).unwrap();
     info!("[worker]---[msg3]------------->[aas]                      [ias]");
 
     let msg3_reply = rx.next().unwrap().unwrap();
     info!("[worker]<--[attest_result]-----[aas]                      [ias]");
 
     assert_eq!(msg3_reply.get_msg_type(), MsgType::SGX_RA_MSG3_REPLY);
-    debug!("msg3 mac: {:02x?}", unsafe{(*p_msg3_ptr).mac});
+    debug!("msg3 mac: {:02x?}", unsafe { (*p_msg3_ptr).mac });
 
     if msg3_reply.get_msg_bytes() == 1u32.to_le_bytes() {
         // aas accepted our attestation, we'll prepare the request
-        let mut buf = [0_u8;4096];
+        let mut buf = [0_u8; 4096];
         let mut buf_size: usize = buf.len();
-        let _ = unsafe {handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap()};
-        let _ = unsafe {handle_ecall!(eid, gen_worker_reg_request(buf.as_mut_ptr(), &mut buf_size, ra_context)).unwrap()};
+        let _ = unsafe { handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap() };
+        let _ = unsafe {
+            handle_ecall!(
+                eid,
+                gen_worker_reg_request(buf.as_mut_ptr(), &mut buf_size, ra_context)
+            )
+            .unwrap()
+        };
 
         let mut msg = Msg::new();
         msg.set_msg_type(MsgType::AAS_RA_REG_REQUEST);
@@ -179,15 +203,21 @@ fn aas_remote_attest(eid: sgx_enclave_id_t, ra_context: sgx_ra_context_t) -> Aas
         // 79:53:e3:89:7d:0f:0c:bc:cf:f0:45:ce:c9:a9:1d:
         // 39:9c:cc:3e:09:ee:b0:2a:b6:d2:8d:dd:67:9b:b4:
         // bb:5c:68:98:9c
-        let srv_pubkey = Secp256r1PublicKey{
-            gx:[227, 83, 121, 95, 64, 91, 138, 143, 52, 92, 214, 188, 137, 28, 73, 110, 158, 86, 142, 203, 116, 238, 67, 193, 125, 237, 189, 4, 13, 234, 79, 26],
-            gy:[156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62, 204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137],
+        let srv_pubkey = Secp256r1PublicKey {
+            gx: [
+                227, 83, 121, 95, 64, 91, 138, 143, 52, 92, 214, 188, 137, 28, 73, 110, 158, 86,
+                142, 203, 116, 238, 67, 193, 125, 237, 189, 4, 13, 234, 79, 26,
+            ],
+            gy: [
+                156, 152, 104, 92, 187, 180, 155, 103, 221, 141, 210, 182, 42, 176, 238, 9, 62,
+                204, 156, 57, 29, 169, 201, 206, 69, 240, 207, 188, 12, 15, 125, 137,
+            ],
         };
         let report_verify = aas_verify_reg_report(&srv_pubkey, &aas_report).unwrap();
         debug!("report verified: {:?}", report_verify);
         debug!("{:?}", srv_pubkey);
         if report_verify {
-            return  aas_report;
+            return aas_report;
         } else {
             panic!("Report mac verification failed!\nReport might be modified!");
         }
@@ -221,7 +251,7 @@ fn main() {
     let mut retval = sgx_status_t::SGX_SUCCESS;
     let mut ra_context: sgx_ra_context_t = 10;
 
-    let sgx_return = unsafe {enclave_init_ra(eid, &mut retval, 0, &mut ra_context)};
+    let sgx_return = unsafe { enclave_init_ra(eid, &mut retval, 0, &mut ra_context) };
     info!("enclave_init_ra: {}", sgx_return);
     info!("ra_context: {}", ra_context);
 
@@ -232,9 +262,15 @@ fn main() {
     // TODO: clean this up when we figure out how to terminate when remote_attest fails
     // currently if aas_remote_attest returns, we know the report is valid and attestation
     // is performed and valid.
-    let mut buf = [0_u8;4096];
+    let mut buf = [0_u8; 4096];
     let mut buf_size: usize = buf.len();
-    let _ = unsafe{handle_ecall!(eid, get_worker_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size)).unwrap()};
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_worker_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size)
+        )
+        .unwrap()
+    };
     let worker_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     info!("ec256 pubkey generated {:?}", worker_pubkey);
 
@@ -290,16 +326,32 @@ fn main() {
 
     let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
     info!("user public_key: {:?}", user_pubkey);
-    let signed_owner_task_pubkey : Secp256r1SignedMsg = serde_cbor::from_slice(&task.signed_owner_task_pubkey).unwrap();
+    let signed_owner_task_pubkey: Secp256r1SignedMsg =
+        serde_cbor::from_slice(&task.signed_owner_task_pubkey).unwrap();
     let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
     info!("verifying owner task pubkey ... {:?}", verified);
     assert_eq!(verified, true);
 
     let owner_task_pubkey_bytes = signed_owner_task_pubkey.msg;
-    let _ = unsafe {handle_ecall!(eid, accept_task(task_id.as_ptr(), owner_task_pubkey_bytes.as_ptr(), owner_task_pubkey_bytes.len())).unwrap()};
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            accept_task(
+                task_id.as_ptr(),
+                owner_task_pubkey_bytes.as_ptr(),
+                owner_task_pubkey_bytes.len()
+            )
+        )
+        .unwrap()
+    };
 
     buf_size = buf.len();
-    let _ = unsafe {handle_ecall!(eid, get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr()))};
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
+        )
+    };
     let signed_task_pubkey: Secp256r1SignedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     let signed_task_pubkey_bytes = serde_cbor::to_vec(&signed_task_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
@@ -310,7 +362,19 @@ fn main() {
     debug!("msg: {:?}", msg);
 
     buf_size = buf.len();
-    let _ = unsafe{handle_ecall!(eid, encrypt_msg(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr(), msg.as_ptr(), msg.len())).unwrap()};
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            encrypt_msg(
+                buf.as_mut_ptr(),
+                &mut buf_size,
+                task_id.as_ptr(),
+                msg.as_ptr(),
+                msg.len()
+            )
+        )
+        .unwrap()
+    };
     let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
     debug!("msg len: {:?}", msg.len());
     debug!("ivcipher len: {:?}", buf_size);
@@ -324,17 +388,20 @@ fn main() {
     }
     info!(
         "accpeting task (id={}) with encrypted url {:?} ...",
-        &task_id,
-        url_encrypted,
+        &task_id, url_encrypted,
     );
-    let hash = api.accept_task(task_id, signed_task_pubkey_bytes, serde_cbor::to_vec(&url_encrypted).unwrap());
+    let hash = api.accept_task(
+        task_id,
+        signed_task_pubkey_bytes,
+        serde_cbor::to_vec(&url_encrypted).unwrap(),
+    );
     info!("accepted task (extrinsic={:?})", hash);
 
     info!("waiting for task termination by user ...");
     api.wait_all_task_aborted(vec![task_id]);
     info!("task aborted");
 
-    let sgx_return = unsafe{enclave_ra_close(eid, &mut retval, ra_context)};
+    let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);
     info!("freeing ra_context: {}", ra_context);
 

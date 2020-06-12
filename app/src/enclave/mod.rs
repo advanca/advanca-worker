@@ -28,18 +28,16 @@ pub use sgx_urts::SgxEnclave;
 use advanca_crypto::*;
 use advanca_crypto_types::*;
 
-use crate::aas_teaclave_ecall::*;
 use crate::aas_teaclave_ecall as enclave_ecall;
+use crate::aas_teaclave_ecall::*;
 use advanca_macros::*;
-
 
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
 
 pub static ENCLAVE_TOKEN: &'static str = "enclave.token";
 pub static ENCLAVE_FILE: &'static str = "enclave.signed.so";
 
-pub fn heartbeat_challenge(encrypted_msg: Aes128EncryptedMsg) -> () {
-}
+pub fn heartbeat_challenge(encrypted_msg: Aes128EncryptedMsg) -> () {}
 
 pub fn init() -> SgxResult<SgxEnclave> {
     const LAUNCH_TOKEN_LENGTH: usize = 1024;
@@ -85,7 +83,7 @@ pub fn init() -> SgxResult<SgxEnclave> {
     }
 
     debug!("initializaing enclave ...");
-    let _ = unsafe {handle_ecall!(enclave.geteid(), enclave_init()).unwrap()};
+    let _ = unsafe { handle_ecall!(enclave.geteid(), enclave_init()).unwrap() };
     debug!("done!");
     Ok(enclave)
 }
@@ -95,7 +93,11 @@ pub fn sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
     let mut public_key = vec![0u8; public_key_size as usize];
 
     let _ = unsafe {
-        handle_ecall!(eid, get_sr25519_public_key(public_key.as_mut_ptr(), public_key_size)).unwrap()
+        handle_ecall!(
+            eid,
+            get_sr25519_public_key(public_key.as_mut_ptr(), public_key_size)
+        )
+        .unwrap()
     };
 
     Ok(public_key)
