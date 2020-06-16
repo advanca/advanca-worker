@@ -24,12 +24,12 @@ version = "1.0.0"
 
 [dependencies.advanca-runtime]
 git = "https://github.com/advanca/advanca-node/"
-tag = "v0.2.0"
+rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db"
 version = "~0.2"
 
 [dependencies.advanca-core]
 git = "https://github.com/advanca/advanca-node/"
-tag = "v0.2.0"
+rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db"
 version = "~0.2"
 
 [dev-dependencies]

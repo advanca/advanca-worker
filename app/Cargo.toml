@@ -28,8 +28,8 @@ advanca-macros          = { tag = "v0.2.0", git = "https://github.com/advanca/ad
 advanca-crypto          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 advanca-crypto-types    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
 sgx-ra                  = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-runtime         = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
-advanca-core            = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
+advanca-runtime         = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
+advanca-core            = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
 
 serde_cbor              = { version = "0.11.1"}
 aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
