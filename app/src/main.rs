@@ -232,6 +232,18 @@ fn aas_remote_attest(
             panic!("Report mac verification failed!\nReport might be modified!");
         }
     } else {
+        let msg_tcb_update = rx.next().unwrap().unwrap();
+        assert_eq!(msg_tcb_update.get_msg_type(), MsgType::MSG_UNKNOWN);
+        let platform_info_bytes = msg_tcb_update.get_msg_bytes();
+
+        let mut update_info = sgx_update_info_bit_t::default();
+        let ret = unsafe{sgx_report_attestation_status(platform_info_bytes[4..].as_ptr() as *const sgx_platform_info_t, 1, &mut update_info)};
+        debug!("sgx: {:?}", platform_info_bytes);
+        debug!("sgx: {:?}", platform_info_bytes.len());
+        debug!("sgx: {:?}", ret);
+        debug!("ucodeUpdate: {:?}", update_info.ucodeUpdate);
+        debug!("csmeFwUpdate: {:?}", update_info.csmeFwUpdate);
+        debug!("pswUpdate: {:?}", update_info.pswUpdate);
         panic!("AAS rejected our attestation. >.<");
     }
 }
