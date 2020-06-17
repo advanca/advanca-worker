@@ -23,7 +23,10 @@ use futures::prelude::*;
 use grpcio::{Environment, RpcContext, ServerBuilder, UnarySink};
 use log::{debug, error, info, trace};
 
-use worker_protos_std::storage::storage::{HeartbeatRequest, HeartbeatResponse, EncryptedRequest, EncryptedResponse, GetRequest, GetResponse, SetRequest, SetResponse};
+use worker_protos_std::storage::storage::{
+    EncryptedRequest, EncryptedResponse, GetRequest, GetResponse, HeartbeatRequest,
+    HeartbeatResponse, SetRequest, SetResponse,
+};
 use worker_protos_std::storage::storage_grpc::{self, Storage};
 
 #[derive(Clone)]
