@@ -1,8 +1,8 @@
 [workspace]
 members = [
     "app",
-    "protos/app",
-    "protos/enclave",
+    "worker-protos/worker-protos-std",
+    "worker-protos/worker-protos-enclave",
     "client",
     "substrate-api"
 ]
@@ -11,8 +11,8 @@ exclude = [
     "enclave"
 ]
 
-#[patch.crates-io]
-#grpcio-compiler = { git = "https://github.com/tikv/grpc-rs.git", version = "0.5", default-features = false }
+[patch.crates-io]
+protobuf-build  = { rev = "1c76baf642c9abc6428c94c66f4f16304c77950e", git = "https://github.com/advanca/protobuf-build.git" }
 
 [patch.'https://github.com/apache/teaclave-sgx-sdk.git']
 sgx_alloc 			= { path = "rust-sgx-sdk/sgx_alloc" }
