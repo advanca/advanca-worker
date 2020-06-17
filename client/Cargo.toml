@@ -38,9 +38,7 @@ advanca-crypto       = { tag = "v0.2.0", git = "https://github.com/advanca/advan
 advanca-core         = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
 advanca-runtime      = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
 
-[dependencies.protos]
-package = "protos-app"
-path = "../protos/app"
+worker-protos-std    = { path = "../worker-protos/worker-protos-std" }
 
 [dependencies.substrate-api-client]
 git = "https://github.com/advanca/substrate-api-client"

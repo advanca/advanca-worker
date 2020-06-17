@@ -33,14 +33,11 @@ advanca-core            = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", gi
 
 serde_cbor              = { version = "0.11.1"}
 aas-protos              = { tag = "v0.1.0", git = "https://github.com/advanca/advanca-attestation-service" }
+worker-protos-std       = { path = "../worker-protos/worker-protos-std" }
 
 [dependencies.codec]
 package = "parity-scale-codec"
 version = "1.0.0"
-
-[dependencies.protos]
-package = "protos-app"
-path = "../protos/app"
 
 [dependencies.substrate-api]
 path = "../substrate-api"
