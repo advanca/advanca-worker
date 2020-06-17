@@ -1,0 +1,17 @@
+[package]
+name = "worker-protos-std"
+version = "0.2.0"
+authors = ["Advanca Authors"]
+edition = "2018"
+license = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+grpcio   = { rev = "249e21b3593a8bdd58429d2552b9ab72d6d46526", git = "https://github.com/tikv/grpc-rs.git", default-features = false, features = ["openssl", "protobuf-codec"] }
+protobuf = { version = "=2.8.1" }
+futures  = { version = "0.3" }
+
+[build-dependencies]
+protobuf-build = { version = "=0.11.3", default-features = false, features = ["grpcio-protobuf-codec"] }
+walkdir = "2.2"
+
