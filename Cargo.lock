@@ -11,14 +11,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "aas-protos"
-version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-attestation-service?tag=v0.1.0#231f386e8ff1b3202c04dd7bab53d0a9b710dada"
+name = "aas-protos-std"
+version = "0.2.1"
+source = "git+https://github.com/advanca/advanca-attestation-service?rev=71bba671e835a8f6e2f21bbc6b25ad406aef955e#71bba671e835a8f6e2f21bbc6b25ad406aef955e"
 dependencies = [
- "futures 0.1.29",
- "grpcio 0.4.7",
+ "futures 0.3.5",
+ "grpcio",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "protoc-grpcio",
+ "protobuf-build",
+ "walkdir",
 ]
 
 [[package]]
@@ -47,7 +48,7 @@ dependencies = [
  "env_logger",
  "error-chain",
  "futures 0.1.29",
- "grpcio 0.4.7",
+ "grpcio",
  "hex",
  "hyper 0.12.35",
  "jsonrpc-core-client",
@@ -163,15 +164,16 @@ dependencies = [
 name = "advanca-worker"
 version = "0.4.0"
 dependencies = [
- "aas-protos",
+ "aas-protos-std",
  "advanca-core",
  "advanca-crypto",
  "advanca-crypto-types",
  "advanca-macros",
  "advanca-runtime",
+ "async-std",
  "env_logger",
- "futures 0.1.29",
- "grpcio 0.4.7",
+ "futures 0.3.5",
+ "grpcio",
  "hex",
  "log 0.4.8",
  "parity-scale-codec",
@@ -1405,35 +1407,13 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "grpcio"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ac757a85603e4f8c40a9f94be06a5ad412acab80b39b4e8895ca931b6619910"
-dependencies = [
- "futures 0.1.29",
- "grpcio-sys 0.4.7",
- "libc",
- "log 0.4.8",
- "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "grpcio"
 version = "0.5.1"
 source = "git+https://github.com/tikv/grpc-rs.git?rev=249e21b3593a8bdd58429d2552b9ab72d6d46526#249e21b3593a8bdd58429d2552b9ab72d6d46526"
 dependencies = [
  "futures 0.3.5",
- "grpcio-sys 0.5.2",
+ "grpcio-sys",
  "libc",
  "log 0.4.8",
- "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "grpcio-compiler"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e89d54316f4fdc3181139f2725944de33e9a2fde1bf9128e9e4b88543ad6955e"
-dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1444,18 +1424,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad76ae5de2e2d85fe8f45e072f7909e22fa9ffaf0d53b280825783720dab051c"
 dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "grpcio-sys"
-version = "0.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b2f22fb0327f153acccedbe91894dd0fb15bb6f202d8195665cd206af0402b0"
-dependencies = [
- "cc",
- "cmake",
- "libc",
- "pkg-config",
 ]
 
 [[package]]
@@ -3811,7 +3779,7 @@ version = "0.11.3"
 source = "git+https://github.com/advanca/protobuf-build.git?rev=1c76baf642c9abc6428c94c66f4f16304c77950e#1c76baf642c9abc6428c94c66f4f16304c77950e"
 dependencies = [
  "bitflags",
- "grpcio-compiler 0.6.0",
+ "grpcio-compiler",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf-codegen",
  "regex",
@@ -3824,29 +3792,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12c6abd78435445fc86898ebbd0521a68438063d4a73e23527b7134e6bf58b4a"
 dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "protoc"
-version = "2.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349d80967ee438cd03ccd236d548d4dcd5f2d9349acda206bef1490a826165d3"
-dependencies = [
- "log 0.4.8",
-]
-
-[[package]]
-name = "protoc-grpcio"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7bb9b76be44d96453f528030c03713f57fa725565036cc9d72037ad75babadf"
-dependencies = [
- "failure",
- "grpcio-compiler 0.5.0",
- "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "protobuf-codegen",
- "protoc",
- "tempfile",
 ]
 
 [[package]]
@@ -6615,7 +6560,7 @@ name = "worker-protos-std"
 version = "0.2.0"
 dependencies = [
  "futures 0.3.5",
- "grpcio 0.5.1",
+ "grpcio",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf-build",
  "walkdir",
