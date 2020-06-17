@@ -7,16 +7,19 @@ name = "advanca-worker"
 version = "0.4.0"
 
 [dependencies]
-log = "0.4"
+log        = "0.4"
 env_logger = "0.7.1"
 serde_json = "1.0"
-hex = "0.4.2"
-futures = "0.1.16"
-grpcio = { version = "0.4", features = ["openssl"]}
-protobuf = "~2"
-structopt = "0.3"
+serde_cbor = { version = "0.11.1"}
+hex        = "0.4.2"
+futures    = "0.3"
+grpcio     = { rev = "249e21b3593a8bdd58429d2552b9ab72d6d46526", git = "https://github.com/tikv/grpc-rs.git", default-features = false, features = ["openssl", "protobuf-codec"] }
+protobuf   = "=2.8.1"
+structopt  = "0.3"
 
-sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+async-std  = { version = "1" }
+
+sp-core    = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 
 sgx_types 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
@@ -31,8 +34,7 @@ sgx-ra                  = { tag = "v0.2.0", git = "https://github.com/advanca/ad
 advanca-runtime         = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
 advanca-core            = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
 
-serde_cbor              = { version = "0.11.1"}
-aas-protos              = { rev = "71bba671e835a8f6e2f21bbc6b25ad406aef955e", git = "https://github.com/advanca/advanca-attestation-service" }
+aas-protos-std          = { rev = "71bba671e835a8f6e2f21bbc6b25ad406aef955e", git = "https://github.com/advanca/advanca-attestation-service" }
 worker-protos-std       = { path = "../worker-protos/worker-protos-std" }
 
 [dependencies.codec]
