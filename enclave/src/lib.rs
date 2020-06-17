@@ -37,8 +37,8 @@ use core::slice;
 use oram::SqrtOram;
 use protobuf::parse_from_bytes;
 use protobuf::Message;
-use protos::storage::*;
-use core::slice;
+use worker_protos_enclave::storage::storage::*;
+
 use storage::{ORAM_BLOCK_SIZE, ORAM_SIZE};
 
 use std::boxed::Box;
@@ -57,8 +57,6 @@ use serde_cbor::ser::SliceWrite;
 use serde_cbor::Serializer;
 
 use advanca_macros::{enclave_cryptoerr, enclave_ret};
-
-//use std::sync::Once;
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
