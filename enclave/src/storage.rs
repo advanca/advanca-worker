@@ -25,7 +25,7 @@ big_array! { BigArray; }
 
 use log::trace;
 use oram::SqrtOram;
-use protos::storage::*;
+use worker_protos_enclave::storage::storage::*;
 use sgx_tstd::io::ErrorKind;
 use sgx_tstd::untrusted::fs::remove_file;
 

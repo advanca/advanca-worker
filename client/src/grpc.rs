@@ -23,8 +23,8 @@ use log::{info, trace};
 
 use protobuf::parse_from_bytes;
 use protobuf::Message;
-use protos::storage::*;
-use protos::storage_grpc::StorageClient;
+use worker_protos_std::storage::storage::*;
+use worker_protos_std::storage::storage_grpc::StorageClient;
 
 use serde::{Deserialize, Serialize};
 
