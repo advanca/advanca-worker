@@ -13,24 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use futures;
-use grpcio;
-use protos;
-
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::enclave;
-use futures::Future;
+use async_std::task;
+use futures::prelude::*;
 use grpcio::{Environment, RpcContext, ServerBuilder, UnarySink};
-use hex;
 use log::{debug, error, info, trace};
-use protos::storage::{
-    EncryptedRequest, EncryptedResponse, GetRequest, GetResponse, SetRequest, SetResponse,
-};
-use protos::storage::{HeartbeatRequest, HeartbeatResponse};
-use protos::storage_grpc::{self, Storage};
+
+use worker_protos_std::storage::storage::{HeartbeatRequest, HeartbeatResponse, EncryptedRequest, EncryptedResponse, GetRequest, GetResponse, SetRequest, SetResponse};
+use worker_protos_std::storage::storage_grpc::{self, Storage};
 
 #[derive(Clone)]
 struct StorageService {
@@ -85,8 +79,8 @@ impl Storage for StorageService {
         );
         let f = sink
             .success(res.clone())
-            .map(move |_| trace!("replied with {:?}", res))
-            .map_err(move |err| error!("failed to reply: {:?}", err));
+            .map_err(move |err| error!("failed to reply: {:?}", err))
+            .map(move |_| trace!("replied with {:?}", res));
         ctx.spawn(f)
     }
 
@@ -104,8 +98,8 @@ impl Storage for StorageService {
         debug!("<GetResponse> {:?}", res);
         let f = sink
             .success(res.clone())
-            .map(move |_| trace!("replied with {:?}", res))
-            .map_err(move |err| error!("failed to reply: {:?}", err));
+            .map_err(move |err| error!("failed to reply: {:?}", err))
+            .map(move |_| trace!("replied with {:?}", res));
         ctx.spawn(f)
     }
 
@@ -127,8 +121,8 @@ impl Storage for StorageService {
         debug!("<SetResponse> {:?}", res);
         let f = sink
             .success(res.clone())
-            .map(move |_| trace!("replied with {:?}", res))
-            .map_err(move |err| error!("failed to reply: {:?}", err));
+            .map_err(move |err| error!("failed to reply: {:?}", err))
+            .map(move |_| trace!("replied with {:?}", res));
         ctx.spawn(f);
     }
 }
@@ -143,11 +137,13 @@ pub fn start_grpc_server(port: u16, e: enclave::SgxEnclave, exit_signal: Receive
         .build()
         .unwrap();
     server.start();
-    for &(ref host, port) in server.bind_addrs() {
+    for (host, port) in server.bind_addrs() {
         info!("gRPC listening on {}:{}", host, port);
     }
     exit_signal.recv().unwrap();
     info!("stopping gRPC server ...");
-    let _ = server.shutdown().wait();
+    task::block_on(async move {
+        let _ = server.shutdown().await;
+    });
     info!("gRPC server stopped");
 }
