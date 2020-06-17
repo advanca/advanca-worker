@@ -235,7 +235,13 @@ async fn aas_remote_attest(
         let platform_info_bytes = msg_tcb_update.get_msg_bytes();
 
         let mut update_info = sgx_update_info_bit_t::default();
-        let ret = unsafe{sgx_report_attestation_status(platform_info_bytes[4..].as_ptr() as *const sgx_platform_info_t, 1, &mut update_info)};
+        let ret = unsafe {
+            sgx_report_attestation_status(
+                platform_info_bytes[4..].as_ptr() as *const sgx_platform_info_t,
+                1,
+                &mut update_info,
+            )
+        };
         debug!("sgx: {:?}", platform_info_bytes);
         debug!("sgx: {:?}", platform_info_bytes.len());
         debug!("sgx: {:?}", ret);
@@ -277,10 +283,8 @@ fn main() {
     info!("enclave_init_ra: {}", sgx_return);
     info!("ra_context: {}", ra_context);
 
-    let aas_report = 
-    task::block_on(async {
-        aas_remote_attest(&opt.aas_url, eid, ra_context).await
-    });
+    let aas_report =
+        task::block_on(async { aas_remote_attest(&opt.aas_url, eid, ra_context).await });
     info!("Remote attestation complete!");
     info!("AAS Report: {:?}", aas_report);
 
