@@ -18,18 +18,22 @@ package worker;
 
 service Storage {
   rpc Send(EncryptedRequest) returns (EncryptedResponse) {}
+  rpc heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+
   // used for testing
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc Set(SetRequest) returns (SetResponse) {}
-  rpc heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
 }
 
 message HeartbeatRequest {
-	bytes challenge = 1;
+	bytes block_hash = 1;
 }
 
 message HeartbeatResponse {
-	bytes response  = 1;
+	bytes  block_hash      = 1;
+	bytes  heartbeat_mac   = 2;
+	uint64 aas_timestamp   = 3;
+	bytes  aas_signature   = 4;
 }
 
 message EncryptedRequest {
