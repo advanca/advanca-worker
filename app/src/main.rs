@@ -40,8 +40,8 @@ use sgx_types::*;
 
 use std::mem::size_of;
 
-mod aas_teaclave_ecall;
-use aas_teaclave_ecall::*;
+mod worker_teaclave_ecall;
+use worker_teaclave_ecall::*;
 
 mod trusted_key_exchange_ecall;
 use trusted_key_exchange_ecall::*;
