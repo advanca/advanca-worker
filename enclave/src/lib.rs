@@ -56,7 +56,7 @@ use serde_cbor::de::from_slice_with_scratch;
 use serde_cbor::ser::SliceWrite;
 use serde_cbor::Serializer;
 
-use advanca_macros::{enclave_cryptoerr, enclave_ret};
+use advanca_macros::{enclave_cryptoerr, enclave_ret, enclave_ret_protobuf};
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
@@ -310,16 +310,19 @@ pub unsafe extern "C" fn proc_heartbeat(
     let mut task_id = [0_u8; 32];
     task_id.copy_from_slice(core::slice::from_raw_parts(p_task_id, 32));
     let task_info = (*TASKS).get(&task_id).unwrap();
-    let kdk = task_info.kdk;
+    let worker_task_prvkey = task_info.task_prvkey;
+    let mut heartbeat_response = HeartbeatResponse::default();
 
-    let encrypted_msg_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
-    let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_slice).unwrap();
-    let heartbeat_req_bytes = aes128gcm_decrypt(&kdk, &encrypted_msg).unwrap();
-    let mut response_bytes: [u8; 16] = [0; 16];
-    response_bytes[..4].copy_from_slice(&heartbeat_req_bytes);
-    response_bytes[4..].copy_from_slice(b"heartbeatmsg");
-    let encrypted_response = aes128gcm_encrypt(&kdk, &response_bytes).unwrap();
-    enclave_ret!(encrypted_response, p_ubuf, p_ubuf_size);
+    let heartbeat_req_bytes_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
+    let heartbeat_req = parse_from_bytes::<HeartbeatRequest>(&heartbeat_req_bytes_slice).unwrap();
+    let mut block_hash = heartbeat_req.block_hash;
+    if block_hash.len() != 32 {
+        return sgx_status_t::SGX_ERROR_INVALID_PARAMETER;
+    }
+    block_hash.append(&mut b"dokidoki".to_vec());
+    let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &block_hash));
+    heartbeat_response.heartbeat_sig = serde_cbor::to_vec(&block_hash_mac).unwrap();
+    enclave_ret_protobuf!(heartbeat_response, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
 
