@@ -28,8 +28,8 @@ pub use sgx_urts::SgxEnclave;
 use advanca_crypto::*;
 use advanca_crypto_types::*;
 
-use crate::aas_teaclave_ecall as enclave_ecall;
-use crate::aas_teaclave_ecall::*;
+use crate::worker_teaclave_ecall as enclave_ecall;
+use crate::worker_teaclave_ecall::*;
 use advanca_macros::*;
 
 pub const PAYLOAD_MAX_SIZE: usize = 4196;
