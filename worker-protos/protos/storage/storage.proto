@@ -30,10 +30,7 @@ message HeartbeatRequest {
 }
 
 message HeartbeatResponse {
-	bytes  block_hash      = 1;
-	bytes  heartbeat_mac   = 2;
-	uint64 aas_timestamp   = 3;
-	bytes  aas_signature   = 4;
+	bytes  heartbeat_sig   = 2;
 }
 
 message EncryptedRequest {
