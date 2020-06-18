@@ -231,7 +231,7 @@ async fn aas_remote_attest(
         }
     } else {
         let msg_tcb_update = rx.next().await.unwrap().unwrap();
-        assert_eq!(msg_tcb_update.get_msg_type(), MsgType::MSG_UNKNOWN);
+        assert_eq!(msg_tcb_update.get_msg_type(), MsgType::AAS_RA_TCB_UPDATE);
         let platform_info_bytes = msg_tcb_update.get_msg_bytes();
 
         let mut update_info = sgx_update_info_bit_t::default();
