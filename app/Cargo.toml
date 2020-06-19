@@ -17,10 +17,12 @@ grpcio     = { rev = "249e21b3593a8bdd58429d2552b9ab72d6d46526", git = "https://
 protobuf   = "=2.8.1"
 structopt  = "0.3"
 
+jsonrpsee  = { version = "0.1", features = ["ws"] }
 async-std  = { version = "1" }
 
 sp-core    = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+sp-runtime = {rev = '00a400f82539e2f78e8ddbcd98aea512c87c5f3c', git = 'https://github.com/paritytech/substrate.git'}
 
 sgx_types 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_urts 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
@@ -36,6 +38,7 @@ advanca-core            = { tag = "v0.2.0", git = "https://github.com/advanca/ad
 
 aas-protos-std          = { rev = "71bba671e835a8f6e2f21bbc6b25ad406aef955e", git = "https://github.com/advanca/advanca-attestation-service" }
 worker-protos-std       = { path = "../worker-protos/worker-protos-std" }
+
 
 [dependencies.codec]
 package = "parity-scale-codec"
