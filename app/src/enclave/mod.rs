@@ -25,8 +25,11 @@ use log::{debug, info, trace, warn};
 pub use sgx_types::*;
 pub use sgx_urts::SgxEnclave;
 
-use advanca_crypto::*;
 use advanca_crypto_types::*;
+
+use protobuf::Message;
+use protobuf::parse_from_bytes;
+use worker_protos_std::storage::storage::*;
 
 use crate::worker_teaclave_ecall as enclave_ecall;
 use crate::worker_teaclave_ecall::*;
@@ -37,7 +40,17 @@ pub const PAYLOAD_MAX_SIZE: usize = 4196;
 pub static ENCLAVE_TOKEN: &'static str = "enclave.token";
 pub static ENCLAVE_FILE: &'static str = "enclave.signed.so";
 
-pub fn heartbeat_challenge(encrypted_msg: Aes128EncryptedMsg) -> () {}
+pub fn heartbeat_challenge(
+    eid : sgx_enclave_id_t,
+    heartbeat_req: HeartbeatRequest
+    ) -> HeartbeatResponse {
+    let mut buf: [u8;4096] = [0; 4096];
+    let mut buf_size = 4096;
+    let heartbeat_req_bytes = heartbeat_req.write_to_bytes().unwrap();
+    let _ = unsafe { handle_ecall!(eid, proc_heartbeat(buf.as_mut_ptr(), &mut buf_size, heartbeat_req_bytes.as_ptr(), heartbeat_req_bytes.len() )).unwrap() };
+    let heartbeat_reponse = parse_from_bytes::<HeartbeatResponse>(&buf[..buf_size]).unwrap();
+    heartbeat_reponse
+}
 
 pub fn init() -> SgxResult<SgxEnclave> {
     const LAUNCH_TOKEN_LENGTH: usize = 1024;
