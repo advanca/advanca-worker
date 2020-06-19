@@ -51,6 +51,7 @@ use aas_protos_std::aas::aas::Msg_MsgType as MsgType;
 use aas_protos_std::aas::aas_grpc::AasServerClient;
 use grpcio::*;
 use std::sync::Arc;
+use std::sync::Mutex;
 
 use async_std::task;
 use futures::prelude::*;
@@ -59,6 +60,9 @@ use advanca_crypto::*;
 use advanca_crypto_types::*;
 
 use advanca_macros::handle_ecall;
+
+mod watchdog;
+use watchdog::watchdog_loop;
 
 /// helper function to fund the account
 fn fund_account(ws_url: &str, account: &AccountId) {
@@ -342,6 +346,7 @@ fn main() {
     let owner = task.owner;
 
     // start grpc server, preparing for accepting the task
+    let eid_thread = e.geteid();
     let (tx, rx) = mpsc::channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
         info!("starting grpc server ...");
@@ -373,6 +378,15 @@ fn main() {
         )
         .unwrap()
     };
+    // start watchdog
+    let ws_url = opt.ws_url.to_owned();
+    let is_done = Arc::new(Mutex::new(false));
+    let is_done_thread = Arc::clone(&is_done);
+    let task_id_thread = task_id.to_fixed_bytes();
+    let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
+        info!("starting watchdog thread...");
+        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread);
+    });
 
     buf_size = buf.len();
     let _ = unsafe {
@@ -430,13 +444,21 @@ fn main() {
     api.wait_all_task_aborted(vec![task_id]);
     info!("task aborted");
 
+    // kill task watchdog
+    info!("killing task watchdog");
+    *is_done.lock().unwrap() = true;
+    handle_watchdog
+        .join()
+        .expect("Couldn't join on the watchdog");
+    info!("watchdong killed");
+
+
     let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);
     info!("freeing ra_context: {}", ra_context);
 
     // send exiting signal to gRPC server
     tx.send(()).unwrap();
-
     handle
         .join()
         .expect("Couldn't join on the associated thread");

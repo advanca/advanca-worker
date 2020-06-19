@@ -46,7 +46,7 @@ impl StorageService {
 
 pub fn format_payload(payload: &[u8]) -> String {
     if payload.len() > 16 {
-        format!("0x{}...", hex::encode(payload[..16].as_ref()))
+        format!("0x{}...", hex::encode(&payload[..16]))
     } else {
         format!("0x{}", hex::encode(payload))
     }
@@ -59,6 +59,13 @@ impl Storage for StorageService {
         req: HeartbeatRequest,
         sink: UnarySink<HeartbeatResponse>,
     ) {
+        let eid = self.enclave.lock().unwrap().geteid();
+        let response = enclave::heartbeat_challenge(eid, req);
+        let f = sink
+            .success(response.clone())
+            .map_err(move |err| error!("failed to reply: {:?}", err))
+            .map(move |_| trace!("replied with {:?}", response));
+        ctx.spawn(f)
     }
 
     fn send(&mut self, ctx: RpcContext, req: EncryptedRequest, sink: UnarySink<EncryptedResponse>) {
