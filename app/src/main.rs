@@ -97,15 +97,11 @@ struct Opt {
 }
 
 async fn aas_remote_attest(
-    aas_url: &str,
+    client: Arc<Mutex<AasServerClient>>,
     eid: sgx_enclave_id_t,
     ra_context: sgx_ra_context_t,
 ) -> AasRegReport {
-    // We'll try to connect to the service provider
-    let env = Arc::new(Environment::new(2));
-    let channel = ChannelBuilder::new(env).connect(aas_url);
-    let client = AasServerClient::new(channel);
-    let (mut tx, mut rx) = client.remote_attest().unwrap();
+    let (mut tx, mut rx) = client.lock().unwrap().remote_attest().unwrap();
     // convert to blocking communication
     let mut extended_epid_gid: u32 = 10;
     let sgx_return = unsafe { sgx_get_extended_epid_group_id(&mut extended_epid_gid) };
@@ -287,8 +283,14 @@ fn main() {
     info!("enclave_init_ra: {}", sgx_return);
     info!("ra_context: {}", ra_context);
 
+    // We'll try to connect to the service provider
+    let env = Arc::new(Environment::new(2));
+    let channel = ChannelBuilder::new(env).connect(&opt.aas_url);
+    let client = AasServerClient::new(channel);
+    let client = Arc::new(Mutex::new(client));
+
     let aas_report =
-        task::block_on(async { aas_remote_attest(&opt.aas_url, eid, ra_context).await });
+        task::block_on(async { aas_remote_attest(Arc::clone(&client), eid, ra_context).await });
     info!("Remote attestation complete!");
     info!("AAS Report: {:?}", aas_report);
 
@@ -383,9 +385,10 @@ fn main() {
     let is_done = Arc::new(Mutex::new(false));
     let is_done_thread = Arc::clone(&is_done);
     let task_id_thread = task_id.to_fixed_bytes();
+    let client_thread = Arc::clone(&client);
     let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
         info!("starting watchdog thread...");
-        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread);
+        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread, client_thread);
     });
 
     buf_size = buf.len();
