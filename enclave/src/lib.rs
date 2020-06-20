@@ -321,6 +321,7 @@ pub unsafe extern "C" fn proc_heartbeat(
     block_hash.append(&mut b"dokidoki".to_vec());
     let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &block_hash));
     heartbeat_response.heartbeat_sig = serde_cbor::to_vec(&block_hash_mac).unwrap();
+    println!("{:?}", heartbeat_response);
     enclave_ret_protobuf!(heartbeat_response, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
