@@ -29,16 +29,15 @@ sgx_urts 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk
 sgx_tseal 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_crypto_helper 	= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-macros          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto-types    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-sgx-ra                  = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-runtime         = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
-advanca-core            = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
+advanca-macros          = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto          = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto-types    = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper" }
+sgx-ra                  = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-runtime         = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
+advanca-core            = { rev = "35eba1fe2b38caee3a9f7770a0951bfebf7d92db", git = "https://github.com/advanca/advanca-node/" }
 
 aas-protos-std          = { rev = "71bba671e835a8f6e2f21bbc6b25ad406aef955e", git = "https://github.com/advanca/advanca-attestation-service" }
 worker-protos-std       = { path = "../worker-protos/worker-protos-std" }
-
 
 [dependencies.codec]
 package = "parity-scale-codec"
