@@ -97,6 +97,8 @@ struct TaskInfo {
     task_pubkey: Secp256r1PublicKey,
     user_pubkey: Secp256r1PublicKey,
     kdk: Aes128Key,
+    enclave_total_in  : usize,
+    enclave_total_out : usize,
 }
 
 static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
@@ -111,6 +113,8 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
         gy: [0; 32],
     },
     kdk: Aes128Key { key: [0; 16] },
+    enclave_total_in  : 0,
+    enclave_total_out : 0,
 };
 
 #[no_mangle]
@@ -239,6 +243,8 @@ pub unsafe extern "C" fn accept_task(
         task_pubkey: task_pubkey,
         user_pubkey: user_pubkey,
         kdk: kdk,
+        enclave_total_in  : 0,
+        enclave_total_out : 0,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
@@ -306,9 +312,12 @@ pub unsafe extern "C" fn proc_heartbeat(
     p_msg_in: *const u8,
     msg_in_len: usize,
 ) -> sgx_status_t {
+    let data_in  = SINGLE_TASK.enclave_total_in;
+    let data_out = SINGLE_TASK.enclave_total_out;
+
     let heartbeat_req_bytes_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
     let heartbeat_req = parse_from_bytes::<HeartbeatRequest>(&heartbeat_req_bytes_slice).unwrap();
-    let mut block_hash = heartbeat_req.block_hash;
+    let block_hash = heartbeat_req.block_hash;
     if block_hash.len() != 32 {
         return sgx_status_t::SGX_ERROR_INVALID_PARAMETER;
     }
@@ -317,11 +326,17 @@ pub unsafe extern "C" fn proc_heartbeat(
     let task_info = (*TASKS).get(&task_id).unwrap();
     let worker_task_prvkey = task_info.task_prvkey;
     let mut heartbeat_response = HeartbeatResponse::new();
+    let alive_evidence = AliveEvidence {
+        magic_str : *b"dokidoki",
+        task_id : task_id.to_vec(),
+        block_hash : block_hash,
+        data_in  : data_in,
+        data_out : data_out,
+    };
+    let data = serde_cbor::to_vec(&alive_evidence).unwrap();
 
-    block_hash.append(&mut b"dokidoki".to_vec());
-    let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &block_hash));
+    let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &data));
     heartbeat_response.heartbeat_sig = serde_cbor::to_vec(&block_hash_mac).unwrap();
-    println!("{:?}", heartbeat_response);
     enclave_ret_protobuf!(heartbeat_response, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -335,6 +350,7 @@ pub unsafe extern "C" fn storage_request(
     response_size: *mut u32,
 ) -> sgx_status_t {
     let kdk = SINGLE_TASK.kdk;
+    SINGLE_TASK.enclave_total_in += request_size as usize;
 
     let encrypted_msg_slice = slice::from_raw_parts(request, request_size as usize);
     let response_payload = slice::from_raw_parts_mut(response, response_capacity as usize);
@@ -362,5 +378,6 @@ pub unsafe extern "C" fn storage_request(
     first.clone_from_slice(&response_encrypted_bytes);
     *response_size = response_encrypted_bytes.len() as u32;
 
+    SINGLE_TASK.enclave_total_out += *response_size as usize;
     sgx_status_t::SGX_SUCCESS
 }
