@@ -318,7 +318,7 @@ fn main() {
     debug!("funded account {:?}", worker_account);
 
     let mut api = SubstrateApi::new(&opt.ws_url);
-    api.set_signer(worker_keypair);
+    api.set_signer(worker_keypair.clone());
 
     // get the keys from enclave
     let sr25519_public_key = sr25519::Public::try_from(
@@ -386,10 +386,14 @@ fn main() {
     let is_done_thread = Arc::clone(&is_done);
     let task_id_thread = task_id.to_fixed_bytes();
     let client_thread = Arc::clone(&client);
+    let api_wrapper = Arc::new(Mutex::new(api));
+    let api_thread = Arc::clone(&api_wrapper);
+
     let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
         info!("starting watchdog thread...");
-        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread, client_thread);
+        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread, client_thread, api_thread);
     });
+    std::thread::sleep(std::time::Duration::from_secs(12));
 
     buf_size = buf.len();
     let _ = unsafe {
@@ -436,7 +440,7 @@ fn main() {
         "accpeting task (id={}) with encrypted url {:?} ...",
         &task_id, url_encrypted,
     );
-    let hash = api.accept_task(
+    let hash = api_wrapper.lock().unwrap().accept_task(
         task_id,
         signed_task_pubkey_bytes,
         serde_cbor::to_vec(&url_encrypted).unwrap(),
@@ -444,7 +448,7 @@ fn main() {
     info!("accepted task (extrinsic={:?})", hash);
 
     info!("waiting for task termination by user ...");
-    api.wait_all_task_aborted(vec![task_id]);
+    api_wrapper.lock().unwrap().wait_all_task_aborted(vec![task_id]);
     info!("task aborted");
 
     // kill task watchdog
@@ -465,6 +469,7 @@ fn main() {
     handle
         .join()
         .expect("Couldn't join on the associated thread");
+
 }
 
 #[cfg(test)]
