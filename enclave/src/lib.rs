@@ -97,8 +97,8 @@ struct TaskInfo {
     task_pubkey: Secp256r1PublicKey,
     user_pubkey: Secp256r1PublicKey,
     kdk: Aes128Key,
-    enclave_total_in  : usize,
-    enclave_total_out : usize,
+    enclave_total_in: usize,
+    enclave_total_out: usize,
 }
 
 static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
@@ -113,8 +113,8 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
         gy: [0; 32],
     },
     kdk: Aes128Key { key: [0; 16] },
-    enclave_total_in  : 0,
-    enclave_total_out : 0,
+    enclave_total_in: 0,
+    enclave_total_out: 0,
 };
 
 #[no_mangle]
@@ -244,8 +244,8 @@ pub unsafe extern "C" fn accept_task(
         task_pubkey: task_pubkey,
         user_pubkey: user_pubkey,
         kdk: kdk,
-        enclave_total_in  : 0,
-        enclave_total_out : 0,
+        enclave_total_in: 0,
+        enclave_total_out: 0,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
@@ -320,7 +320,7 @@ pub unsafe extern "C" fn proc_heartbeat(
     p_msg_in: *const u8,
     msg_in_len: usize,
 ) -> sgx_status_t {
-    let data_in  = SINGLE_TASK.enclave_total_in;
+    let data_in = SINGLE_TASK.enclave_total_in;
     let data_out = SINGLE_TASK.enclave_total_out;
 
     let heartbeat_req_bytes_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
@@ -335,11 +335,11 @@ pub unsafe extern "C" fn proc_heartbeat(
     let worker_task_prvkey = task_info.task_prvkey;
     let mut heartbeat_response = HeartbeatResponse::new();
     let alive_evidence = AliveEvidence {
-        magic_str : *b"dokidoki",
-        task_id : task_id.to_vec(),
-        block_hash : block_hash,
-        data_in  : data_in,
-        data_out : data_out,
+        magic_str: *b"dokidoki",
+        task_id: task_id.to_vec(),
+        block_hash: block_hash,
+        data_in: data_in,
+        data_out: data_out,
     };
     let data = serde_cbor::to_vec(&alive_evidence).unwrap();
 
