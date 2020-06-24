@@ -171,6 +171,8 @@ fn main() {
     grpc::start_demo(&url, worker_task_pubkey, owner_task_prvkey);
 
     // abort the task
+    info!("sleeping for 12 seconds...");
+    std::thread::sleep(std::time::Duration::from_secs(12));
     info!("aborting task ...");
     let hash = api.abort_task(task_id);
     info!("task aborted (extrinsic={:?})", hash);
