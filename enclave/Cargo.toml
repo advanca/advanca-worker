@@ -43,9 +43,9 @@ serde-big-array   = { git = "https://github.com/mesalock-linux/serde-big-array-s
 serde_cbor        = { git = "https://github.com/mesalock-linux/cbor-sgx" }
 
 # customized crates
-advanca-macros         = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto         = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
-advanca-crypto-types   = { rev = "ab6a466caf362654fced81aea4c5a766cdad856c", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
+advanca-macros         = { rev = "2be0683f66f05633bdffa4d60eff8988d0fbca1b", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto         = { rev = "2be0683f66f05633bdffa4d60eff8988d0fbca1b", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
+advanca-crypto-types   = { rev = "2be0683f66f05633bdffa4d60eff8988d0fbca1b", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
 oram                   = { tag = "v0.1.2", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
 worker-protos-enclave  = { path = "../worker-protos/worker-protos-enclave" }
 
@@ -56,6 +56,9 @@ sgx_crypto_helper = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 sgx_rand          = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_trts          = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_tkey_exchange = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+
+#[patch.'https://github.com/advanca/advanca-sgx-helper']
+#advanca-crypto-types = { path = "../../advanca-sgx-helper/advanca-crypto-types" }
 
 #[patch.'https://github.com/advanca/advanca-sgx-helper']
 #advanca-macros  = { path = "../../advanca-sgx-helper/advanca-macros" }

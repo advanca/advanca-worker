@@ -13,6 +13,7 @@ dependencies = [
 [[package]]
 name = "aas-protos-std"
 version = "0.2.1"
+source = "git+https://github.com/advanca/advanca-attestation-service?rev=fcbd88bdc05e892444c2dd13b2b3fecb163882b5#fcbd88bdc05e892444c2dd13b2b3fecb163882b5"
 dependencies = [
  "futures 0.3.5",
  "grpcio",
@@ -23,9 +24,9 @@ dependencies = [
 
 [[package]]
 name = "addr2line"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a49806b9dadc843c61e7c97e72490ad7f7220ae249012fbda9ad0609457c0543"
+checksum = "602d785912f476e480434627e8732e6766b760c045bbf897d9dfaa9f4fbd399c"
 dependencies = [
  "gimli",
 ]
@@ -75,7 +76,7 @@ dependencies = [
 [[package]]
 name = "advanca-core"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=35eba1fe2b38caee3a9f7770a0951bfebf7d92db#35eba1fe2b38caee3a9f7770a0951bfebf7d92db"
+source = "git+https://github.com/advanca/advanca-node/?rev=7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0#7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -105,10 +106,10 @@ dependencies = [
 [[package]]
 name = "advanca-crypto"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c#ab6a466caf362654fced81aea4c5a766cdad856c"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
 dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
- "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
+ "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
+ "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
  "aes",
  "cmac",
  "rand 0.7.3",
@@ -134,7 +135,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c#ab6a466caf362654fced81aea4c5a766cdad856c"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
 dependencies = [
  "aes",
  "cmac",
@@ -157,16 +158,16 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c#ab6a466caf362654fced81aea4c5a766cdad856c"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
 dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
+ "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
  "sgx_types",
 ]
 
 [[package]]
 name = "advanca-runtime"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=35eba1fe2b38caee3a9f7770a0951bfebf7d92db#35eba1fe2b38caee3a9f7770a0951bfebf7d92db"
+source = "git+https://github.com/advanca/advanca-node/?rev=7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0#7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0"
 dependencies = [
  "advanca-core",
  "frame-executive",
@@ -203,9 +204,9 @@ version = "0.4.0"
 dependencies = [
  "aas-protos-std",
  "advanca-core",
- "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
- "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
+ "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
+ "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
+ "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
  "advanca-runtime",
  "async-std",
  "env_logger",
@@ -215,6 +216,7 @@ dependencies = [
  "jsonrpsee",
  "log 0.4.8",
  "parity-scale-codec",
+ "primitive-types",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_cbor",
  "serde_json",
@@ -293,9 +295,9 @@ checksum = "e8fd72866655d1904d6b0997d0b07ba561047d070fbe29de039031c641b61217"
 
 [[package]]
 name = "aho-corasick"
-version = "0.7.10"
+version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8716408b8bc624ed7f65d223ddb9ac2d044c0547b6fa4b0d554f3a9540496ada"
+checksum = "043164d8ba5c4c3035fec9bbee8647c0261d788f3474306f93bb65901cae0e86"
 dependencies = [
  "memchr",
 ]
@@ -3637,9 +3639,9 @@ checksum = "ddfc878dac00da22f8f61e7af3157988424567ab01d9920b962ef7dcbd7cd865"
 
 [[package]]
 name = "parking"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a7fad362df89617628a7508b3e9d588ade1b0ac31aa25de168193ad999c2dd4"
+checksum = "1bcaa58ee64f8e4a3d02f5d8e6ed0340eae28fed6fdabd984ad1776e3b43848a"
 
 [[package]]
 name = "parking_lot"
@@ -3716,9 +3718,9 @@ dependencies = [
 
 [[package]]
 name = "paste"
-version = "0.1.17"
+version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "026c63fe245362be0322bfec5a9656d458d13f9cfb1785d1b38458b9968e8080"
+checksum = "45ca20c77d80be666aef2b45486da86238fabe33e38306bd3118fe4af33fa880"
 dependencies = [
  "paste-impl",
  "proc-macro-hack",
@@ -3726,9 +3728,9 @@ dependencies = [
 
 [[package]]
 name = "paste-impl"
-version = "0.1.17"
+version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b9281a268ec213237dcd2aa3c3d0f46681b04ced37c1616fd36567a9e6954b0"
+checksum = "d95a7db200b97ef370c8e6de0088252f7e0dfff7d047a28528e47456c0fc98b6"
 dependencies = [
  "proc-macro-hack",
 ]
@@ -3802,18 +3804,6 @@ name = "pin-utils"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
-
-[[package]]
-name = "piper"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01608bfa680dafb103f9207fa944facf572e4e3e708d10de19a0d0c3d36e5f18"
-dependencies = [
- "crossbeam-utils",
- "futures-io",
- "futures-sink",
- "futures-util",
-]
 
 [[package]]
 name = "pkg-config"
@@ -4709,9 +4699,9 @@ checksum = "a0eddf2e8f50ced781f288c19f18621fa72a3779e3cb58dbf23b07469b0abeb4"
 
 [[package]]
 name = "serde"
-version = "1.0.113"
+version = "1.0.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6135c78461981c79497158ef777264c51d9d0f4f3fc3a4d22b915900e42dac6a"
+checksum = "5317f7588f0a5078ee60ef675ef96735a1442132dc645eb1d12c018620ed8cd3"
 dependencies = [
  "serde_derive",
 ]
@@ -4748,9 +4738,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.113"
+version = "1.0.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93c5eaa17d0954cb481cdcfffe9d84fcfa7a1a9f2349271e678677be4c26ae31"
+checksum = "2a0be94b04690fbaed37cddffc5c134bf537c8e3329d53e982fe04c374978f8e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4783,10 +4773,10 @@ dependencies = [
 [[package]]
 name = "sgx-ra"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c#ab6a466caf362654fced81aea4c5a766cdad856c"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
 dependencies = [
- "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=ab6a466caf362654fced81aea4c5a766cdad856c)",
+ "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
+ "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b)",
  "aes",
  "base16",
  "base64 0.12.2",
@@ -5048,9 +5038,9 @@ dependencies = [
 
 [[package]]
 name = "smol"
-version = "0.1.14"
+version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f50d21240d7045d848746d6244762b8cb96449b586b4200519719784859ef50"
+checksum = "620cbb3c6e34da57d3a248cda0cd01cd5848164dc062e764e65d06fe3ea7aed5"
 dependencies = [
  "async-task",
  "blocking",
@@ -5060,11 +5050,11 @@ dependencies = [
  "futures-util",
  "libc",
  "once_cell 1.4.0",
- "piper",
  "scoped-tls 1.0.0",
  "slab",
  "socket2",
- "wepoll-binding",
+ "wepoll-sys-stjepang",
+ "winapi 0.3.8",
 ]
 
 [[package]]
@@ -5801,9 +5791,9 @@ checksum = "502d53007c02d7605a05df1c1a73ee436952781653da5d0bf57ad608f66932c1"
 
 [[package]]
 name = "syn"
-version = "1.0.31"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5304cfdf27365b7585c25d4af91b35016ed21ef88f17ced89c7093b43dba8b6"
+checksum = "e8d5d96e8cbb005d6959f119f773bfaebb5684296108fb32600c00cde305b2cd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6360,9 +6350,9 @@ checksum = "caaa9d531767d1ff2150b9332433f32a24622147e5ebb1f26409d5da67afd479"
 
 [[package]]
 name = "unicode-xid"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
+checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
 
 [[package]]
 name = "unsigned-varint"
@@ -6663,20 +6653,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "wepoll-binding"
-version = "2.0.2"
+name = "wepoll-sys-stjepang"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "374fff4ff9701ff8b6ad0d14bacd3156c44063632d8c136186ff5967d48999a7"
-dependencies = [
- "bitflags",
- "wepoll-sys",
-]
-
-[[package]]
-name = "wepoll-sys"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9082a777aed991f6769e2b654aa0cb29f1c3d615daf009829b07b66c7aff6a24"
+checksum = "6fd319e971980166b53e17b1026812ad66c6b54063be879eb182342b55284694"
 dependencies = [
  "cc",
 ]
