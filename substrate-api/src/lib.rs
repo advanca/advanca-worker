@@ -209,11 +209,7 @@ impl SubstrateApi {
         self.send_extrinsic(extrinsic.hex_encode())
     }
 
-    pub fn submit_task_evidence(
-        &self,
-        task_id: TaskId,
-        evidence: Vec<Vec<u8>>,
-    ) -> Hash {
+    pub fn submit_task_evidence(&self, task_id: TaskId, evidence: Vec<Vec<u8>>) -> Hash {
         let extrinsic = compose_extrinsic!(
             self.0.clone(),
             "AdvancaCore",
