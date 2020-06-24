@@ -391,7 +391,14 @@ fn main() {
 
     let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
         info!("starting watchdog thread...");
-        watchdog_loop(task_id_thread, eid_thread, &ws_url, is_done_thread, client_thread, api_thread);
+        watchdog_loop(
+            task_id_thread,
+            eid_thread,
+            &ws_url,
+            is_done_thread,
+            client_thread,
+            api_thread,
+        );
     });
     std::thread::sleep(std::time::Duration::from_secs(12));
 
@@ -448,7 +455,10 @@ fn main() {
     info!("accepted task (extrinsic={:?})", hash);
 
     info!("waiting for task termination by user ...");
-    api_wrapper.lock().unwrap().wait_all_task_aborted(vec![task_id]);
+    api_wrapper
+        .lock()
+        .unwrap()
+        .wait_all_task_aborted(vec![task_id]);
     info!("task aborted");
 
     // kill task watchdog
@@ -459,7 +469,6 @@ fn main() {
         .expect("Couldn't join on the watchdog");
     info!("watchdong killed");
 
-
     let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);
     info!("freeing ra_context: {}", ra_context);
@@ -469,7 +478,6 @@ fn main() {
     handle
         .join()
         .expect("Couldn't join on the associated thread");
-
 }
 
 #[cfg(test)]
