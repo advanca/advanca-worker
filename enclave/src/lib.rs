@@ -334,12 +334,19 @@ pub unsafe extern "C" fn proc_heartbeat(
     let task_info = (*TASKS).get(&task_id).unwrap();
     let worker_task_prvkey = task_info.task_prvkey;
     let mut heartbeat_response = HeartbeatResponse::new();
+    // obtain the storage info
+    // current owner is not used for storage, set it to 0
+    // used in the future for multiple owners
+    let (storage_in, storage_out, storage_size) = storage::get_storage_stats([0; 64]).unwrap();
     let alive_evidence = AliveEvidence {
         magic_str: *b"dokidoki",
         task_id: task_id.to_vec(),
         block_hash: block_hash,
         data_in: data_in,
         data_out: data_out,
+        storage_in: storage_in,
+        storage_out: storage_out,
+        storage_size: storage_size,
     };
     let data = serde_cbor::to_vec(&alive_evidence).unwrap();
 

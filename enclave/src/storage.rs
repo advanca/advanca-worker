@@ -41,6 +41,9 @@ struct Storage {
     #[serde(with = "BigArray")]
     owner: [u8; 64],
     backend: HashMap<String, String>,
+    pub storage_size : usize,
+    pub storage_in   : usize,
+    pub storage_out  : usize,
 }
 
 impl Default for Storage {
@@ -48,12 +51,15 @@ impl Default for Storage {
         Storage {
             owner: [0; 64],
             backend: HashMap::default(),
+            storage_size: 0,
+            storage_in: 0,
+            storage_out: 0,
         }
     }
 }
 
 pub fn create_sealed_storage(owner: [u8; 64]) -> SgxResult<sgx_status_t> {
-    let storage = Storage {
+    let mut storage = Storage {
         owner,
         ..Default::default()
     };
@@ -70,20 +76,31 @@ pub fn create_sealed_storage(owner: [u8; 64]) -> SgxResult<sgx_status_t> {
     } else {
         println!("[ENCLAVE INFO] removed old file {}", SEALED_STORAGE_FILE);
     }
+    storage.storage_size = storage_json.len();
+    let storage_json = serde_json::to_string(&storage).unwrap();
     io::seal(storage_json.as_bytes(), SEALED_STORAGE_FILE)
 }
 
 fn unseal_storage() -> SgxResult<Storage> {
     let bytes = io::unseal(SEALED_STORAGE_FILE)?;
     let storage_json = std::str::from_utf8(&bytes).unwrap();
-    let storage: Storage = serde_json::from_str(&storage_json).unwrap();
+    let mut storage: Storage = serde_json::from_str(&storage_json).unwrap();
+    storage.storage_out += storage_json.len();
     Ok(storage)
 }
 
-fn seal_storage(storage: &Storage) -> SgxError {
+fn seal_storage(storage: &mut Storage) -> SgxError {
     let storage_json = serde_json::to_string(storage).unwrap();
+    // assume that storage_json is the length stored in the file
+    storage.storage_in += storage_json.len();
+    storage.storage_size = storage_json.len();
     io::seal(storage_json.as_bytes(), SEALED_STORAGE_FILE)?;
     Ok(())
+}
+
+pub  fn get_storage_stats(_owner: [u8; 64]) -> SgxResult<(usize,usize,usize)> {
+    let storage = unseal_storage()?;
+    Ok((storage.storage_in, storage.storage_out, storage.storage_size))
 }
 
 pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> {
@@ -104,6 +121,7 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
                     None => set_res.set_message("new key and value created".into()),
                     Some(_) => set_res.set_message("new value updated".into()),
                 }
+                storage.storage_in += set_req.get_value().len();
             }
             Privacy::SQRTORAM => {
                 let index: u32 = set_req.get_key().parse().unwrap();
@@ -111,9 +129,9 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
                 oram.put(index, value);
                 // TODO: handle put failure
                 set_res.set_message("key inserted".into());
+                storage.storage_in += set_req.get_value().len();
             }
         }
-
         plain_response.set_set_response(set_res);
     } else if plain_request.has_get_request() {
         let get_req = plain_request.get_get_request();
@@ -125,6 +143,7 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
                 Some(k) => {
                     get_res.set_value(k.clone());
                     get_res.set_message("key exists, value returned".into());
+                    storage.storage_out += k.len();
                 }
                 None => get_res.set_message("key not found".into()),
             },
@@ -133,6 +152,7 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
                 if let Some(value) = oram.get(index) {
                     get_res.set_value(std::str::from_utf8(&value).unwrap().to_string());
                     get_res.set_message("key exists, value returned".into());
+                    storage.storage_out += value.len();
                 } else {
                     get_res.set_message("key not found".into());
                 }
@@ -141,7 +161,7 @@ pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> 
 
         plain_response.set_get_response(get_res);
     }
-    seal_storage(&storage)?;
+    seal_storage(&mut storage)?;
 
     Ok(plain_response)
 }
