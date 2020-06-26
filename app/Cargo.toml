@@ -4,7 +4,7 @@ build = "build.rs"
 edition = "2018"
 license = "GPL-3.0"
 name = "advanca-worker"
-version = "0.4.0"
+version = "0.4.1"
 
 [dependencies]
 log        = "0.4"
@@ -31,10 +31,10 @@ sgx_urts 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk
 sgx_tseal 		= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_crypto_helper 	= { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-macros          = { rev = "a0a7f2bef6e0d371ad70a405e17d027c96279e17", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto          = { rev = "a0a7f2bef6e0d371ad70a405e17d027c96279e17", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto-types    = { rev = "a0a7f2bef6e0d371ad70a405e17d027c96279e17", git = "https://github.com/advanca/advanca-sgx-helper" }
-sgx-ra                  = { rev = "a0a7f2bef6e0d371ad70a405e17d027c96279e17", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-macros          = { rev = "271c991e18148f77844bc74bc338ee31456fde29", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto          = { rev = "271c991e18148f77844bc74bc338ee31456fde29", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto-types    = { rev = "271c991e18148f77844bc74bc338ee31456fde29", git = "https://github.com/advanca/advanca-sgx-helper" }
+sgx-ra                  = { rev = "271c991e18148f77844bc74bc338ee31456fde29", git = "https://github.com/advanca/advanca-sgx-helper" }
 advanca-runtime         = { rev = "7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0", git = "https://github.com/advanca/advanca-node/" }
 advanca-core            = { rev = "7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0", git = "https://github.com/advanca/advanca-node/" }
 
