@@ -3,7 +3,7 @@
 [[package]]
 name = "advanca-crypto"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
 dependencies = [
  "serde 1.0.106",
  "serde-big-array",
@@ -28,7 +28,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=2be0683f66f05633bdffa4d60eff8988d0fbca1b#2be0683f66f05633bdffa4d60eff8988d0fbca1b"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
