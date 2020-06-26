@@ -262,7 +262,7 @@ fn main() {
         .format_level(true)
         .format_module_path(false)
         .format_timestamp(None)
-        .filter(Some("advanca_worker"), LevelFilter::Debug)
+        .filter(Some("advanca_worker"), LevelFilter::Info)
         .init();
 
     let grpc_port = opt
@@ -280,8 +280,8 @@ fn main() {
     let mut ra_context: sgx_ra_context_t = 10;
 
     let sgx_return = unsafe { enclave_init_ra(eid, &mut retval, 0, &mut ra_context) };
-    info!("enclave_init_ra: {}", sgx_return);
-    info!("ra_context: {}", ra_context);
+    debug!("enclave_init_ra: {}", sgx_return);
+    debug!("ra_context: {}", ra_context);
 
     // We'll try to connect to the service provider
     let env = Arc::new(Environment::new(2));
@@ -292,7 +292,7 @@ fn main() {
     let aas_report =
         task::block_on(async { aas_remote_attest(Arc::clone(&client), eid, ra_context).await });
     info!("Remote attestation complete!");
-    info!("AAS Report: {:?}", aas_report);
+    debug!("AAS Report: {:?}", aas_report);
 
     // TODO: clean this up when we figure out how to terminate when remote_attest fails
     // currently if aas_remote_attest returns, we know the report is valid and attestation
@@ -344,7 +344,7 @@ fn main() {
     // find out the owner of the task (i.e. user)
     info!("querying task information ...");
     let task = api.get_task(task_id);
-    info!("received task information {:?}", &task);
+    debug!("received task information {:?}", &task);
     let owner = task.owner;
 
     // start grpc server, preparing for accepting the task
@@ -380,28 +380,6 @@ fn main() {
         )
         .unwrap()
     };
-    // start watchdog
-    let ws_url = opt.ws_url.to_owned();
-    let is_done = Arc::new(Mutex::new(false));
-    let is_done_thread = Arc::clone(&is_done);
-    let task_id_thread = task_id.to_fixed_bytes();
-    let client_thread = Arc::clone(&client);
-    let api_wrapper = Arc::new(Mutex::new(api));
-    let api_thread = Arc::clone(&api_wrapper);
-
-    let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
-        info!("starting watchdog thread...");
-        watchdog_loop(
-            task_id_thread,
-            eid_thread,
-            &ws_url,
-            is_done_thread,
-            client_thread,
-            api_thread,
-        );
-    });
-    std::thread::sleep(std::time::Duration::from_secs(12));
-
     buf_size = buf.len();
     let _ = unsafe {
         handle_ecall!(
@@ -443,6 +421,28 @@ fn main() {
         error!("failed to initialize storage {}", e);
         return;
     }
+
+    // start watchdog
+    let ws_url = opt.ws_url.to_owned();
+    let is_done = Arc::new(Mutex::new(false));
+    let is_done_thread = Arc::clone(&is_done);
+    let task_id_thread = task_id.to_fixed_bytes();
+    let client_thread = Arc::clone(&client);
+    let api_wrapper = Arc::new(Mutex::new(api));
+    let api_thread = Arc::clone(&api_wrapper);
+
+    let handle_watchdog: thread::JoinHandle<_> = thread::spawn(move || {
+        info!("starting watchdog thread...");
+        watchdog_loop(
+            task_id_thread,
+            eid_thread,
+            &ws_url,
+            is_done_thread,
+            client_thread,
+            api_thread,
+        );
+    });
+
     info!(
         "accpeting task (id={}) with encrypted url {:?} ...",
         &task_id, url_encrypted,
