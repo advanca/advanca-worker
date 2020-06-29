@@ -41,9 +41,9 @@ struct Storage {
     #[serde(with = "BigArray")]
     owner: [u8; 64],
     backend: HashMap<String, String>,
-    pub storage_size : usize,
-    pub storage_in   : usize,
-    pub storage_out  : usize,
+    pub storage_size: usize,
+    pub storage_in: usize,
+    pub storage_out: usize,
 }
 
 impl Default for Storage {
@@ -98,9 +98,13 @@ fn seal_storage(storage: &mut Storage) -> SgxError {
     Ok(())
 }
 
-pub  fn get_storage_stats(_owner: [u8; 64]) -> SgxResult<(usize,usize,usize)> {
+pub fn get_storage_stats(_owner: [u8; 64]) -> SgxResult<(usize, usize, usize)> {
     let storage = unseal_storage()?;
-    Ok((storage.storage_in, storage.storage_out, storage.storage_size))
+    Ok((
+        storage.storage_in,
+        storage.storage_out,
+        storage.storage_size,
+    ))
 }
 
 pub fn storage_request(plain_request: PlainRequest) -> SgxResult<PlainResponse> {
