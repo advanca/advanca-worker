@@ -13,8 +13,8 @@ use sgx_types::*;
 use substrate_api::SubstrateApi;
 use worker_protos_std::storage::storage::*;
 
-use std::collections::HashSet;
 use hex;
+use std::collections::HashSet;
 
 // Defining the Header from sp_runtime here instead of using
 // the defined type from node. Lessen compilation time.
@@ -35,7 +35,7 @@ const AAS_PUB_KEY: Secp256r1PublicKey = Secp256r1PublicKey {
     ],
 };
 
-pub fn print_task_stats (task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
+pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     // Print information about the completed task
     info!("reading task stats from chain ...");
     debug!("preparing to access task stats: {:?}", task_id);
@@ -47,14 +47,23 @@ pub fn print_task_stats (task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     let worker_info = api.lock().unwrap().get_worker(worker_account_id);
     trace!("{:?}", worker_info);
     debug!("verifying worker's attestation report");
-    let worker_attestation_report = serde_cbor::from_slice(&worker_info.enclave.attestation).unwrap();
-    assert_eq!(true, aas_verify_reg_report(&AAS_PUB_KEY, &worker_attestation_report).unwrap());
+    let worker_attestation_report =
+        serde_cbor::from_slice(&worker_info.enclave.attestation).unwrap();
+    assert_eq!(
+        true,
+        aas_verify_reg_report(&AAS_PUB_KEY, &worker_attestation_report).unwrap()
+    );
     debug!("get worker's attested pubkey");
     let worker_pubkey: Secp256r1PublicKey = worker_attestation_report.worker_pubkey;
     debug!("verifying worker's task pubkey");
-    let signed_worker_task_pubkey = serde_cbor::from_slice(&task.signed_worker_task_pubkey.unwrap()).unwrap();
-    assert_eq!(true, secp256r1_verify_msg(&worker_pubkey, &signed_worker_task_pubkey).unwrap());
-    let worker_task_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&signed_worker_task_pubkey.msg).unwrap();
+    let signed_worker_task_pubkey =
+        serde_cbor::from_slice(&task.signed_worker_task_pubkey.unwrap()).unwrap();
+    assert_eq!(
+        true,
+        secp256r1_verify_msg(&worker_pubkey, &signed_worker_task_pubkey).unwrap()
+    );
+    let worker_task_pubkey: Secp256r1PublicKey =
+        serde_cbor::from_slice(&signed_worker_task_pubkey.msg).unwrap();
     debug!("iterating over the evidences ...");
     let mut verified_evidence = 0;
     let mut alive_blocks = HashSet::new();
@@ -64,15 +73,19 @@ pub fn print_task_stats (task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     let mut data_in = 0;
     let mut data_out = 0;
     for evidence_bytes in task.worker_heartbeat_evidence {
-        let signed_timestamp: Secp256r1SignedMsg =
-            serde_cbor::from_slice(&evidence_bytes).unwrap();
+        let signed_timestamp: Secp256r1SignedMsg = serde_cbor::from_slice(&evidence_bytes).unwrap();
         trace!("verifying aas timestamp...");
-        assert_eq!(true, secp256r1_verify_msg(&AAS_PUB_KEY, &signed_timestamp).unwrap());
+        assert_eq!(
+            true,
+            secp256r1_verify_msg(&AAS_PUB_KEY, &signed_timestamp).unwrap()
+        );
         let timestamp: AasTimestamp = serde_cbor::from_slice(&signed_timestamp.msg).unwrap();
         trace!("verifying signed evidence ...");
-        let signed_evidence: Secp256r1SignedMsg =
-            serde_cbor::from_slice(&timestamp.data).unwrap();
-        assert_eq!(true, secp256r1_verify_msg(&worker_task_pubkey, &signed_evidence).unwrap());
+        let signed_evidence: Secp256r1SignedMsg = serde_cbor::from_slice(&timestamp.data).unwrap();
+        assert_eq!(
+            true,
+            secp256r1_verify_msg(&worker_task_pubkey, &signed_evidence).unwrap()
+        );
         let evidence: AliveEvidence = serde_cbor::from_slice(&signed_evidence.msg).unwrap();
         trace!("Evidence: {:?}", evidence);
         alive_blocks.insert(evidence.block_hash.clone());
@@ -101,7 +114,6 @@ pub fn print_task_stats (task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     info!("Data out  : {}", data_out);
     info!("{:=^80}", "");
 }
-
 
 pub fn watchdog_loop(
     task_id: [u8; 32],
