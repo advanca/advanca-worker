@@ -39,11 +39,11 @@ checksum = "5d2e7343e7fc9de883d1b0341e0b13970f764c14101234857d2ddafa1cb1cac2"
 
 [[package]]
 name = "advanca-client"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "advanca-core",
- "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0)",
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0)",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "advanca-runtime",
  "env_logger",
  "error-chain",
@@ -90,26 +90,11 @@ dependencies = [
 
 [[package]]
 name = "advanca-crypto"
-version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
+version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
 dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0)",
- "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0)",
- "aes",
- "cmac",
- "rand 0.7.3",
- "ring",
- "sgx_types",
- "sgx_ucrypto",
-]
-
-[[package]]
-name = "advanca-crypto"
-version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
-dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
- "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
+ "advanca-crypto-types",
+ "advanca-macros",
  "aes",
  "cmac",
  "rand 0.7.3",
@@ -120,22 +105,8 @@ dependencies = [
 
 [[package]]
 name = "advanca-crypto-types"
-version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
-dependencies = [
- "aes",
- "cmac",
- "openssl",
- "serde",
- "serde-big-array 0.3.0",
- "serde_json",
- "sgx_types",
-]
-
-[[package]]
-name = "advanca-crypto-types"
-version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
+version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
 dependencies = [
  "aes",
  "cmac",
@@ -148,19 +119,10 @@ dependencies = [
 
 [[package]]
 name = "advanca-macros"
-version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0#96e0144fbed9b6362ffe5286de1d221b095dcbd9"
+version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
 dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?tag=v0.2.0)",
- "sgx_types",
-]
-
-[[package]]
-name = "advanca-macros"
-version = "0.1.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
-dependencies = [
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
+ "advanca-crypto-types",
  "sgx_types",
 ]
 
@@ -200,13 +162,13 @@ dependencies = [
 
 [[package]]
 name = "advanca-worker"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "aas-protos-std",
  "advanca-core",
- "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
- "advanca-macros 0.1.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
+ "advanca-crypto",
+ "advanca-crypto-types",
+ "advanca-macros",
  "advanca-runtime",
  "async-std",
  "env_logger",
@@ -4774,11 +4736,11 @@ dependencies = [
 
 [[package]]
 name = "sgx-ra"
-version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17#a0a7f2bef6e0d371ad70a405e17d027c96279e17"
+version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
 dependencies = [
- "advanca-crypto 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
- "advanca-crypto-types 0.2.0 (git+https://github.com/advanca/advanca-sgx-helper?rev=a0a7f2bef6e0d371ad70a405e17d027c96279e17)",
+ "advanca-crypto",
+ "advanca-crypto-types",
  "aes",
  "base16",
  "base64 0.12.3",
