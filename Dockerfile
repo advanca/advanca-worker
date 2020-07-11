@@ -13,9 +13,7 @@ RUN curl -sO $SGX_SDK_URL && chmod +x $SGX_SDK_BIN && \
     export PATH=$PATH:$HOME/.cargo/bin && \
     rustup default nightly-2020-04-07 && \
     rustup target add wasm32-unknown-unknown --toolchain nightly-2020-04-07 && \
-    rustup run nightly-2020-04-07 cargo --version && \
     rustup run nightly-2020-04-07 cargo install -f cargo && \
-    rustup run nightly-2020-04-07 cargo --version
 
 ENV RUSTC_BOOTSTRAP=1
 
