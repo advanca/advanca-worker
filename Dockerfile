@@ -11,8 +11,14 @@ RUN curl -sO $SGX_SDK_URL && chmod +x $SGX_SDK_BIN && \
     echo -e 'no\n/opt/intel' | ./$SGX_SDK_BIN && \
     curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly-2020-04-07 -y && \
     export PATH=$PATH:$HOME/.cargo/bin && \
-    rustup target add wasm32-unknown-unknown
-    
+    rustup default nightly-2020-04-07 && \
+    rustup target add wasm32-unknown-unknown --toolchain nightly-2020-04-07 && \
+    rustup run nightly-2020-04-07 cargo --version && \
+    rustup run nightly-2020-04-07 cargo install -f cargo && \
+    rustup run nightly-2020-04-07 cargo --version
+
+ENV RUSTC_BOOTSTRAP=1
+
 ENV SGX_DEBUG=0
 ENV SGX_MODE=HW
 
@@ -23,6 +29,7 @@ WORKDIR /advanca
 RUN . $HOME/.cargo/env && \
     . /opt/intel/sgxsdk/environment && \
     make
+
 
 #=============== worker =======
 FROM ubuntu:bionic-20200403 as worker
