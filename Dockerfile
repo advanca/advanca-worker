@@ -2,7 +2,8 @@ FROM ubuntu:bionic-20200403 as builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        curl ca-certificates make build-essential cmake protobuf-compiler golang autoconf libtool automake pkg-config libssl-dev
+        curl ca-certificates make build-essential cmake protobuf-compiler golang autoconf libtool automake pkg-config libssl-dev \
+	openssl
 
 ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.9.1/distro/ubuntu18.04-server/sgx_linux_x64_sdk_2.9.101.2.bin
 ARG SGX_SDK_BIN=sgx_linux_x64_sdk_2.9.101.2.bin
@@ -13,7 +14,7 @@ RUN curl -sO $SGX_SDK_URL && chmod +x $SGX_SDK_BIN && \
     export PATH=$PATH:$HOME/.cargo/bin && \
     rustup default nightly-2020-04-07 && \
     rustup target add wasm32-unknown-unknown --toolchain nightly-2020-04-07 && \
-    rustup run nightly-2020-04-07 cargo install -f cargo && \
+    rustup run nightly-2020-04-07 cargo install -f cargo
 
 ENV RUSTC_BOOTSTRAP=1
 
@@ -71,6 +72,10 @@ ENTRYPOINT ["/usr/local/bin/advanca-worker"]
 FROM ubuntu:bionic-20200403 as client
 
 ARG SOURCE_PATH=/advanca
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+	openssl
 
 COPY --from=builder $SOURCE_PATH/bin/advanca-client /usr/local/bin
 
