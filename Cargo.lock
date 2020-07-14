@@ -12,9 +12,10 @@ dependencies = [
 
 [[package]]
 name = "aas-protos-std"
-version = "0.2.1"
-source = "git+https://github.com/advanca/advanca-attestation-service?rev=fcbd88bdc05e892444c2dd13b2b3fecb163882b5#fcbd88bdc05e892444c2dd13b2b3fecb163882b5"
+version = "0.2.0"
+source = "git+https://github.com/advanca/advanca-attestation-service?tag=v0.2.0#015e301e04c0ce66af0e450abe6caade799d3357"
 dependencies = [
+ "clang-sys",
  "futures 0.3.5",
  "grpcio",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -33,9 +34,9 @@ dependencies = [
 
 [[package]]
 name = "adler"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccc9a9dd069569f212bc4330af9f17c4afb5e8ce185e83dbb14f1349dda18b10"
+checksum = "ee2a4ec343196209d6594e19543ae87a39f96d5534d7174822a3ad825dd6ed7e"
 
 [[package]]
 name = "advanca-client"
@@ -45,6 +46,7 @@ dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
  "advanca-runtime",
+ "clang-sys",
  "env_logger",
  "error-chain",
  "futures 0.1.29",
@@ -76,7 +78,7 @@ dependencies = [
 [[package]]
 name = "advanca-core"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0#7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0"
+source = "git+https://github.com/advanca/advanca-node/?tag=v0.2.0#c674ee015ee6e917456fd23b446353130ec05c50"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -91,7 +93,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -106,7 +108,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "aes",
  "cmac",
@@ -120,7 +122,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
@@ -129,7 +131,7 @@ dependencies = [
 [[package]]
 name = "advanca-runtime"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0#7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0"
+source = "git+https://github.com/advanca/advanca-node/?tag=v0.2.0#c674ee015ee6e917456fd23b446353130ec05c50"
 dependencies = [
  "advanca-core",
  "frame-executive",
@@ -171,6 +173,7 @@ dependencies = [
  "advanca-macros",
  "advanca-runtime",
  "async-std",
+ "clang-sys",
  "env_logger",
  "futures 0.3.5",
  "grpcio",
@@ -609,12 +612,9 @@ dependencies = [
 
 [[package]]
 name = "bytes"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "118cf036fbb97d0816e3c34b2d7a1e8cfc60f68fcf63d550ddbe9bd5f59c213b"
-dependencies = [
- "loom",
-]
+checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
 
 [[package]]
 name = "c_linked_list"
@@ -1394,7 +1394,7 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0a73299e4718f5452e45980fc1d6957a070abe308d3700b63b8673f47e1c2b3"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures 0.3.5",
  "memchr",
  "pin-project",
@@ -1405,19 +1405,6 @@ name = "gcc"
 version = "0.3.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
-
-[[package]]
-name = "generator"
-version = "0.6.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "add72f17bb81521258fcc8a7a3245b1e184e916bfbe34f0ea89558f440df5c68"
-dependencies = [
- "cc",
- "libc",
- "log 0.4.8",
- "rustc_version",
- "winapi 0.3.9",
-]
 
 [[package]]
 name = "generic-array"
@@ -1541,21 +1528,21 @@ dependencies = [
 
 [[package]]
 name = "h2"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79b7246d7e4b979c03fa093da39cfb3617a96bbeee6310af63991668d7e843ff"
+checksum = "993f9e0baeed60001cf565546b0d3dbe6a6ad23f2bd31644a133c641eccf6d53"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "futures-core",
  "futures-sink",
  "futures-util",
  "http 0.2.1",
  "indexmap",
- "log 0.4.8",
  "slab",
  "tokio 0.2.21",
  "tokio-util",
+ "tracing",
 ]
 
 [[package]]
@@ -1697,7 +1684,7 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28d569972648b2c512421b5f2a405ad6ac9666547189d0c5477a3f200f3e02f9"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "itoa",
 ]
@@ -1720,7 +1707,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13d5ff830006f7646652e057693569bfe0d51760c0085a071769d142a205111b"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "http 0.2.1",
 ]
 
@@ -1790,25 +1777,25 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "0.13.6"
+version = "0.13.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6e7655b9594024ad0ee439f3b5a7299369dc2a3f459b47c696f9ff676f9aa1f"
+checksum = "3e68a8dd9716185d9e64ea473ea6ef63529252e3e27623295a0378a19665d5eb"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures-channel",
  "futures-core",
  "futures-util",
- "h2 0.2.5",
+ "h2 0.2.6",
  "http 0.2.1",
  "http-body 0.3.1",
  "httparse",
  "itoa",
- "log 0.4.8",
  "pin-project",
  "socket2",
  "time",
  "tokio 0.2.21",
  "tower-service",
+ "tracing",
  "want 0.3.0",
 ]
 
@@ -1818,8 +1805,8 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d979acc56dcb5b8dddba3917601745e877576475aa046df3226eabdecef78eed"
 dependencies = [
- "bytes 0.5.5",
- "hyper 0.13.6",
+ "bytes 0.5.6",
+ "hyper 0.13.7",
  "native-tls",
  "tokio 0.2.21",
  "tokio-tls 0.3.1",
@@ -2023,13 +2010,13 @@ dependencies = [
  "async-std",
  "async-tls",
  "bs58",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "futures 0.3.5",
  "futures-timer 3.0.2",
  "globset",
  "hashbrown 0.7.2",
- "hyper 0.13.6",
+ "hyper 0.13.7",
  "jsonrpsee-proc-macros",
  "lazy_static",
  "log 0.4.8",
@@ -2135,7 +2122,7 @@ version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f84847789ab24b3fc5971a68656ac85886df640986d9ce3264c0327694eae471"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures 0.3.5",
  "lazy_static",
  "libp2p-core",
@@ -2259,7 +2246,7 @@ dependencies = [
  "base64 0.11.0",
  "bs58",
  "byteorder 1.3.4",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "futures 0.3.5",
  "futures_codec",
@@ -2299,7 +2286,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c6ea6fece0d99599afb1b2082ca8937944cdd6b0946a88d54cb3ae7a38d1253"
 dependencies = [
  "arrayvec 0.5.1",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "either",
  "fnv",
  "futures 0.3.5",
@@ -2347,7 +2334,7 @@ version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89d0b44dfdef80cc2be4b42d127de1c793905eca2459415a5c57d6b4fbd8ec30"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "futures 0.3.5",
  "futures_codec",
@@ -2398,7 +2385,7 @@ version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "195fda6b6a948a242fd30570e0e3418ae8e0a20055ea75d45458e1079a8efb05"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures 0.3.5",
  "futures_codec",
  "libp2p-core",
@@ -2502,7 +2489,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bba425f2af1fdb7dece88b9ae05ca9430dfb0b72b2c078e73ded6f1556084509"
 dependencies = [
  "async-tls",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "either",
  "futures 0.3.5",
  "libp2p-core",
@@ -2592,17 +2579,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "loom"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ecc775857611e1df29abba5c41355cdf540e7e9d4acfdf0f355eefee82330b7"
-dependencies = [
- "cfg-if",
- "generator",
- "scoped-tls 0.1.2",
 ]
 
 [[package]]
@@ -2771,7 +2747,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f938ffe420493e77c8b6cbcc3f282283f68fc889c5dcbc8e51668d5f3a01ad94"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures 0.1.29",
  "log 0.4.8",
  "smallvec 1.4.1",
@@ -3528,7 +3504,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a1cd2ba02391b81367bec529fb209019d718684fdc8ad6a712c2b536e46f775"
 dependencies = [
  "blake2",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "rand 0.7.3",
  "sha-1",
  "sha2",
@@ -3771,9 +3747,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05da548ad6865900e60eaba7f589cc0783590a92e940c26953ff81ddbab2d677"
+checksum = "d36492546b6af1463394d46f0c834346f31548646f6ba10849802c9c9a27ac33"
 
 [[package]]
 name = "ppv-lite86"
@@ -3795,9 +3771,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e10d4b51f154c8a7fb96fd6dad097cb74b863943ec010ac94b9fd1be8861fe1e"
+checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
 dependencies = [
  "toml",
 ]
@@ -3855,7 +3831,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce49aefe0a6144a45de32927c77bd2859a5f7677b55f220ae5b744e87389c212"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "prost-derive",
 ]
 
@@ -3865,7 +3841,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02b10678c913ecbd69350e8535c3aef91a8676c0773fc1d7b95cdd196d7f2f26"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "heck",
  "itertools 0.8.2",
  "log 0.4.8",
@@ -3896,7 +3872,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1834f67c0697c001304b75be76f67add9c89742eda3a085ad8ee0bb38c3417aa"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "prost",
 ]
 
@@ -4168,9 +4144,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.1.56"
+version = "0.1.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
+checksum = "41cc0f7e4d5d4544e8861606a285bb08d3e70712ccc7d2b84d7c0ccfaf4b05ce"
 
 [[package]]
 name = "regex"
@@ -4206,13 +4182,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b82c9238b305f26f53443e3a4bc8528d64b8d0bee408ec949eb7bf5635ec680"
 dependencies = [
  "base64 0.12.3",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "encoding_rs",
  "futures-core",
  "futures-util",
  "http 0.2.1",
  "http-body 0.3.1",
- "hyper 0.13.6",
+ "hyper 0.13.7",
  "hyper-tls",
  "js-sys",
  "lazy_static",
@@ -4539,7 +4515,7 @@ name = "sc-telemetry"
 version = "2.0.0"
 source = "git+https://github.com/paritytech/substrate?rev=00a400f82539e2f78e8ddbcd98aea512c87c5f3c#00a400f82539e2f78e8ddbcd98aea512c87c5f3c"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures 0.3.5",
  "futures-timer 3.0.2",
  "libp2p",
@@ -4582,12 +4558,6 @@ dependencies = [
  "subtle 2.2.3",
  "zeroize 0.9.3",
 ]
-
-[[package]]
-name = "scoped-tls"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332ffa32bf586782a3efaeb58f127980944bbc8c4d6913a86107ac2a5ab24b28"
 
 [[package]]
 name = "scoped-tls"
@@ -4737,7 +4707,7 @@ dependencies = [
 [[package]]
 name = "sgx-ra"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
@@ -5014,7 +4984,7 @@ dependencies = [
  "futures-util",
  "libc",
  "once_cell 1.4.0",
- "scoped-tls 1.0.0",
+ "scoped-tls",
  "slab",
  "socket2",
  "wepoll-sys-stjepang",
@@ -5053,7 +5023,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c9dab3f95c9ebdf3a88268c19af668f637a3c5039c2c56ff2d40b1b2d64a25b"
 dependencies = [
  "base64 0.11.0",
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "flate2",
  "futures 0.3.5",
  "http 0.2.1",
@@ -5755,9 +5725,9 @@ checksum = "502d53007c02d7605a05df1c1a73ee436952781653da5d0bf57ad608f66932c1"
 
 [[package]]
 name = "syn"
-version = "1.0.33"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8d5d96e8cbb005d6959f119f773bfaebb5684296108fb32600c00cde305b2cd"
+checksum = "936cae2873c940d92e697597c5eee105fb570cd5689c695806f672883653349b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5924,7 +5894,7 @@ version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d099fa27b9702bed751524694adbe393e18b36b204da91eb1cbbbbb4a5ee2d58"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "fnv",
  "futures-core",
  "iovec",
@@ -6132,7 +6102,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be8242891f2b6cbef26a2d7e8605133c2c554cd35b3e4948ea892d6d68436499"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures-core",
  "futures-sink",
  "log 0.4.8",
@@ -6162,6 +6132,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2e2a2de6b0d5cbb13fc21193a2296888eaab62b6044479aafb3c54c01c29fcd"
 dependencies = [
  "cfg-if",
+ "log 0.4.8",
  "tracing-attributes",
  "tracing-core",
 ]
@@ -6216,9 +6187,9 @@ dependencies = [
 
 [[package]]
 name = "try-lock"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e604eb7b43c06650e854be16a2a03155743d3752dd1c943f6829e26b7a36e382"
+checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "twofish"
@@ -6324,7 +6295,7 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f67332660eb59a6f1eb24ff1220c9e8d01738a8503c6002e30bcfe4bd9f2b4a9"
 dependencies = [
- "bytes 0.5.5",
+ "bytes 0.5.6",
  "futures_codec",
 ]
 
@@ -6702,6 +6673,7 @@ dependencies = [
 name = "worker-protos-std"
 version = "0.2.0"
 dependencies = [
+ "clang-sys",
  "futures 0.3.5",
  "grpcio",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",

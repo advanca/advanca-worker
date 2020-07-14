@@ -3,7 +3,7 @@
 [[package]]
 name = "advanca-crypto"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "serde 1.0.106",
  "serde-big-array",
@@ -28,7 +28,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=271c991e18148f77844bc74bc338ee31456fde29#271c991e18148f77844bc74bc338ee31456fde29"
+source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
@@ -195,9 +195,9 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "cc"
-version = "1.0.54"
+version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bbb73db36c1246e9034e307d0fba23f9a2e251faa47ade70c1bd252220c8311"
+checksum = "f9a06fb2e53271d7c279ec1efea6ab691c35a2ae67ec0d91d7acec0caf13b518"
 
 [[package]]
 name = "cfg-if"
@@ -283,7 +283,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b480f641ccf0faf324e20c1d3e53d81b7484c698b42ea677f6907ae4db195371"
 dependencies = [
  "errno-dragonfly",
- "libc 0.2.71",
+ "libc 0.2.72",
  "winapi",
 ]
 
@@ -294,7 +294,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14ca354e36190500e1e1fb267c647932382b54053c50b14970856c0b00a35067"
 dependencies = [
  "gcc",
- "libc 0.2.71",
+ "libc 0.2.72",
 ]
 
 [[package]]
@@ -312,7 +312,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
 dependencies = [
- "libc 0.2.71",
+ "libc 0.2.72",
  "winapi",
 ]
 
@@ -338,7 +338,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"
 dependencies = [
  "cfg-if",
- "libc 0.2.71",
+ "libc 0.2.72",
  "wasi",
 ]
 
@@ -420,9 +420,9 @@ source = "git+https://github.com/mesalock-linux/libc-sgx#b718c0bdf0cf19764559586
 
 [[package]]
 name = "libc"
-version = "0.2.71"
+version = "0.2.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
+checksum = "a9f8082297d534141b30c8d39e9b1773713ab50fdbe4ff30f750d063b3bfd701"
 
 [[package]]
 name = "log"
@@ -539,9 +539,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e10d4b51f154c8a7fb96fd6dad097cb74b863943ec010ac94b9fd1be8861fe1e"
+checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
 dependencies = [
  "toml",
 ]
@@ -624,7 +624,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
 dependencies = [
  "getrandom",
- "libc 0.2.71",
+ "libc 0.2.72",
  "rand_chacha",
  "rand_core 0.5.1",
  "rand_hc",
@@ -898,7 +898,7 @@ dependencies = [
 [[package]]
 name = "sgx_tkey_exchange"
 version = "1.1.2"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2#fdc2ea93caecaa7f69a3edc9cf840607d0628ff3"
+source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.2#8f065be7a442157bf16dc7106feb795ea1c578eb"
 dependencies = [
  "sgx_types",
 ]
@@ -971,9 +971,9 @@ dependencies = [
 
 [[package]]
 name = "snap"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7fb9b0bb877b35a1cc1474a3b43d9c226a2625311760cdda2cbccbc0c7a8376"
+checksum = "da73c8f77aebc0e40c300b93f0a5f1bece7a248a36eee287d4e095f35c7b7d6e"
 
 [[package]]
 name = "spin"
@@ -1003,9 +1003,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.33"
+version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8d5d96e8cbb005d6959f119f773bfaebb5684296108fb32600c00cde305b2cd"
+checksum = "936cae2873c940d92e697597c5eee105fb570cd5689c695806f672883653349b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1090,9 +1090,9 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "winapi"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8093091eeb260906a183e6ae1abdba2ef5ef2257a21801128899c3fc699229c6"
+checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
 dependencies = [
  "winapi-i686-pc-windows-gnu",
  "winapi-x86_64-pc-windows-gnu",
