@@ -14,6 +14,7 @@ serde_cbor = { version = "0.11.1"}
 hex        = "0.4.2"
 futures    = "0.3"
 grpcio     = { rev = "249e21b3593a8bdd58429d2552b9ab72d6d46526", git = "https://github.com/tikv/grpc-rs.git", default-features = false, features = ["openssl", "protobuf-codec"] }
+clang-sys  = "=0.28.1"
 protobuf   = "=2.8.1"
 structopt  = "0.3"
 
