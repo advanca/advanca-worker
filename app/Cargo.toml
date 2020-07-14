@@ -39,7 +39,7 @@ sgx-ra                  = { tag = "v0.3.0", git = "https://github.com/advanca/ad
 advanca-runtime         = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
 advanca-core            = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node/" }
 
-aas-protos-std          = { rev = "fcbd88bdc05e892444c2dd13b2b3fecb163882b5", git = "https://github.com/advanca/advanca-attestation-service" }
+aas-protos-std          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-attestation-service" }
 worker-protos-std       = { path = "../worker-protos/worker-protos-std" }
 
 [dependencies.codec]
