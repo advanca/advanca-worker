@@ -14,8 +14,8 @@ hex = "0.4.2"
 
 sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 
-advanca-runtime = { rev = "7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0", git = "https://github.com/advanca/advanca-node" }
-advanca-core    = { rev = "7b5704d9deb3e9b137c4acb61ea7db3019ee1cf0", git = "https://github.com/advanca/advanca-node" }
+advanca-runtime = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
+advanca-core    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
 
 [dependencies.substrate-api-client]
 git = "https://github.com/advanca/substrate-api-client"
