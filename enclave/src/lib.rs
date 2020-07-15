@@ -123,14 +123,13 @@ pub unsafe extern "C" fn enclave_init() -> sgx_status_t {
     SqrtOram::open("oram", ORAM_SIZE, ORAM_BLOCK_SIZE);
 
     println!("[ENCLAVE INFO] enclave initialized");
-    let heap_hashmap = Box::new(HashMap::<[u8;32], TaskInfo>::new());
+    let heap_hashmap = Box::new(HashMap::<[u8; 32], TaskInfo>::new());
     TASKS = Box::into_raw(heap_hashmap);
     sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn enclave_init_ra (b_pse: i32,
-                                   p_context: &mut sgx_ra_context_t) -> sgx_status_t {
+pub extern "C" fn enclave_init_ra(b_pse: i32, p_context: &mut sgx_ra_context_t) -> sgx_status_t {
     let ret: sgx_status_t;
     match rsgx_ra_init(&G_SP_PUB_KEY, b_pse) {
         Ok(p) => {
@@ -281,18 +280,11 @@ pub unsafe extern "C" fn get_sr25519_public_key(
     public_key: *mut u8,
     public_key_size: u32,
 ) -> sgx_status_t {
-    let p_public_ptr = unsafe { &ATTESTED_SESSION.worker_pubkey as *const sgx_ec256_public_t };
-    let data_slice = unsafe {
-        core::slice::from_raw_parts(p_public_ptr as *const u8, size_of::<sgx_ec256_public_t>())
-    };
-    let mut mac = sgx_cmac_128bit_tag_t::default();
+    let key_slice = slice::from_raw_parts_mut(public_key, public_key_size as usize);
 
-    let ret = enclave_utils::aes128_cmac_sk(context, &data_slice, &mut mac);
-    if ret == sgx_status_t::SGX_SUCCESS {
-        aas_reg_request.pubkey = unsafe { ATTESTED_SESSION.worker_pubkey };
-        aas_reg_request.mac = mac;
-    }
-    ret
+    //FIXME: a dummy public key is used
+    key_slice.clone_from_slice(&[111 as u8; 32]);
+    sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
