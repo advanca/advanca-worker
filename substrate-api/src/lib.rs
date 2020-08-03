@@ -257,6 +257,12 @@ impl SubstrateApi {
         self.send_extrinsic(extrinsic.hex_encode())
     }
 
+    pub fn complete_task(&self, task_id: TaskId) -> Hash {
+        let extrinsic = compose_extrinsic!(self.0.clone(), "AdvancaCore", "complete_task", task_id);
+        trace!("composed extrinsic: {:?}", extrinsic);
+        self.send_extrinsic(extrinsic.hex_encode())
+    }
+
     /// Listen for event WorkerAdded once
     ///
     /// Block the current thread and return the worker acount received
