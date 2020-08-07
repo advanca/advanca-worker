@@ -483,10 +483,7 @@ fn main() {
         .expect("Couldn't join on the watchdog");
     info!("watchdong killed");
 
-    api_wrapper
-        .lock()
-        .unwrap()
-        .complete_task(task_id);
+    api_wrapper.lock().unwrap().complete_task(task_id);
     info!("complete task: {:?}", task_id);
 
     display_balance(worker_account.clone(), &api_wrapper.lock().unwrap());

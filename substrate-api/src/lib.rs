@@ -144,7 +144,10 @@ impl SubstrateApi {
     pub fn get_balance(&self, id: AccountId) -> AccountData<Balance> {
         let hex_str = self.get_storage("Balances", "Account", Some(id.encode()));
         let accountdata_encoded = hexstr_to_vec(hex_str).unwrap();
-        trace!("accountdata encoded {:?}", hex::encode(&accountdata_encoded));
+        trace!(
+            "accountdata encoded {:?}",
+            hex::encode(&accountdata_encoded)
+        );
         let accountdata = Decode::decode(&mut accountdata_encoded.as_slice()).unwrap();
         trace!("accountdata {:?}", accountdata);
         accountdata
