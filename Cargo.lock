@@ -43,8 +43,8 @@ name = "advanca-client"
 version = "0.4.0"
 dependencies = [
  "advanca-core",
- "advanca-crypto",
- "advanca-crypto-types",
+ "advanca-crypto 0.3.0",
+ "advanca-crypto-types 0.3.0",
  "advanca-runtime",
  "clang-sys",
  "env_logger",
@@ -78,7 +78,6 @@ dependencies = [
 [[package]]
 name = "advanca-core"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?tag=v0.2.0#c674ee015ee6e917456fd23b446353130ec05c50"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -95,12 +94,29 @@ name = "advanca-crypto"
 version = "0.3.0"
 source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
- "advanca-crypto-types",
- "advanca-macros",
+ "advanca-crypto-types 0.3.0",
+ "advanca-macros 0.3.0",
  "aes",
  "cmac",
  "rand 0.7.3",
  "ring",
+ "sgx_types",
+ "sgx_ucrypto",
+]
+
+[[package]]
+name = "advanca-crypto"
+version = "0.3.1"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+dependencies = [
+ "advanca-crypto-types 0.3.1",
+ "advanca-macros 0.3.1",
+ "aes",
+ "cmac",
+ "curve25519-dalek 2.1.0",
+ "rand 0.7.3",
+ "ring",
+ "schnorrkel 0.9.1",
  "sgx_types",
  "sgx_ucrypto",
 ]
@@ -120,18 +136,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "advanca-crypto-types"
+version = "0.3.1"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+dependencies = [
+ "aes",
+ "cmac",
+ "curve25519-dalek 2.1.0",
+ "openssl",
+ "schnorrkel 0.9.1",
+ "serde",
+ "serde-big-array 0.3.0",
+ "serde_json",
+ "sgx_types",
+]
+
+[[package]]
 name = "advanca-macros"
 version = "0.3.0"
 source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
 dependencies = [
- "advanca-crypto-types",
+ "advanca-crypto-types 0.3.0",
+ "sgx_types",
+]
+
+[[package]]
+name = "advanca-macros"
+version = "0.3.1"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+dependencies = [
+ "advanca-crypto-types 0.3.1",
  "sgx_types",
 ]
 
 [[package]]
 name = "advanca-runtime"
 version = "0.2.0"
-source = "git+https://github.com/advanca/advanca-node/?tag=v0.2.0#c674ee015ee6e917456fd23b446353130ec05c50"
 dependencies = [
  "advanca-core",
  "frame-executive",
@@ -168,9 +208,9 @@ version = "0.4.0"
 dependencies = [
  "aas-protos-std",
  "advanca-core",
- "advanca-crypto",
- "advanca-crypto-types",
- "advanca-macros",
+ "advanca-crypto 0.3.1",
+ "advanca-crypto-types 0.3.1",
+ "advanca-macros 0.3.1",
  "advanca-runtime",
  "async-std",
  "clang-sys",
@@ -2649,6 +2689,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "merlin"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6feca46f4fa3443a01769d768727f10c10a20fdb65e52dc16a81f0c8269bb78"
+dependencies = [
+ "byteorder 1.3.4",
+ "keccak",
+ "rand_core 0.5.1",
+ "zeroize 1.1.0",
+]
+
+[[package]]
 name = "mime"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4548,13 +4600,29 @@ checksum = "eacd8381b3c37840c9c9f40472af529e49975bdcbc24f83c31059fd6539023d3"
 dependencies = [
  "curve25519-dalek 1.2.4",
  "failure",
- "merlin",
+ "merlin 1.3.0",
  "rand 0.6.5",
  "rand_core 0.4.2",
  "rand_os",
  "sha2",
  "subtle 2.2.3",
  "zeroize 0.9.3",
+]
+
+[[package]]
+name = "schnorrkel"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "021b403afe70d81eea68f6ea12f6b3c9588e5d536a94c3bf80f15e7faa267862"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.5.1",
+ "curve25519-dalek 2.1.0",
+ "merlin 2.0.0",
+ "rand_core 0.5.1",
+ "sha2",
+ "subtle 2.2.3",
+ "zeroize 1.1.0",
 ]
 
 [[package]]
@@ -4704,11 +4772,11 @@ dependencies = [
 
 [[package]]
 name = "sgx-ra"
-version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.3.0#54b3227e8ad0f83699c8c843bf525ea9b7d23d64"
+version = "0.3.1"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
 dependencies = [
- "advanca-crypto",
- "advanca-crypto-types",
+ "advanca-crypto 0.3.1",
+ "advanca-crypto-types 0.3.1",
  "aes",
  "base16",
  "base64 0.12.3",
@@ -5191,7 +5259,7 @@ version = "0.8.0"
 source = "git+https://github.com/paritytech/substrate?rev=00a400f82539e2f78e8ddbcd98aea512c87c5f3c#00a400f82539e2f78e8ddbcd98aea512c87c5f3c"
 dependencies = [
  "parity-scale-codec",
- "schnorrkel",
+ "schnorrkel 0.8.5",
  "sp-api",
  "sp-application-crypto",
  "sp-consensus",
@@ -5225,7 +5293,7 @@ dependencies = [
  "rand 0.7.3",
  "regex",
  "rustc-hex",
- "schnorrkel",
+ "schnorrkel 0.8.5",
  "serde",
  "sha2",
  "sp-debug-derive",
@@ -5659,6 +5727,7 @@ dependencies = [
  "env_logger",
  "hex",
  "log 0.4.8",
+ "pallet-balances",
  "parity-scale-codec",
  "sp-core",
  "sp-keyring",
@@ -5700,7 +5769,7 @@ checksum = "3be511be555a3633e71739a79e4ddff6a6aaa6579fa6114182a51d72c3eb93c5"
 dependencies = [
  "hmac",
  "pbkdf2",
- "schnorrkel",
+ "schnorrkel 0.8.5",
  "sha2",
 ]
 
