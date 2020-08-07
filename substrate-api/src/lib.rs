@@ -23,6 +23,8 @@ use std::sync::mpsc::channel;
 use codec::{Decode, Encode};
 use log::{error, info, trace};
 
+use pallet_balances::AccountData;
+
 use advanca_core::{
     self, Ciphertext, Duration, Enclave, Privacy, Task, TaskSpec, TaskStatus, User, Worker,
 };
@@ -137,6 +139,15 @@ impl SubstrateApi {
         let task = Decode::decode(&mut task_encoded.as_slice()).unwrap();
         trace!("task {:?}", task);
         task
+    }
+
+    pub fn get_balance(&self, id: AccountId) -> AccountData<Balance> {
+        let hex_str = self.get_storage("Balances", "Account", Some(id.encode()));
+        let accountdata_encoded = hexstr_to_vec(hex_str).unwrap();
+        trace!("accountdata encoded {:?}", hex::encode(&accountdata_encoded));
+        let accountdata = Decode::decode(&mut accountdata_encoded.as_slice()).unwrap();
+        trace!("accountdata {:?}", accountdata);
+        accountdata
     }
 
     pub fn get_user(&self, id: AccountId) -> User<AccountId> {

@@ -13,6 +13,7 @@ log = "0.4.8"
 hex = "0.4.2"
 
 sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+pallet-balances = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
 
 advanca-runtime = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
 advanca-core    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
