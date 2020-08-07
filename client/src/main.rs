@@ -42,7 +42,7 @@ mod grpc;
 fn fund_account(ws_url: &str, account: &AccountId) {
     let mut alice_api = SubstrateApi::new(ws_url);
     alice_api.set_signer(AccountKeyring::Alice.pair());
-    alice_api.transfer_balance(account.to_owned(), 1_000_000_000);
+    alice_api.transfer_balance(account.to_owned(), 1_000_000_000_000);
 }
 
 #[derive(Debug, StructOpt)]
@@ -55,6 +55,16 @@ struct Opt {
         help = "advanca-node websocket url"
     )]
     ws_url: String,
+}
+
+fn display_balance(account_id: AccountId, api: &SubstrateApi) {
+    let accountdata = api.get_balance(account_id);
+    info!("{:=^80}", "Client Balance Information");
+    info!("Free        : {:?}", accountdata.free);
+    info!("Reserved    : {:?}", accountdata.reserved);
+    info!("Misc Frozen : {:?}", accountdata.misc_frozen);
+    info!("Fee Frozen  : {:?}", accountdata.fee_frozen);
+    info!("{:=^80}", "");
 }
 
 fn main() {
@@ -100,6 +110,7 @@ fn main() {
     info!("public_key bytes: {:?}", public_key);
     let hash = api.register_user(1 as u128, public_key);
     info!("registered user (extrinsic={:?})", hash);
+    display_balance(client_account.clone(), &api);
 
     let (task_in, task_out) = channel();
     let handle: thread::JoinHandle<_> = thread::spawn(move || {
@@ -127,6 +138,7 @@ fn main() {
         task_spec,
     );
     info!("task submitted (extrinsic={:?})", hash);
+    display_balance(client_account.clone(), &api);
 
     let task_id = task_out.recv().unwrap();
     handle.join().unwrap();
@@ -176,4 +188,7 @@ fn main() {
     info!("aborting task ...");
     let hash = api.abort_task(task_id);
     info!("task aborted (extrinsic={:?})", hash);
+    info!("sleeping for 18 seconds...");
+    std::thread::sleep(std::time::Duration::from_secs(18));
+    display_balance(client_account.clone(), &api);
 }

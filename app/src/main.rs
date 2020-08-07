@@ -96,6 +96,16 @@ struct Opt {
     aas_url: String,
 }
 
+fn display_balance(account_id: AccountId, api: &SubstrateApi) {
+    let accountdata = api.get_balance(account_id);
+    info!("{:=^80}", "Worker Balance Information");
+    info!("Free        : {:?}", accountdata.free);
+    info!("Reserved    : {:?}", accountdata.reserved);
+    info!("Misc Frozen : {:?}", accountdata.misc_frozen);
+    info!("Fee Frozen  : {:?}", accountdata.fee_frozen);
+    info!("{:=^80}", "");
+}
+
 async fn aas_remote_attest(
     client: Arc<Mutex<AasServerClient>>,
     eid: sgx_enclave_id_t,
@@ -320,6 +330,8 @@ fn main() {
     let mut api = SubstrateApi::new(&opt.ws_url);
     api.set_signer(worker_keypair.clone());
 
+    display_balance(worker_account.clone(), &api);
+
     // get the keys from enclave
     let sr25519_public_key = sr25519::Public::try_from(
         &enclave::sr25519_public_key(e.geteid()).expect("enclave sr25519 public key")[..],
@@ -335,6 +347,8 @@ fn main() {
     info!("registering worker ...");
     let hash = api.register_worker(10, enclave);
     info!("registered worker (extrinsic={:?})", hash);
+
+    display_balance(worker_account.clone(), &api);
 
     // listen for new task
     info!("listening for new task ...");
@@ -468,6 +482,14 @@ fn main() {
         .join()
         .expect("Couldn't join on the watchdog");
     info!("watchdong killed");
+
+    api_wrapper
+        .lock()
+        .unwrap()
+        .complete_task(task_id);
+    info!("complete task: {:?}", task_id);
+
+    display_balance(worker_account.clone(), &api_wrapper.lock().unwrap());
 
     let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);
