@@ -32,8 +32,8 @@ use advanca_runtime::{AccountId, Balance, Hash};
 use sp_core::{sr25519, Pair};
 use substrate_api_client::{
     node_metadata::Metadata,
-    utils::{hexstr_to_u256, hexstr_to_vec},
-    Api,
+    utils::{hexstr_to_hash, hexstr_to_vec},
+    Api, XtStatus,
 };
 
 pub use substrate_api_client::compose_extrinsic;
@@ -85,14 +85,21 @@ impl SubstrateApi {
         );
     }
 
-    fn get_storage(&self, prefix: &str, key: &str, param_encoded: Option<Vec<u8>>) -> String {
+    fn get_storage(&self, prefix: &'static str, key: &'static str, param_encoded: Option<Vec<u8>>) -> String {
         trace!(
             "calling get_storage(prefix={}, key={}, param={:?})",
             prefix,
             key,
             param_encoded
         );
-        let result = self.0.get_storage(prefix, key, param_encoded).unwrap();
+        let result : String = match param_encoded {
+            Some(param_encoded) => {
+                self.0.get_storage_map(prefix, key, param_encoded, None).unwrap()
+            },
+            None                => {
+                self.0.get_storage_value(prefix, key, None).unwrap()
+            }
+        };
         trace!("received encoded storage value {}", result);
         result
     }
@@ -107,17 +114,17 @@ impl SubstrateApi {
             &extrinsic_encoded.len()
         );
 
-        let hash = self.0.send_extrinsic(extrinsic_encoded).unwrap();
+        let hash = self.0.send_extrinsic(extrinsic_encoded, XtStatus::Finalized).unwrap();
         trace!("received extrinsic hash {:?}", hash);
-        hash
+        hash.unwrap()
     }
 
     /// Get the nonce of the spcecified account
     pub fn get_nonce(&self, account: &AccountId) -> u32 {
         let hex_str = self.get_storage("System", "AccountNonce", Some(account.encode()));
-        let nonce = hexstr_to_u256(hex_str).unwrap();
-        trace!("received nonce {:?}", &nonce.low_u32());
-        nonce.low_u32()
+        let nonce = hexstr_to_hash(hex_str).unwrap();
+        trace!("received nonce {:?}", nonce);
+        nonce.to_low_u64_le() as u32
     }
 
     pub fn get_worker(&self, id: AccountId) -> Worker<AccountId> {
@@ -286,7 +293,7 @@ impl SubstrateApi {
         trace!("waiting for WorkedAdded");
         let args: events::WorkerAdded = self
             .0
-            .wait_for_event("AdvancaCore", "WorkerAdded", &events_out)
+            .wait_for_event("AdvancaCore", "WorkerAdded", None, &events_out)
             .unwrap()
             .unwrap();
 
@@ -304,7 +311,7 @@ impl SubstrateApi {
         api.subscribe_events(events_in.clone());
         trace!("waiting for TaskSubmitted");
         let args: events::TaskSubmitted = api
-            .wait_for_event("AdvancaCore", "TaskSubmitted", &events_out)
+            .wait_for_event("AdvancaCore", "TaskSubmitted", None, &events_out)
             .unwrap()
             .unwrap();
 
@@ -347,7 +354,7 @@ impl SubstrateApi {
 
         loop {
             let args: T = api
-                .wait_for_event("AdvancaCore", variant, &events_out)
+                .wait_for_event("AdvancaCore", variant, None, &events_out)
                 .unwrap()
                 .unwrap();
 
@@ -499,7 +506,7 @@ mod tests {
         info!("composed Extrinsic:\n {:?}\n", xt);
 
         // send and watch extrinsic until finalized
-        let tx_hash = api.0.send_extrinsic(xt.hex_encode()).unwrap();
+        let tx_hash = api.0.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap().unwrap();
         info!("transaction got finalized. Hash: {:?}", tx_hash);
 
         let (random_receiver, _, _) = sr25519::Pair::generate_with_phrase(None);
