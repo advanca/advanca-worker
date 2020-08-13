@@ -29,18 +29,11 @@ use advanca_crypto::*;
 use advanca_crypto_types::*;
 
 use substrate_subxt::{
-    balances::{
-        TransferCallExt,
-        TransferEventExt,
-        TransferEvent,
-    },
-    system::AccountStoreExt,
     advanca::advanca_core::*,
-    ClientBuilder,
-    Client,
     advanca::AdvancaRuntime,
-    PairSigner,
-    EventsDecoder, EventSubscription,
+    balances::{TransferCallExt, TransferEvent, TransferEventExt},
+    system::AccountStoreExt,
+    Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
 };
 
 mod grpc;
@@ -50,16 +43,21 @@ async fn fund_account(api: &Client<AdvancaRuntime>, account: &AccountId) {
     // Alice has initial balances so using it to fund 'account'
     let alice = PairSigner::new(AccountKeyring::Alice.pair());
     trace!("funding account {:?}", account);
-    let result = api.transfer_and_watch(&alice, &account, 1_000_000_000_000 as u128)
+    let result = api
+        .transfer_and_watch(&alice, &account, 1_000_000_000_000 as u128)
         .await
         .expect("extrinsic success");
 
-    trace!("confirmed extrinsic '{:?}' at block '{:?}'", result.extrinsic, result.block);
+    trace!(
+        "confirmed extrinsic '{:?}' at block '{:?}'",
+        result.extrinsic,
+        result.block
+    );
     let event = result.transfer().expect("decode event").expect("has event");
     let expected_event = TransferEvent {
         from: alice.signer().public().as_array_ref().to_owned().into(),
         to: account.clone(),
-        amount: 1_000_000_000_000
+        amount: 1_000_000_000_000,
     };
     assert_eq!(expected_event, event, "got expected event");
     trace!("fund_account done");
@@ -77,7 +75,10 @@ struct Opt {
     ws_url: String,
 }
 
-async fn display_balance(account_id: AccountId, api: &Client<AdvancaRuntime>) -> Result<(), Box<dyn std::error::Error>> {
+async fn display_balance(
+    account_id: AccountId,
+    api: &Client<AdvancaRuntime>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let accountdata = api.account(&account_id, None).await?.data;
     info!("{:=^80}", "Client Balance Information");
     info!("Free        : {:?}", accountdata.free);
@@ -88,8 +89,15 @@ async fn display_balance(account_id: AccountId, api: &Client<AdvancaRuntime>) ->
     Ok(())
 }
 
-async fn wait_for_event<E, P, R>(api: &Client<R>, predicate: P) -> Result<(), Box<dyn std::error::Error>>
-    where P: Fn(&E) -> bool, R: AdvancaCore + substrate_subxt::Runtime, E: substrate_subxt::Event<R> + std::fmt::Debug {
+async fn wait_for_event<E, P, R>(
+    api: &Client<R>,
+    predicate: P,
+) -> Result<(), Box<dyn std::error::Error>>
+where
+    P: Fn(&E) -> bool,
+    R: AdvancaCore + substrate_subxt::Runtime,
+    E: substrate_subxt::Event<R> + std::fmt::Debug,
+{
     let sub = api.subscribe_events().await?;
     let mut decoder = EventsDecoder::<R>::new(api.metadata().clone());
     decoder.with_advanca_core();
@@ -102,7 +110,7 @@ async fn wait_for_event<E, P, R>(api: &Client<R>, predicate: P) -> Result<(), Bo
         trace!("Received event {:?}", event);
         if predicate(&event) {
             trace!("Found the matched event");
-            return Ok(())
+            return Ok(());
         }
     }
     Err("Cannot find the matching event".into())
@@ -111,9 +119,13 @@ async fn wait_for_event<E, P, R>(api: &Client<R>, predicate: P) -> Result<(), Bo
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
-    env_logger::from_env(env_logger::Env::default().default_filter_or("advanca_client=debug")).init();
+    env_logger::from_env(env_logger::Env::default().default_filter_or("advanca_client=debug"))
+        .init();
 
-    let api = ClientBuilder::<AdvancaRuntime>::new().set_url(&opt.ws_url).build().await?;
+    let api = ClientBuilder::<AdvancaRuntime>::new()
+        .set_url(&opt.ws_url)
+        .build()
+        .await?;
     info!("connected to advanca-node API");
     trace!("API Metadata:\n{}", api.metadata().pretty());
 
@@ -128,7 +140,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "sr25519 keypair generated: {}",
         hex::encode(&client_sr25519_keypair.public())
     );
-    
+
     // fund the user account
     fund_account(&api, &client_account).await;
     info!("funded account {:?}", client_account);
@@ -138,7 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("generated client ec256 keypair");
     trace!("generated client ec256 keypair {:?}", prvkey.r);
-    
+
     let client_signer = PairSigner::new(client_sr25519_keypair.clone());
 
     // register user
@@ -146,8 +158,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let public_key = serde_cbor::to_vec(&pubkey).unwrap();
     info!("public_key bytes: {:?}", public_key);
 
-    let result = api.register_user_and_watch(&client_signer, 1, public_key).await.expect("extrinsic success");
-    info!("registered user (extrinsic={:?})", result.extrinsic);    
+    let result = api
+        .register_user_and_watch(&client_signer, 1, public_key)
+        .await
+        .expect("extrinsic success");
+    info!("registered user (extrinsic={:?})", result.extrinsic);
     display_balance(client_account.clone(), &api).await?;
 
     // submit task
@@ -161,20 +176,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("submitting task ...");
     let mut task_spec: TaskSpec<Privacy> = Default::default();
     task_spec.privacy = Privacy::Encryption;
-    let result = api.submit_task_and_watch(
-        &client_signer,
-        serde_cbor::to_vec(&signed_task_pubkey).unwrap(),
-        0,
-        task_spec,
-    ).await.expect("extrinsic success");
+    let result = api
+        .submit_task_and_watch(
+            &client_signer,
+            serde_cbor::to_vec(&signed_task_pubkey).unwrap(),
+            0,
+            task_spec,
+        )
+        .await
+        .expect("extrinsic success");
     info!("task submitted (extrinsic={:?})", result.extrinsic);
     display_balance(client_account.clone(), &api).await?;
 
-    let task_id = result.task_submitted().expect("decode event").expect("has event").task_id;
+    let task_id = result
+        .task_submitted()
+        .expect("decode event")
+        .expect("has event")
+        .task_id;
     info!("task_id is {:?}", task_id);
 
     info!("waiting for the task to be accepted ...");
-    wait_for_event(&api, |e: &TaskAcceptedEvent<AdvancaRuntime>| e.task_id == task_id.clone()).await?;
+    wait_for_event(&api, |e: &TaskAcceptedEvent<AdvancaRuntime>| {
+        e.task_id == task_id.clone()
+    })
+    .await?;
     info!("task accepted, moving forward");
 
     let task = api.tasks(task_id, None).await?;
@@ -215,7 +240,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("sleeping for 12 seconds...");
     async_std::task::sleep(std::time::Duration::from_secs(12)).await;
     info!("aborting task ...");
-    let result = api.abort_task_and_watch(&client_signer, task_id).await.expect("extrinsic success");
+    let result = api
+        .abort_task_and_watch(&client_signer, task_id)
+        .await
+        .expect("extrinsic success");
     info!("task aborted (extrinsic={:?})", result.extrinsic);
     info!("sleeping for 18 seconds...");
     async_std::task::sleep(std::time::Duration::from_secs(18)).await;
