@@ -41,13 +41,12 @@ advanca-runtime      = { rev = "b0036729bf27088f2f2f29e19b41168bfe2879d8", git =
 
 worker-protos-std    = { path = "../worker-protos/worker-protos-std" }
 
-[dependencies.substrate-api-client]
-git = "https://github.com/advanca/substrate-api-client"
-rev = "90f98aca947a9a8377ab21bbd4baf236a5133a37"
+async-std = { version = "1.6.2", features = ["attributes"] }
+
+[dependencies.substrate-subxt]
+git = 'https://github.com/advanca/substrate-subxt'
+rev = '65f433b550e4a563dfd5765739877723a107df8f'
 
 [dependencies.codec]
 package = "parity-scale-codec"
 version = "1.3.0"
-
-[dependencies.substrate-api]
-path = "../substrate-api"

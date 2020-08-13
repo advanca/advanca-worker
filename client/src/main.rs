@@ -12,15 +12,8 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-use std::str;
-use std::sync::mpsc::channel;
-use std::thread;
-
 use env_logger;
-use env_logger::Builder;
 use hex;
-use log::LevelFilter;
 use log::{debug, info, trace};
 use structopt::StructOpt;
 
@@ -29,20 +22,47 @@ use sp_keyring::AccountKeyring;
 
 use advanca_core::{Privacy, TaskSpec};
 use advanca_runtime::AccountId;
-use substrate_api::SubstrateApi;
 
 use serde_cbor;
 
 use advanca_crypto::*;
 use advanca_crypto_types::*;
 
+use substrate_subxt::{
+    balances::{
+        TransferCallExt,
+        TransferEventExt,
+        TransferEvent,
+    },
+    system::AccountStoreExt,
+    advanca::advanca_core::*,
+    ClientBuilder,
+    Client,
+    advanca::AdvancaRuntime,
+    PairSigner,
+    EventsDecoder, EventSubscription,
+};
+
 mod grpc;
 
 /// helper function to fund the account
-fn fund_account(ws_url: &str, account: &AccountId) {
-    let mut alice_api = SubstrateApi::new(ws_url);
-    alice_api.set_signer(AccountKeyring::Alice.pair());
-    alice_api.transfer_balance(account.to_owned(), 1_000_000_000_000);
+async fn fund_account(api: &Client<AdvancaRuntime>, account: &AccountId) {
+    // Alice has initial balances so using it to fund 'account'
+    let alice = PairSigner::new(AccountKeyring::Alice.pair());
+    trace!("funding account {:?}", account);
+    let result = api.transfer_and_watch(&alice, &account, 1_000_000_000_000 as u128)
+        .await
+        .expect("extrinsic success");
+
+    trace!("confirmed extrinsic '{:?}' at block '{:?}'", result.extrinsic, result.block);
+    let event = result.transfer().expect("decode event").expect("has event");
+    let expected_event = TransferEvent {
+        from: alice.signer().public().as_array_ref().to_owned().into(),
+        to: account.clone(),
+        amount: 1_000_000_000_000
+    };
+    assert_eq!(expected_event, event, "got expected event");
+    trace!("fund_account done");
 }
 
 #[derive(Debug, StructOpt)]
@@ -57,26 +77,45 @@ struct Opt {
     ws_url: String,
 }
 
-fn display_balance(account_id: AccountId, api: &SubstrateApi) {
-    let accountdata = api.get_balance(account_id);
+async fn display_balance(account_id: AccountId, api: &Client<AdvancaRuntime>) -> Result<(), Box<dyn std::error::Error>> {
+    let accountdata = api.account(&account_id, None).await?.data;
     info!("{:=^80}", "Client Balance Information");
     info!("Free        : {:?}", accountdata.free);
     info!("Reserved    : {:?}", accountdata.reserved);
     info!("Misc Frozen : {:?}", accountdata.misc_frozen);
     info!("Fee Frozen  : {:?}", accountdata.fee_frozen);
     info!("{:=^80}", "");
+    Ok(())
 }
 
-fn main() {
+async fn wait_for_event<E, P, R>(api: &Client<R>, predicate: P) -> Result<(), Box<dyn std::error::Error>>
+    where P: Fn(&E) -> bool, R: AdvancaCore + substrate_subxt::Runtime, E: substrate_subxt::Event<R> + std::fmt::Debug {
+    let sub = api.subscribe_events().await?;
+    let mut decoder = EventsDecoder::<R>::new(api.metadata().clone());
+    decoder.with_advanca_core();
+
+    let mut event_sub = EventSubscription::new(sub, decoder);
+    event_sub.filter_event::<E>();
+
+    while let Some(result) = event_sub.next().await {
+        let event = E::decode(&mut &result?.data[..])?;
+        trace!("Received event {:?}", event);
+        if predicate(&event) {
+            trace!("Found the matched event");
+            return Ok(())
+        }
+    }
+    Err("Cannot find the matching event".into())
+}
+
+#[async_std::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
-    let mut builder = Builder::from_default_env();
-    builder
-        .default_format()
-        .format_level(true)
-        .format_module_path(false)
-        .format_timestamp(None)
-        .filter(Some("advanca_client"), LevelFilter::Debug)
-        .init();
+    env_logger::from_env(env_logger::Env::default().default_filter_or("advanca_client=debug")).init();
+
+    let api = ClientBuilder::<AdvancaRuntime>::new().set_url(&opt.ws_url).build().await?;
+    info!("connected to advanca-node API");
+    trace!("API Metadata:\n{}", api.metadata().pretty());
 
     // generate sr25519 keypair
     let (client_sr25519_keypair, _) = sr25519::Pair::generate();
@@ -89,9 +128,9 @@ fn main() {
         "sr25519 keypair generated: {}",
         hex::encode(&client_sr25519_keypair.public())
     );
-
+    
     // fund the user account
-    fund_account(&opt.ws_url, &client_account);
+    fund_account(&api, &client_account).await;
     info!("funded account {:?}", client_account);
 
     // generate secp256r1 keypair for communication with worker
@@ -99,27 +138,17 @@ fn main() {
 
     info!("generated client ec256 keypair");
     trace!("generated client ec256 keypair {:?}", prvkey.r);
-
-    let mut api = SubstrateApi::new(&opt.ws_url);
-    api.set_signer(client_sr25519_keypair.clone());
-    info!("connected to advanca-node API");
+    
+    let client_signer = PairSigner::new(client_sr25519_keypair.clone());
 
     // register user
     info!("registering user ...");
     let public_key = serde_cbor::to_vec(&pubkey).unwrap();
     info!("public_key bytes: {:?}", public_key);
-    let hash = api.register_user(1 as u128, public_key);
-    info!("registered user (extrinsic={:?})", hash);
-    display_balance(client_account.clone(), &api);
 
-    let (task_in, task_out) = channel();
-    let handle: thread::JoinHandle<_> = thread::spawn(move || {
-        let listener_api = SubstrateApi::new(&opt.ws_url);
-
-        task_in
-            .send(listener_api.listen_for_task_submitted())
-            .unwrap();
-    });
+    let result = api.register_user_and_watch(&client_signer, 1, public_key).await.expect("extrinsic success");
+    info!("registered user (extrinsic={:?})", result.extrinsic);    
+    display_balance(client_account.clone(), &api).await?;
 
     // submit task
     info!("generating ephemeral task key ...");
@@ -132,28 +161,28 @@ fn main() {
     info!("submitting task ...");
     let mut task_spec: TaskSpec<Privacy> = Default::default();
     task_spec.privacy = Privacy::Encryption;
-    let hash = api.submit_task(
+    let result = api.submit_task_and_watch(
+        &client_signer,
         serde_cbor::to_vec(&signed_task_pubkey).unwrap(),
         0,
         task_spec,
-    );
-    info!("task submitted (extrinsic={:?})", hash);
-    display_balance(client_account.clone(), &api);
+    ).await.expect("extrinsic success");
+    info!("task submitted (extrinsic={:?})", result.extrinsic);
+    display_balance(client_account.clone(), &api).await?;
 
-    let task_id = task_out.recv().unwrap();
-    handle.join().unwrap();
+    let task_id = result.task_submitted().expect("decode event").expect("has event").task_id;
+    info!("task_id is {:?}", task_id);
 
-    // wait for the task to be accepted
     info!("waiting for the task to be accepted ...");
-    api.wait_all_task_accepted(vec![task_id]);
+    wait_for_event(&api, |e: &TaskAcceptedEvent<AdvancaRuntime>| e.task_id == task_id.clone()).await?;
     info!("task accepted, moving forward");
 
-    let task = api.get_task(task_id);
+    let task = api.tasks(task_id, None).await?;
     let worker_id = task.worker.expect("There should be a worker ID");
     info!("got a new worker (id={})", worker_id);
 
     info!("querying worker information ...");
-    let worker = api.get_worker(worker_id);
+    let worker = api.workers(worker_id, None).await?;
     info!("received worker information");
     let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
     debug!("enclave public key is {:?}", enclave_public_key);
@@ -184,11 +213,13 @@ fn main() {
 
     // abort the task
     info!("sleeping for 12 seconds...");
-    std::thread::sleep(std::time::Duration::from_secs(12));
+    async_std::task::sleep(std::time::Duration::from_secs(12)).await;
     info!("aborting task ...");
-    let hash = api.abort_task(task_id);
-    info!("task aborted (extrinsic={:?})", hash);
+    let result = api.abort_task_and_watch(&client_signer, task_id).await.expect("extrinsic success");
+    info!("task aborted (extrinsic={:?})", result.extrinsic);
     info!("sleeping for 18 seconds...");
-    std::thread::sleep(std::time::Duration::from_secs(18));
-    display_balance(client_account.clone(), &api);
+    async_std::task::sleep(std::time::Duration::from_secs(18)).await;
+    display_balance(client_account.clone(), &api).await?;
+
+    Ok(())
 }
