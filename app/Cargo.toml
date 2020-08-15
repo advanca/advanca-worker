@@ -36,8 +36,7 @@ advanca-macros          = { rev = "c73508a4ad947c4a027679e7638589769006ec17", gi
 advanca-crypto          = { rev = "c73508a4ad947c4a027679e7638589769006ec17", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
 advanca-crypto-types    = { rev = "c73508a4ad947c4a027679e7638589769006ec17", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
 sgx-ra                  = { rev = "c73508a4ad947c4a027679e7638589769006ec17", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-runtime         = { rev = "b0036729bf27088f2f2f29e19b41168bfe2879d8", git = "https://github.com/advanca/advanca-node/" }
-advanca-core            = { rev = "b0036729bf27088f2f2f29e19b41168bfe2879d8", git = "https://github.com/advanca/advanca-node/" }
+advanca-node-primitives = { rev = "dc13cadb1e375223c85a22c1fd404b951b6d869a", git = "https://github.com/advanca/advanca-node/" }
 
 aas-protos-std          = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-attestation-service" }
 worker-protos-std       = { path = "../worker-protos/worker-protos-std" }

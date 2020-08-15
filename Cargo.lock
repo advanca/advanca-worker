@@ -42,10 +42,10 @@ checksum = "ee2a4ec343196209d6594e19543ae87a39f96d5534d7174822a3ad825dd6ed7e"
 name = "advanca-client"
 version = "0.4.0"
 dependencies = [
- "advanca-core",
  "advanca-crypto",
  "advanca-crypto-types",
- "advanca-runtime",
+ "advanca-node-primitives",
+ "async-std",
  "clang-sys",
  "env_logger",
  "error-chain",
@@ -70,22 +70,8 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "structopt",
- "substrate-api",
- "substrate-api-client",
+ "substrate-subxt",
  "worker-protos-std",
-]
-
-[[package]]
-name = "advanca-core"
-version = "0.3.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "smart-default",
- "sp-api",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -131,35 +117,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "advanca-runtime"
+name = "advanca-node-primitives"
 version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-node/?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a#dc13cadb1e375223c85a22c1fd404b951b6d869a"
 dependencies = [
- "advanca-core",
- "frame-executive",
- "frame-support",
- "frame-system",
- "pallet-aura",
- "pallet-balances",
- "pallet-grandpa",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
  "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
+ "primitive-types",
+ "smart-default",
  "sp-runtime",
- "sp-session",
  "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "substrate-wasm-builder-runner",
 ]
 
 [[package]]
@@ -167,11 +133,10 @@ name = "advanca-worker"
 version = "0.4.0"
 dependencies = [
  "aas-protos-std",
- "advanca-core",
  "advanca-crypto",
  "advanca-crypto-types",
  "advanca-macros",
- "advanca-runtime",
+ "advanca-node-primitives",
  "async-std",
  "clang-sys",
  "env_logger",
@@ -181,7 +146,7 @@ dependencies = [
  "jsonrpsee",
  "log 0.4.11",
  "parity-scale-codec",
- "primitive-types 0.7.2",
+ "primitive-types",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_cbor",
  "serde_json",
@@ -336,6 +301,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-attributes"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efd3d156917d94862e779f356c5acae312b08fd3121e792c857d7928c8088423"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -352,6 +327,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d68a33ebc8b57800847d00787307f84a562224a14db069b0acefe4c2abbf5d"
 dependencies = [
+ "async-attributes",
  "async-task",
  "crossbeam-utils",
  "futures-channel",
@@ -1085,18 +1061,6 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "parking_lot 0.9.0",
-]
-
-[[package]]
-name = "fixed-hash"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3367952ceb191f4ab95dd5685dc163ac539e36202f9fcfd0cb22f9f9c542fefc"
-dependencies = [
- "byteorder",
- "rand 0.7.3",
- "rustc-hex",
- "static_assertions",
 ]
 
 [[package]]
@@ -2151,12 +2115,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "lazycell"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
-
-[[package]]
 name = "libc"
 version = "0.2.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2516,18 +2474,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mio-extras"
-version = "2.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52403fe290012ce777c4626790c8951324a2b9e3316b3143779c72b029742f19"
-dependencies = [
- "lazycell",
- "log 0.4.11",
- "mio",
- "slab",
-]
-
-[[package]]
 name = "mio-uds"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2839,25 +2785,6 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "pallet-aura"
-version = "2.0.0-rc5"
-source = "git+https://github.com/paritytech/substrate?tag=v2.0.0-rc5+2#1502626e45a704d1e2852e38ad669687ef02f68b"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "sp-application-crypto",
- "sp-consensus-aura",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
 ]
 
 [[package]]
@@ -3437,7 +3364,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
  "parking_lot 0.10.2",
- "primitive-types 0.7.2",
+ "primitive-types",
  "winapi 0.3.9",
 ]
 
@@ -3617,22 +3544,11 @@ checksum = "237a5ed80e274dbc66f86bd59c1e25edc039660be53194b5fe0a482e0f2612ea"
 
 [[package]]
 name = "primitive-types"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4336f4f5d5524fa60bcbd6fe626f9223d8142a50e7053e979acdf0da41ab975"
-dependencies = [
- "fixed-hash 0.5.2",
- "impl-codec",
- "uint",
-]
-
-[[package]]
-name = "primitive-types"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c55c21c64d0eaa4d7ed885d959ef2d62d9e488c27c0e02d9aa5ce6c877b7d5f8"
 dependencies = [
- "fixed-hash 0.6.1",
+ "fixed-hash",
  "impl-codec",
  "impl-serde 0.3.1",
  "uint",
@@ -3834,19 +3750,6 @@ name = "radium"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "def50a86306165861203e7f84ecffbbdfdea79f0e51039b33de1e952358c47ac"
-
-[[package]]
-name = "rand"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "552840b97013b1a26992c11eac34bdd778e464601a4c2054b5f0bff7c6761293"
-dependencies = [
- "fuchsia-cprng",
- "libc",
- "rand_core 0.3.1",
- "rdrand 0.4.0",
- "winapi 0.3.9",
-]
 
 [[package]]
 name = "rand"
@@ -5138,20 +5041,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-consensus-aura"
-version = "0.8.0-rc5"
-source = "git+https://github.com/paritytech/substrate?tag=v2.0.0-rc5+2#1502626e45a704d1e2852e38ad669687ef02f68b"
-dependencies = [
- "parity-scale-codec",
- "sp-api",
- "sp-application-crypto",
- "sp-inherents",
- "sp-runtime",
- "sp-std",
- "sp-timestamp",
-]
-
-[[package]]
 name = "sp-consensus-babe"
 version = "0.8.0-rc5"
 source = "git+https://github.com/paritytech/substrate?tag=v2.0.0-rc5+2#1502626e45a704d1e2852e38ad669687ef02f68b"
@@ -5214,7 +5103,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.10.2",
- "primitive-types 0.7.2",
+ "primitive-types",
  "rand 0.7.3",
  "regex",
  "schnorrkel",
@@ -5413,7 +5302,7 @@ version = "2.0.0-rc5"
 source = "git+https://github.com/paritytech/substrate?tag=v2.0.0-rc5+2#1502626e45a704d1e2852e38ad669687ef02f68b"
 dependencies = [
  "parity-scale-codec",
- "primitive-types 0.7.2",
+ "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
  "sp-std",
@@ -5712,10 +5601,10 @@ dependencies = [
 
 [[package]]
 name = "substrate-api"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "advanca-core",
- "advanca-runtime",
+ "advanca-node-primitives",
+ "async-std",
  "env_logger",
  "hex",
  "log 0.4.11",
@@ -5724,33 +5613,7 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-runtime",
- "substrate-api-client",
-]
-
-[[package]]
-name = "substrate-api-client"
-version = "0.4.6-sub2.0.0-rc5"
-source = "git+https://github.com/advanca/substrate-api-client?rev=90f98aca947a9a8377ab21bbd4baf236a5133a37#90f98aca947a9a8377ab21bbd4baf236a5133a37"
-dependencies = [
- "env_logger",
- "frame-metadata",
- "frame-support",
- "frame-system",
- "hex",
- "log 0.4.11",
- "pallet-balances",
- "parity-scale-codec",
- "primitive-types 0.6.2",
- "sc-rpc-api",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-version",
- "thiserror",
- "ws",
+ "substrate-subxt",
 ]
 
 [[package]]
@@ -5777,6 +5640,50 @@ dependencies = [
  "log 0.4.11",
  "prometheus",
  "tokio 0.2.22",
+]
+
+[[package]]
+name = "substrate-subxt"
+version = "0.11.0"
+source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
+dependencies = [
+ "advanca-node-primitives",
+ "frame-metadata",
+ "frame-support",
+ "futures 0.3.5",
+ "hex",
+ "jsonrpsee",
+ "log 0.4.11",
+ "num-traits",
+ "pallet-balances",
+ "pallet-indices",
+ "parity-scale-codec",
+ "sc-rpc-api",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-subxt-proc-macro",
+ "thiserror",
+ "url 2.1.1",
+]
+
+[[package]]
+name = "substrate-subxt-proc-macro"
+version = "0.11.0"
+source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
+dependencies = [
+ "heck",
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "sp-keyring",
+ "syn",
+ "synstructure",
 ]
 
 [[package]]
@@ -6742,25 +6649,6 @@ dependencies = [
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "protobuf-build",
  "walkdir",
-]
-
-[[package]]
-name = "ws"
-version = "0.7.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "329d3e6dd450a9c5c73024e1047f0be7e24121a68484eb0b5368977bee3cf8c3"
-dependencies = [
- "byteorder",
- "bytes 0.4.12",
- "httparse",
- "log 0.4.11",
- "mio",
- "mio-extras",
- "openssl",
- "rand 0.4.6",
- "sha1",
- "slab",
- "url 1.7.2",
 ]
 
 [[package]]

@@ -17,8 +17,7 @@ sp-core         = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/s
 sp-runtime      = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }
 pallet-balances = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }
 
-advanca-runtime = { rev = "483b4d60fae249f9b02becfd7e9a683aeabdca7a", git = "https://github.com/advanca/advanca-node" }
-advanca-core    = { rev = "483b4d60fae249f9b02becfd7e9a683aeabdca7a", git = "https://github.com/advanca/advanca-node" }
+advanca-node-primitives = { rev = "dc13cadb1e375223c85a22c1fd404b951b6d869a", git = "https://github.com/advanca/advanca-node" }
 
 [dependencies.codec]
 package = "parity-scale-codec"
@@ -26,7 +25,7 @@ version = "1.3.0"
 
 [dependencies.substrate-subxt]
 git = 'https://github.com/advanca/substrate-subxt'
-rev = '65f433b550e4a563dfd5765739877723a107df8f'
+rev = 'cea05ad5ecd03e649827617e5e2ae3f696f4e31b'
 
 [dev-dependencies]
 sp-keyring = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }

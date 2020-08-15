@@ -22,10 +22,10 @@ use log::{error, trace};
 
 use pallet_balances::AccountData;
 
-use advanca_core::{
+use advanca_node_primitives::{
     self, Ciphertext, Duration, Enclave, Privacy, Task, TaskSpec, TaskStatus, User, Worker,
 };
-use advanca_runtime::{AccountId, Balance, Hash};
+use advanca_node_primitives::{AccountId, Balance, Hash};
 use sp_core::sr25519;
 
 use substrate_subxt::{

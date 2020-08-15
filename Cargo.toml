@@ -14,9 +14,9 @@ exclude = [
 #[patch.'https://github.com/advanca/advanca-attestation-service']
 #aas-protos-std = { path = "../advanca-attestation-service/aas-protos/aas-protos-std" }
 
-[patch.'https://github.com/advanca/advanca-node']
-advanca-core    = { path = "../advanca-node/pallets/advanca-core" }
-advanca-runtime = { path = "../advanca-node/runtime" }
+#[patch.'https://github.com/advanca/advanca-node']
+#advanca-core    = { path = "../advanca-node/pallets/advanca-core" }
+#advanca-runtime = { path = "../advanca-node/runtime" }
 
 #[patch.'https://github.com/advanca/substrate-api-client']
 #substrate-api-client = { path = "../substrate-api-client" }

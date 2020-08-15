@@ -29,8 +29,7 @@ use sp_keyring::AccountKeyring;
 
 use substrate_api::SubstrateApi;
 
-use advanca_core::Enclave;
-use advanca_runtime::AccountId;
+use advanca_node_primitives::{Enclave, AccountId};
 
 mod enclave;
 mod grpc;
