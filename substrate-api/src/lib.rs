@@ -12,9 +12,6 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-mod events;
-
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 
@@ -29,7 +26,7 @@ use advanca_node_primitives::{AccountId, Balance, Hash};
 use sp_core::sr25519;
 
 use substrate_subxt::{
-    advanca::advanca_core::*, advanca::AdvancaRuntime, balances::TransferCallExt,
+    advanca::advanca_core::*, advanca::AdvancaRuntime, balances::TransferCall,
     system::AccountStoreExt, Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
 };
 
@@ -82,7 +79,6 @@ impl SubstrateApi {
         println!("Metadata:\n {}", meta.pretty());
     }
 
-
     /// Get the nonce of the spcecified account
     pub fn get_nonce(&self, account: &AccountId) -> u32 {
         async_std::task::block_on(self.client.account(account, None))
@@ -117,8 +113,25 @@ impl SubstrateApi {
             .expect("retrieve unscheduled tasks")
     }
 
+    // an enhanced version of substrate_subxt::transfer_and_watch
+    async fn transfer_and_watch(
+        &self,
+        to: &AccountId,
+        amount: Balance,
+    ) -> Result<substrate_subxt::ExtrinsicSuccess<AdvancaRuntime>, substrate_subxt::Error> {
+        let extrinsic = self
+            .client
+            .create_signed(TransferCall { to, amount }, self.signer())
+            .await?;
+        let mut decoder = self.client.events_decoder::<TransferCall<AdvancaRuntime>>();
+        decoder.with_advanca_core();
+        self.client
+            .submit_and_watch_extrinsic(extrinsic, decoder)
+            .await
+    }
+
     pub fn transfer_balance(&self, to: AccountId, amount: Balance) -> Hash {
-        async_std::task::block_on(self.client.transfer_and_watch(self.signer(), &to, amount))
+        async_std::task::block_on(self.transfer_and_watch(&to, amount))
             .expect("get transfer hash")
             .extrinsic
     }
@@ -242,9 +255,7 @@ impl SubstrateApi {
     ///
     /// Block the current thread
     pub fn wait_all_task_aborted(&self, task_ids: Vec<TaskId>) {
-        self.wait_all_task_on_condition(task_ids, |e: &TaskAcceptedEvent<AdvancaRuntime>| {
-            e.task_id
-        });
+        self.wait_all_task_on_condition(task_ids, |e: &TaskAbortedEvent<AdvancaRuntime>| e.task_id);
     }
 
     /// Internal helper function for all wait_all_task_* functions
