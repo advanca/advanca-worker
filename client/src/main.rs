@@ -20,7 +20,7 @@ use structopt::StructOpt;
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::AccountKeyring;
 
-use advanca_node_primitives::{Privacy, TaskSpec, AccountId};
+use advanca_node_primitives::{AccountId, Privacy, TaskSpec};
 
 use serde_cbor;
 
