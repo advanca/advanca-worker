@@ -22,8 +22,6 @@ use sp_keyring::AccountKeyring;
 
 use advanca_node_primitives::{Privacy, TaskSpec, AccountId};
 
-use serde_cbor;
-
 use advanca_crypto::*;
 use advanca_crypto_types::*;
 
@@ -154,7 +152,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // register user
     info!("registering user ...");
-    let public_key = serde_cbor::to_vec(&pubkey).unwrap();
+    let public_key = serde_json::to_vec(&pubkey).unwrap();
     info!("public_key bytes: {:?}", public_key);
 
     let result = api
@@ -170,7 +168,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     debug!("owner task prvkey: {:?}", owner_task_prvkey);
     debug!("owner task pubkey: {:?}", owner_task_pubkey);
     let signed_task_pubkey =
-        secp256r1_sign_msg(&prvkey, &serde_cbor::to_vec(&owner_task_pubkey).unwrap()).unwrap();
+        secp256r1_sign_msg(&prvkey, &serde_json::to_vec(&owner_task_pubkey).unwrap()).unwrap();
     info!("signed task pubkey ... {:?}", signed_task_pubkey);
     info!("submitting task ...");
     let mut task_spec: TaskSpec<Privacy> = Default::default();
@@ -178,7 +176,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result = api
         .submit_task_and_watch(
             &client_signer,
-            serde_cbor::to_vec(&signed_task_pubkey).unwrap(),
+            serde_json::to_vec(&signed_task_pubkey).unwrap(),
             0,
             task_spec,
         )
@@ -208,23 +206,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("querying worker information ...");
     let worker = api.workers(worker_id, None).await?;
     info!("received worker information");
-    let enclave_public_key = serde_cbor::from_slice(&worker.enclave.public_key).unwrap();
+    let enclave_public_key = serde_json::from_slice(&worker.enclave.public_key).unwrap();
     debug!("enclave public key is {:?}", enclave_public_key);
 
     let signed_task_pubkey_bytes = task
         .signed_worker_task_pubkey
         .expect("signed task pubkey should exist");
     let signed_task_pubkey: Secp256r1SignedMsg =
-        serde_cbor::from_slice(&signed_task_pubkey_bytes).unwrap();
+        serde_json::from_slice(&signed_task_pubkey_bytes).unwrap();
 
     // verify that the task_pubkey is untampered
     let verified = secp256r1_verify_msg(&enclave_public_key, &signed_task_pubkey).unwrap();
     assert_eq!(verified, true);
     let worker_task_pubkey: Secp256r1PublicKey =
-        serde_cbor::from_slice(&signed_task_pubkey.msg).unwrap();
+        serde_json::from_slice(&signed_task_pubkey.msg).unwrap();
     let kdk: Aes128Key = derive_kdk(&owner_task_prvkey, &worker_task_pubkey).unwrap();
     let encrypted_worker_url = task.worker_url.expect("encrypted url should exist");
-    let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&encrypted_worker_url).unwrap();
+    let url_encrypted: Aes128EncryptedMsg = serde_json::from_slice(&encrypted_worker_url).unwrap();
     debug!("encrypted_url: {:?}", url_encrypted);
     debug!("key: {:?}", kdk);
 

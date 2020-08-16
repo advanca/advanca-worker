@@ -48,7 +48,7 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     trace!("{:?}", worker_info);
     debug!("verifying worker's attestation report");
     let worker_attestation_report =
-        serde_cbor::from_slice(&worker_info.enclave.attestation).unwrap();
+        serde_json::from_slice(&worker_info.enclave.attestation).unwrap();
     assert_eq!(
         true,
         aas_verify_reg_report(&AAS_PUB_KEY, &worker_attestation_report).unwrap()
@@ -57,13 +57,13 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     let worker_pubkey: Secp256r1PublicKey = worker_attestation_report.worker_pubkey;
     debug!("verifying worker's task pubkey");
     let signed_worker_task_pubkey =
-        serde_cbor::from_slice(&task.signed_worker_task_pubkey.unwrap()).unwrap();
+        serde_json::from_slice(&task.signed_worker_task_pubkey.unwrap()).unwrap();
     assert_eq!(
         true,
         secp256r1_verify_msg(&worker_pubkey, &signed_worker_task_pubkey).unwrap()
     );
     let worker_task_pubkey: Secp256r1PublicKey =
-        serde_cbor::from_slice(&signed_worker_task_pubkey.msg).unwrap();
+        serde_json::from_slice(&signed_worker_task_pubkey.msg).unwrap();
     debug!("iterating over the evidences ...");
     let mut verified_evidence = 0;
     let mut alive_blocks = HashSet::new();
@@ -73,20 +73,20 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     let mut data_in = 0;
     let mut data_out = 0;
     for evidence_bytes in task.worker_heartbeat_evidence {
-        let signed_timestamp: Secp256r1SignedMsg = serde_cbor::from_slice(&evidence_bytes).unwrap();
+        let signed_timestamp: Secp256r1SignedMsg = serde_json::from_slice(&evidence_bytes).unwrap();
         trace!("verifying aas timestamp...");
         assert_eq!(
             true,
             secp256r1_verify_msg(&AAS_PUB_KEY, &signed_timestamp).unwrap()
         );
-        let timestamp: AasTimestamp = serde_cbor::from_slice(&signed_timestamp.msg).unwrap();
+        let timestamp: AasTimestamp = serde_json::from_slice(&signed_timestamp.msg).unwrap();
         trace!("verifying signed evidence ...");
-        let signed_evidence: Secp256r1SignedMsg = serde_cbor::from_slice(&timestamp.data).unwrap();
+        let signed_evidence: Secp256r1SignedMsg = serde_json::from_slice(&timestamp.data).unwrap();
         assert_eq!(
             true,
             secp256r1_verify_msg(&worker_task_pubkey, &signed_evidence).unwrap()
         );
-        let evidence: AliveEvidence = serde_cbor::from_slice(&signed_evidence.msg).unwrap();
+        let evidence: AliveEvidence = serde_json::from_slice(&signed_evidence.msg).unwrap();
         trace!("Evidence: {:?}", evidence);
         alive_blocks.insert(evidence.block_hash.clone());
         storage_in = evidence.storage_in;
@@ -155,10 +155,10 @@ pub fn watchdog_loop(
                 .timestamp(&timestamp_request)
                 .unwrap();
             let timestamp: Secp256r1SignedMsg =
-                serde_cbor::from_slice(&timestamp_response.signed_data).unwrap();
+                serde_json::from_slice(&timestamp_response.signed_data).unwrap();
             trace!("timestamp response: {:?}", timestamp);
             // save to vec, prepare to post to chain when watching ends
-            alive_evidence.push(serde_cbor::to_vec(&timestamp).unwrap());
+            alive_evidence.push(serde_json::to_vec(&timestamp).unwrap());
             if *is_done.lock().unwrap() {
                 break;
             }

@@ -10,7 +10,6 @@ version = "0.4.0"
 log        = "0.4"
 env_logger = "0.7.1"
 serde_json = "1.0"
-serde_cbor = { version = "0.11.1"}
 hex        = "0.4.2"
 futures    = "0.3"
 grpcio     = { rev = "249e21b3593a8bdd58429d2552b9ab72d6d46526", git = "https://github.com/tikv/grpc-rs.git", default-features = false, features = ["openssl", "protobuf-codec"] }

@@ -61,14 +61,14 @@ impl Client {
         {
             let plaintext = plain_req.write_to_bytes().unwrap();
             let encrypted_msg = aes128gcm_encrypt(&key, &plaintext).unwrap();
-            req.set_payload(serde_cbor::to_vec(&encrypted_msg).unwrap());
+            req.set_payload(serde_json::to_vec(&encrypted_msg).unwrap());
         }
         trace!("encrypted req {:?}", req);
         let res = self.storage_client.send(&req).unwrap();
         {
             let ciphertext = res.get_payload();
             let encrypted_msg_bytes = ciphertext.to_vec();
-            let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_bytes).unwrap();
+            let encrypted_msg = serde_json::from_slice(&encrypted_msg_bytes).unwrap();
             trace!("response payload {:?}", ciphertext);
             trace!("decryption key {:?}", key);
             let plaintext = aes128gcm_decrypt(&key, &encrypted_msg).unwrap();

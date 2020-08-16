@@ -194,7 +194,7 @@ async fn aas_remote_attest(
         // aas accepted our attestation, we'll prepare the request
         let mut buf = [0_u8; 4096];
         let mut buf_size: usize = buf.len();
-        let _ = unsafe { handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap() };
+        let _ = unsafe { handle_ecall!(eid, gen_worker_key()).unwrap() };
         let _ = unsafe {
             handle_ecall!(
                 eid,
@@ -214,7 +214,7 @@ async fn aas_remote_attest(
 
         assert_eq!(msg_aas_report.get_msg_type(), MsgType::AAS_RA_REG_REPORT);
         let aas_report_bytes = msg_aas_report.get_msg_bytes();
-        let aas_report: AasRegReport = serde_cbor::from_slice(aas_report_bytes).unwrap();
+        let aas_report: AasRegReport = serde_json::from_slice(aas_report_bytes).unwrap();
         // 04:1a:4f:ea:0d:04:bd:ed:7d:c1:43:ee:74:cb:8e:
         // 56:9e:6e:49:1c:89:bc:d6:5c:34:8f:8a:5b:40:5f:
         // 79:53:e3:89:7d:0f:0c:bc:cf:f0:45:ce:c9:a9:1d:
@@ -315,7 +315,7 @@ fn main() {
         )
         .unwrap()
     };
-    let worker_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
+    let worker_pubkey: Secp256r1PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
     info!("ec256 pubkey generated {:?}", worker_pubkey);
 
     let (worker_keypair, _) = sr25519::Pair::generate();
@@ -339,8 +339,8 @@ fn main() {
 
     let enclave = Enclave::<AccountId> {
         account_id: sr25519_public_key.as_array_ref().to_owned().into(),
-        public_key: serde_cbor::to_vec(&worker_pubkey).unwrap(),
-        attestation: serde_cbor::to_vec(&aas_report).unwrap(),
+        public_key: serde_json::to_vec(&worker_pubkey).unwrap(),
+        attestation: serde_json::to_vec(&aas_report).unwrap(),
     };
 
     info!("registering worker ...");
@@ -373,10 +373,10 @@ fn main() {
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
 
-    let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
+    let user_pubkey: Secp256r1PublicKey = serde_json::from_slice(&user.public_key).unwrap();
     info!("user public_key: {:?}", user_pubkey);
     let signed_owner_task_pubkey: Secp256r1SignedMsg =
-        serde_cbor::from_slice(&task.signed_owner_task_pubkey).unwrap();
+        serde_json::from_slice(&task.signed_owner_task_pubkey).unwrap();
     let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
     info!("verifying owner task pubkey ... {:?}", verified);
     assert_eq!(verified, true);
@@ -400,8 +400,8 @@ fn main() {
             get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
         )
     };
-    let signed_task_pubkey: Secp256r1SignedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
-    let signed_task_pubkey_bytes = serde_cbor::to_vec(&signed_task_pubkey).unwrap();
+    let signed_task_pubkey: Secp256r1SignedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
+    let signed_task_pubkey_bytes = serde_json::to_vec(&signed_task_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
     debug!("signed task public key is {:?}", signed_task_pubkey);
 
@@ -423,7 +423,7 @@ fn main() {
         )
         .unwrap()
     };
-    let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
+    let url_encrypted: Aes128EncryptedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
     debug!("msg len: {:?}", msg.len());
     debug!("ivcipher len: {:?}", buf_size);
     debug!("url_encrypted: {:?}", url_encrypted);
@@ -463,7 +463,7 @@ fn main() {
     let hash = api_wrapper.lock().unwrap().accept_task(
         task_id,
         signed_task_pubkey_bytes,
-        serde_cbor::to_vec(&url_encrypted).unwrap(),
+        serde_json::to_vec(&url_encrypted).unwrap(),
     );
     info!("accepted task (extrinsic={:?})", hash);
 

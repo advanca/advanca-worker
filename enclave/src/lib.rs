@@ -50,18 +50,14 @@ use sgx_types::*;
 use advanca_crypto::*;
 use advanca_crypto_types::*;
 
-use serde::Serialize;
-use serde_cbor;
-use serde_cbor::de::from_slice_with_scratch;
-use serde_cbor::ser::SliceWrite;
-use serde_cbor::Serializer;
-
 use advanca_macros::{enclave_cryptoerr, enclave_ret, enclave_ret_protobuf};
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
     worker_prvkey: Secp256r1PrivateKey,
     worker_pubkey: Secp256r1PublicKey,
+    worker_sr25519_prvkey: Sr25519PrivateKey,
+    worker_sr25519_pubkey: Sr25519PublicKey,
     // shared_dhkey  : sgx_ec256_dh_shared_t,
     // kdk           : sgx_key_128bit_t,
 }
@@ -88,6 +84,13 @@ static mut ATTESTED_SESSION: AttestedSession = AttestedSession {
         gx: [0; 32],
         gy: [0; 32],
     },
+    worker_sr25519_prvkey: Sr25519PrivateKey { 
+        secret: [0; 32],
+        nonce: [0; 32],
+    },
+    worker_sr25519_pubkey: Sr25519PublicKey {
+        compressed_point: [0; 32],
+    },
 };
 // static mut ATTESTED_SESSION: Once = Once::new();
 
@@ -95,6 +98,8 @@ static mut ATTESTED_SESSION: AttestedSession = AttestedSession {
 struct TaskInfo {
     task_prvkey: Secp256r1PrivateKey,
     task_pubkey: Secp256r1PublicKey,
+    task_sr25519_prvkey: Sr25519PrivateKey,
+    task_sr25519_pubkey: Sr25519PublicKey,
     user_pubkey: Secp256r1PublicKey,
     kdk: Aes128Key,
     enclave_total_in: usize,
@@ -107,6 +112,13 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
     task_pubkey: Secp256r1PublicKey {
         gx: [0; 32],
         gy: [0; 32],
+    },
+    task_sr25519_prvkey: Sr25519PrivateKey { 
+        secret: [0; 32],
+        nonce: [0; 32],
+    },
+    task_sr25519_pubkey: Sr25519PublicKey {
+        compressed_point: [0; 32],
     },
     user_pubkey: Secp256r1PublicKey {
         gx: [0; 32],
@@ -163,18 +175,55 @@ pub unsafe extern "C" fn enclave_ra_close(context: sgx_ra_context_t) -> sgx_stat
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn gen_worker_ec256_pubkey() -> sgx_status_t {
+pub unsafe extern "C" fn gen_worker_key() -> sgx_status_t {
     match secp256r1_gen_keypair() {
         Ok((prvkey, pubkey)) => {
             ATTESTED_SESSION.worker_prvkey = prvkey;
             ATTESTED_SESSION.worker_pubkey = pubkey;
-            return sgx_status_t::SGX_SUCCESS;
         }
         Err(CryptoError::SgxError(i, _)) => {
             return sgx_status_t::from_repr(i).unwrap();
         }
         _ => unreachable!(),
     }
+    match sr25519_gen_keypair() {
+        Ok((prvkey, pubkey)) => {
+            ATTESTED_SESSION.worker_sr25519_prvkey = prvkey;
+            ATTESTED_SESSION.worker_sr25519_pubkey = pubkey;
+        }
+        Err(CryptoError::SgxError(i, _)) => {
+            return sgx_status_t::from_repr(i).unwrap();
+        }
+        _ => unreachable!(),
+    }
+    return sgx_status_t::SGX_SUCCESS;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_worker_sr25519_pubkey(
+    ubuf: *mut u8,
+    ubuf_size: &mut usize,
+) -> sgx_status_t {
+    enclave_ret!(ATTESTED_SESSION.worker_sr25519_pubkey, ubuf, ubuf_size);
+    sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_task_sr25519_pubkey(
+    ubuf: *mut u8,
+    ubuf_size: &mut usize,
+    p_task_id: *const u8,
+) -> sgx_status_t {
+    let mut task_id = [0_u8; 32];
+    let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
+    task_id.copy_from_slice(&task_id_slice);
+    let task_info = (*TASKS).get(&task_id).unwrap();
+    let task_sr25519_pubkey = task_info.task_sr25519_pubkey;
+    let worker_sr25519_prvkey = ATTESTED_SESSION.worker_sr25519_prvkey;
+    let signed_pubkey: Sr25519SignedMsg =
+        sr25519_sign_msg(&worker_sr25519_prvkey, &serde_json::to_vec(&task_sr25519_pubkey).unwrap()).unwrap();
+    enclave_ret!(signed_pubkey, ubuf, ubuf_size);
+    sgx_status_t::SGX_SUCCESS
 }
 
 #[no_mangle]
@@ -199,7 +248,7 @@ pub unsafe extern "C" fn get_task_ec256_pubkey(
     let task_pubkey = task_info.task_pubkey;
     let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
     let signed_pubkey: Secp256r1SignedMsg =
-        secp256r1_sign_msg(&worker_prvkey, &serde_cbor::to_vec(&task_pubkey).unwrap()).unwrap();
+        secp256r1_sign_msg(&worker_prvkey, &serde_json::to_vec(&task_pubkey).unwrap()).unwrap();
     enclave_ret!(signed_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -228,19 +277,20 @@ pub unsafe extern "C" fn accept_task(
     p_user_pubkey_buf: *const u8,
     user_pubkey_buf_size: usize,
 ) -> sgx_status_t {
-    let mut scratch = [0_u8; 8196];
     let mut task_id = [0_u8; 32];
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
-    let user_pubkey: Secp256r1PublicKey =
-        from_slice_with_scratch(&pubkey_buf_slice, &mut scratch).unwrap();
+    let user_pubkey: Secp256r1PublicKey = serde_json::from_slice(pubkey_buf_slice).unwrap();
     let (task_prvkey, task_pubkey) = secp256r1_gen_keypair().unwrap();
+    let (task_sr25519_prvkey, task_sr25519_pubkey) = sr25519_gen_keypair().unwrap();
 
     let kdk = enclave_cryptoerr!(derive_kdk(&task_prvkey, &user_pubkey));
     let task_info = TaskInfo {
         task_prvkey: task_prvkey,
         task_pubkey: task_pubkey,
+        task_sr25519_prvkey: task_sr25519_prvkey,
+        task_sr25519_pubkey: task_sr25519_pubkey,
         user_pubkey: user_pubkey,
         kdk: kdk,
         enclave_total_in: 0,
@@ -276,25 +326,13 @@ pub unsafe extern "C" fn encrypt_msg(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_sr25519_public_key(
-    public_key: *mut u8,
-    public_key_size: u32,
-) -> sgx_status_t {
-    let key_slice = slice::from_raw_parts_mut(public_key, public_key_size as usize);
-
-    //FIXME: a dummy public key is used
-    key_slice.clone_from_slice(&[111 as u8; 32]);
-    sgx_status_t::SGX_SUCCESS
-}
-
-#[no_mangle]
 pub unsafe extern "C" fn create_storage(
     public_key: *const u8,
     public_key_size: u32,
 ) -> sgx_status_t {
     println!("[ENCLAVE INFO] creating storage ...");
     let key_bytes_slice = slice::from_raw_parts(public_key, public_key_size as usize);
-    let pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&key_bytes_slice).unwrap();
+    let pubkey: Secp256r1PublicKey = serde_json::from_slice(&key_bytes_slice).unwrap();
     let mut key_bytes = [0_u8; 64];
     key_bytes.copy_from_slice(&pubkey.to_raw_bytes());
     if let Err(status) = storage::create_sealed_storage(key_bytes) {
@@ -324,7 +362,8 @@ pub unsafe extern "C" fn proc_heartbeat(
     let mut task_id = [0_u8; 32];
     task_id.copy_from_slice(&heartbeat_req.task_id);
     let task_info = (*TASKS).get(&task_id).unwrap();
-    let worker_task_prvkey = task_info.task_prvkey;
+    // let worker_task_prvkey = task_info.task_prvkey;
+    let worker_task_sr25519_prvkey = task_info.task_sr25519_prvkey;
     let mut heartbeat_response = HeartbeatResponse::new();
     // obtain the storage info
     // current owner is not used for storage, set it to 0
@@ -340,10 +379,11 @@ pub unsafe extern "C" fn proc_heartbeat(
         storage_out: storage_out,
         storage_size: storage_size,
     };
-    let data = serde_cbor::to_vec(&alive_evidence).unwrap();
+    let data = serde_json::to_vec(&alive_evidence).unwrap();
 
-    let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &data));
-    heartbeat_response.heartbeat_sig = serde_cbor::to_vec(&block_hash_mac).unwrap();
+    // let block_hash_mac = enclave_cryptoerr!(secp256r1_sign_msg(&worker_task_prvkey, &data));
+    let block_hash_mac = enclave_cryptoerr!(sr25519_sign_msg(&worker_task_sr25519_prvkey, &data));
+    heartbeat_response.heartbeat_sig = serde_json::to_vec(&block_hash_mac).unwrap();
     enclave_ret_protobuf!(heartbeat_response, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -364,7 +404,7 @@ pub unsafe extern "C" fn storage_request(
 
     let _ = backtrace::enable_backtrace("enclave.signed.so", PrintFormat::Full);
 
-    let encrypted_msg = serde_cbor::from_slice(&encrypted_msg_slice).unwrap();
+    let encrypted_msg = serde_json::from_slice(&encrypted_msg_slice).unwrap();
     let decrypted_msg = enclave_cryptoerr!(aes128gcm_decrypt(&kdk, &encrypted_msg));
 
     let request_decrypted = decrypted_msg;
@@ -379,7 +419,7 @@ pub unsafe extern "C" fn storage_request(
 
     let response_encoded = response.write_to_bytes().unwrap();
     let response_encrypted = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &response_encoded));
-    let response_encrypted_bytes = serde_cbor::to_vec(&response_encrypted).unwrap();
+    let response_encrypted_bytes = serde_json::to_vec(&response_encrypted).unwrap();
 
     let (first, _) = response_payload.split_at_mut(response_encrypted_bytes.len());
     first.clone_from_slice(&response_encrypted_bytes);

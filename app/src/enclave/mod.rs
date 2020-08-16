@@ -113,13 +113,13 @@ pub fn init() -> SgxResult<SgxEnclave> {
 }
 
 pub fn sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
-    let public_key_size = 32;
+    let mut public_key_size = 32;
     let mut public_key = vec![0u8; public_key_size as usize];
 
     let _ = unsafe {
         handle_ecall!(
             eid,
-            get_sr25519_public_key(public_key.as_mut_ptr(), public_key_size)
+            get_worker_sr25519_pubkey(public_key.as_mut_ptr(), &mut public_key_size)
         )
         .unwrap()
     };
@@ -128,7 +128,7 @@ pub fn sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Vec<u8>> {
 }
 
 pub fn create_storage(eid: sgx_enclave_id_t, owner: Secp256r1PublicKey) -> SgxError {
-    let public_key_bytes = serde_cbor::to_vec(&owner).unwrap();
+    let public_key_bytes = serde_json::to_vec(&owner).unwrap();
 
     // we'll keep the current interface
     let mut status = sgx_status_t::SGX_SUCCESS;
