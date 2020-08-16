@@ -70,7 +70,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "structopt",
- "substrate-subxt",
+ "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b)",
  "worker-protos-std",
 ]
 
@@ -5613,7 +5613,7 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-runtime",
- "substrate-subxt",
+ "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5)",
 ]
 
 [[package]]
@@ -5645,6 +5645,35 @@ dependencies = [
 [[package]]
 name = "substrate-subxt"
 version = "0.11.0"
+source = "git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5#9641da555dfa43190069c47ab02ff69e913b08b5"
+dependencies = [
+ "advanca-node-primitives",
+ "frame-metadata",
+ "frame-support",
+ "futures 0.3.5",
+ "hex",
+ "jsonrpsee",
+ "log 0.4.11",
+ "num-traits",
+ "pallet-balances",
+ "pallet-indices",
+ "parity-scale-codec",
+ "sc-rpc-api",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5)",
+ "thiserror",
+ "url 2.1.1",
+]
+
+[[package]]
+name = "substrate-subxt"
+version = "0.11.0"
 source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
 dependencies = [
  "advanca-node-primitives",
@@ -5666,9 +5695,24 @@ dependencies = [
  "sp-runtime",
  "sp-transaction-pool",
  "sp-version",
- "substrate-subxt-proc-macro",
+ "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b)",
  "thiserror",
  "url 2.1.1",
+]
+
+[[package]]
+name = "substrate-subxt-proc-macro"
+version = "0.11.0"
+source = "git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5#9641da555dfa43190069c47ab02ff69e913b08b5"
+dependencies = [
+ "heck",
+ "proc-macro-crate",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "sp-keyring",
+ "syn",
+ "synstructure",
 ]
 
 [[package]]

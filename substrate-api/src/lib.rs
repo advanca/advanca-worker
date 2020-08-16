@@ -18,7 +18,7 @@ mod events;
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 
-use log::{debug, error, trace};
+use log::{error, trace};
 
 use pallet_balances::AccountData;
 
@@ -29,11 +29,8 @@ use advanca_node_primitives::{AccountId, Balance, Hash};
 use sp_core::sr25519;
 
 use substrate_subxt::{
-    advanca::advanca_core::*,
-    advanca::AdvancaRuntime,
-    balances::{TransferCall, TransferCallExt},
-    system::AccountStoreExt,
-    Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
+    advanca::advanca_core::*, advanca::AdvancaRuntime, balances::TransferCall,
+    system::AccountStoreExt, Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
 };
 
 //TODO: use TaskId<T> from advanca_core
