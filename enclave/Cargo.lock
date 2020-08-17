@@ -23,7 +23,6 @@ dependencies = [
  "schnorrkel",
  "serde 1.0.106",
  "serde-big-array",
- "serde_json",
  "sgx_tstd",
  "sgx_types",
 ]

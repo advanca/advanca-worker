@@ -54,10 +54,10 @@ use advanca_macros::{enclave_cryptoerr, enclave_ret, enclave_ret_protobuf};
 
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
-    worker_prvkey: Secp256r1PrivateKey,
-    worker_pubkey: Secp256r1PublicKey,
-    worker_sr25519_prvkey: Sr25519PrivateKey,
-    worker_sr25519_pubkey: Sr25519PublicKey,
+    enclave_secp256r1_prvkey: Secp256r1PrivateKey,
+    enclave_secp256r1_pubkey: Secp256r1PublicKey,
+    enclave_sr25519_prvkey: Sr25519PrivateKey,
+    enclave_sr25519_pubkey: Sr25519PublicKey,
     // shared_dhkey  : sgx_ec256_dh_shared_t,
     // kdk           : sgx_key_128bit_t,
 }
@@ -79,16 +79,16 @@ const G_SP_PUB_KEY: sgx_ec256_public_t = sgx_ec256_public_t {
 // TODO: change this to a mutable attested_session data object
 // and use once_only init to set the value.
 static mut ATTESTED_SESSION: AttestedSession = AttestedSession {
-    worker_prvkey: Secp256r1PrivateKey { r: [0; 32] },
-    worker_pubkey: Secp256r1PublicKey {
+    enclave_secp256r1_prvkey: Secp256r1PrivateKey { r: [0; 32] },
+    enclave_secp256r1_pubkey: Secp256r1PublicKey {
         gx: [0; 32],
         gy: [0; 32],
     },
-    worker_sr25519_prvkey: Sr25519PrivateKey { 
+    enclave_sr25519_prvkey: Sr25519PrivateKey { 
         secret: [0; 32],
         nonce: [0; 32],
     },
-    worker_sr25519_pubkey: Sr25519PublicKey {
+    enclave_sr25519_pubkey: Sr25519PublicKey {
         compressed_point: [0; 32],
     },
 };
@@ -178,8 +178,8 @@ pub unsafe extern "C" fn enclave_ra_close(context: sgx_ra_context_t) -> sgx_stat
 pub unsafe extern "C" fn gen_worker_key() -> sgx_status_t {
     match secp256r1_gen_keypair() {
         Ok((prvkey, pubkey)) => {
-            ATTESTED_SESSION.worker_prvkey = prvkey;
-            ATTESTED_SESSION.worker_pubkey = pubkey;
+            ATTESTED_SESSION.enclave_secp256r1_prvkey = prvkey;
+            ATTESTED_SESSION.enclave_secp256r1_pubkey = pubkey;
         }
         Err(CryptoError::SgxError(i, _)) => {
             return sgx_status_t::from_repr(i).unwrap();
@@ -188,8 +188,8 @@ pub unsafe extern "C" fn gen_worker_key() -> sgx_status_t {
     }
     match sr25519_gen_keypair() {
         Ok((prvkey, pubkey)) => {
-            ATTESTED_SESSION.worker_sr25519_prvkey = prvkey;
-            ATTESTED_SESSION.worker_sr25519_pubkey = pubkey;
+            ATTESTED_SESSION.enclave_sr25519_prvkey = prvkey;
+            ATTESTED_SESSION.enclave_sr25519_pubkey = pubkey;
         }
         Err(CryptoError::SgxError(i, _)) => {
             return sgx_status_t::from_repr(i).unwrap();
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn get_worker_sr25519_pubkey(
     ubuf: *mut u8,
     ubuf_size: &mut usize,
 ) -> sgx_status_t {
-    enclave_ret!(ATTESTED_SESSION.worker_sr25519_pubkey, ubuf, ubuf_size);
+    enclave_ret!(ATTESTED_SESSION.enclave_sr25519_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
 
@@ -219,9 +219,9 @@ pub unsafe extern "C" fn get_task_sr25519_pubkey(
     task_id.copy_from_slice(&task_id_slice);
     let task_info = (*TASKS).get(&task_id).unwrap();
     let task_sr25519_pubkey = task_info.task_sr25519_pubkey;
-    let worker_sr25519_prvkey = ATTESTED_SESSION.worker_sr25519_prvkey;
+    let enclave_sr25519_prvkey = ATTESTED_SESSION.enclave_sr25519_prvkey;
     let signed_pubkey: Sr25519SignedMsg =
-        sr25519_sign_msg(&worker_sr25519_prvkey, &serde_json::to_vec(&task_sr25519_pubkey).unwrap()).unwrap();
+        sr25519_sign_msg(&enclave_sr25519_prvkey, &serde_json::to_vec(&task_sr25519_pubkey).unwrap()).unwrap();
     enclave_ret!(signed_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -231,7 +231,7 @@ pub unsafe extern "C" fn get_worker_ec256_pubkey(
     ubuf: *mut u8,
     ubuf_size: &mut usize,
 ) -> sgx_status_t {
-    enclave_ret!(ATTESTED_SESSION.worker_pubkey, ubuf, ubuf_size);
+    enclave_ret!(ATTESTED_SESSION.enclave_secp256r1_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
 
@@ -246,9 +246,9 @@ pub unsafe extern "C" fn get_task_ec256_pubkey(
     task_id.copy_from_slice(&task_id_slice);
     let task_info = (*TASKS).get(&task_id).unwrap();
     let task_pubkey = task_info.task_pubkey;
-    let worker_prvkey = ATTESTED_SESSION.worker_prvkey;
+    let enclave_secp256r1_prvkey = ATTESTED_SESSION.enclave_secp256r1_prvkey;
     let signed_pubkey: Secp256r1SignedMsg =
-        secp256r1_sign_msg(&worker_prvkey, &serde_json::to_vec(&task_pubkey).unwrap()).unwrap();
+        secp256r1_sign_msg(&enclave_secp256r1_prvkey, &serde_json::to_vec(&task_pubkey).unwrap()).unwrap();
     enclave_ret!(signed_pubkey, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }
@@ -259,14 +259,16 @@ pub unsafe extern "C" fn gen_worker_reg_request(
     ubuf_size: &mut usize,
     context: sgx_ra_context_t,
 ) -> sgx_status_t {
-    let pubkey = ATTESTED_SESSION.worker_pubkey;
-    let sk_key = enclave_cryptoerr!(enclave_get_sk_key(context));
-    let data = pubkey.to_raw_bytes();
-    let mac = enclave_cryptoerr!(aes128cmac_mac(&sk_key, &data));
-    let req = AasRegRequest {
-        worker_pubkey: pubkey,
-        mac: mac,
+    let secp256r1_pubkey = ATTESTED_SESSION.enclave_secp256r1_pubkey;
+    let sr25519_pubkey = ATTESTED_SESSION.enclave_sr25519_pubkey;
+    let mut req = AasRegRequest {
+        enclave_secp256r1_pubkey: secp256r1_pubkey,
+        enclave_sr25519_pubkey: sr25519_pubkey,
+        mac: Aes128Mac::default(),
     };
+    let sk_key = enclave_cryptoerr!(enclave_get_sk_key(context));
+    let mac = enclave_cryptoerr!(aes128cmac_mac(&sk_key, &req.to_check_bytes()));
+    req.mac = mac;
     enclave_ret!(req, ubuf, ubuf_size);
     sgx_status_t::SGX_SUCCESS
 }

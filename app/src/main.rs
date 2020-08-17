@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::convert::TryFrom;
 use std::str;
 use std::sync::mpsc;
 use std::thread;
@@ -315,8 +314,8 @@ fn main() {
         )
         .unwrap()
     };
-    let worker_pubkey: Secp256r1PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
-    info!("ec256 pubkey generated {:?}", worker_pubkey);
+    let enclave_sec256p1_pubkey: Secp256r1PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
+    info!("ec256 pubkey generated {:?}", enclave_sec256p1_pubkey);
 
     let (worker_keypair, _) = sr25519::Pair::generate();
     let worker_account: AccountId = worker_keypair.public().as_array_ref().to_owned().into();
@@ -332,14 +331,11 @@ fn main() {
     display_balance(worker_account.clone(), &api);
 
     // get the keys from enclave
-    let sr25519_public_key = sr25519::Public::try_from(
-        &enclave::sr25519_public_key(e.geteid()).expect("enclave sr25519 public key")[..],
-    )
-    .unwrap(); //.try_into().unwrap();
+    let sr25519_public_key = enclave::enclave_sr25519_public_key(e.geteid()).expect("enclave sr25519 public key").to_schnorrkel_public();
 
     let enclave = Enclave::<AccountId> {
-        account_id: sr25519_public_key.as_array_ref().to_owned().into(),
-        public_key: serde_json::to_vec(&worker_pubkey).unwrap(),
+        account_id: sr25519_public_key.to_bytes().to_owned().into(),
+        public_key: serde_json::to_vec(&enclave_sec256p1_pubkey).unwrap(),
         attestation: serde_json::to_vec(&aas_report).unwrap(),
     };
 
