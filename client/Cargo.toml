@@ -33,9 +33,9 @@ sgx_crypto_helper = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 sgx_types         = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_ucrypto       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-crypto       = { rev = "c73508a4ad947c4a027679e7638589769006ec17", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
-advanca-crypto-types = { rev = "c73508a4ad947c4a027679e7638589769006ec17", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
-advanca-node-primitives = { rev = "dc13cadb1e375223c85a22c1fd404b951b6d869a", git = "https://github.com/advanca/advanca-node/" }
+advanca-crypto       = { rev = "e3e6886c9d0e5fd9b673c0365012bd861edc0e39", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
+advanca-crypto-types = { rev = "e3e6886c9d0e5fd9b673c0365012bd861edc0e39", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
+advanca-node-primitives = { rev = "7d01af90ac821c61d63cacb54c6b1c32777bae2a", git = "https://github.com/advanca/advanca-node/" }
 
 worker-protos-std    = { path = "../worker-protos/worker-protos-std" }
 

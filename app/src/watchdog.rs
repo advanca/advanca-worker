@@ -53,17 +53,17 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
         true,
         aas_verify_reg_report(&AAS_PUB_KEY, &worker_attestation_report).unwrap()
     );
-    debug!("get worker's attested pubkey");
-    let worker_pubkey: Secp256r1PublicKey = worker_attestation_report.worker_pubkey;
-    debug!("verifying worker's task pubkey");
-    let signed_worker_task_pubkey =
-        serde_json::from_slice(&task.signed_worker_task_pubkey.unwrap()).unwrap();
+    debug!("get enclave's attested pubkey");
+    let enclave_secp256r1_pubkey: Secp256r1PublicKey = worker_attestation_report.enclave_secp256r1_pubkey;
+    debug!("verifying enclave's task secp256r1 pubkey");
+    let signed_enclave_task_secp256r1_pubkey =
+        serde_json::from_slice(&task.signed_enclave_task_secp256r1_pubkey.unwrap()).unwrap();
     assert_eq!(
         true,
-        secp256r1_verify_msg(&worker_pubkey, &signed_worker_task_pubkey).unwrap()
+        secp256r1_verify_msg(&enclave_secp256r1_pubkey, &signed_enclave_task_secp256r1_pubkey).unwrap()
     );
     let worker_task_pubkey: Secp256r1PublicKey =
-        serde_json::from_slice(&signed_worker_task_pubkey.msg).unwrap();
+        serde_json::from_slice(&signed_enclave_task_secp256r1_pubkey.msg).unwrap();
     debug!("iterating over the evidences ...");
     let mut verified_evidence = 0;
     let mut alive_blocks = HashSet::new();

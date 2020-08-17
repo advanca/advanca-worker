@@ -44,7 +44,7 @@ version = "0.4.0"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
- "advanca-node-primitives",
+ "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
  "async-std",
  "clang-sys",
  "env_logger",
@@ -76,7 +76,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -93,7 +93,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
 dependencies = [
  "aes",
  "cmac",
@@ -102,14 +102,13 @@ dependencies = [
  "schnorrkel",
  "serde",
  "serde-big-array 0.3.0",
- "serde_json",
  "sgx_types",
 ]
 
 [[package]]
 name = "advanca-macros"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
@@ -118,7 +117,19 @@ dependencies = [
 [[package]]
 name = "advanca-node-primitives"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a#dc13cadb1e375223c85a22c1fd404b951b6d869a"
+source = "git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a#7d01af90ac821c61d63cacb54c6b1c32777bae2a"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "smart-default",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "advanca-node-primitives"
+version = "0.3.0"
+source = "git+https://github.com/advanca/advanca-node?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a#dc13cadb1e375223c85a22c1fd404b951b6d869a"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -135,7 +146,7 @@ dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
  "advanca-macros",
- "advanca-node-primitives",
+ "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
  "async-std",
  "clang-sys",
  "env_logger",
@@ -415,7 +426,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df097e3f506bec0e1a24f06bb3c962c228f36671de841ff579cb99f371772634"
 dependencies = [
  "futures 0.3.5",
- "rustls 0.18.0",
+ "rustls 0.18.1",
  "webpki",
  "webpki-roots 0.19.0",
 ]
@@ -2309,7 +2320,7 @@ dependencies = [
  "libp2p-core",
  "log 0.4.11",
  "quicksink",
- "rustls 0.18.0",
+ "rustls 0.18.1",
  "rw-stream-sink",
  "soketto 0.4.1",
  "url 2.1.1",
@@ -4177,9 +4188,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.18.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cac94b333ee2aac3284c5b8a1b7fb4dd11cba88c244e3fe33cdbd047af0eb693"
+checksum = "5d1126dcf58e93cee7d098dbda643b5f92ed724f1f6a63007c1116eed6700c81"
 dependencies = [
  "base64 0.12.3",
  "log 0.4.11",
@@ -4609,7 +4620,7 @@ dependencies = [
 [[package]]
 name = "sgx-ra"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=c73508a4ad947c4a027679e7638589769006ec17#c73508a4ad947c4a027679e7638589769006ec17"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
@@ -5638,7 +5649,7 @@ dependencies = [
 name = "substrate-api"
 version = "0.3.0"
 dependencies = [
- "advanca-node-primitives",
+ "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
  "async-std",
  "env_logger",
  "hex",
@@ -5648,7 +5659,7 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-runtime",
- "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5)",
+ "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89)",
 ]
 
 [[package]]
@@ -5680,9 +5691,9 @@ dependencies = [
 [[package]]
 name = "substrate-subxt"
 version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5#9641da555dfa43190069c47ab02ff69e913b08b5"
+source = "git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89#41ef6db2f46ef9df64a627e3efc04a942def5d89"
 dependencies = [
- "advanca-node-primitives",
+ "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
  "frame-metadata",
  "frame-support",
  "futures 0.3.5",
@@ -5701,7 +5712,7 @@ dependencies = [
  "sp-runtime",
  "sp-transaction-pool",
  "sp-version",
- "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5)",
+ "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89)",
  "thiserror",
  "url 2.1.1",
 ]
@@ -5711,7 +5722,7 @@ name = "substrate-subxt"
 version = "0.11.0"
 source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
 dependencies = [
- "advanca-node-primitives",
+ "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a)",
  "frame-metadata",
  "frame-support",
  "futures 0.3.5",
@@ -5738,7 +5749,7 @@ dependencies = [
 [[package]]
 name = "substrate-subxt-proc-macro"
 version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=9641da555dfa43190069c47ab02ff69e913b08b5#9641da555dfa43190069c47ab02ff69e913b08b5"
+source = "git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89#41ef6db2f46ef9df64a627e3efc04a942def5d89"
 dependencies = [
  "heck",
  "proc-macro-crate",

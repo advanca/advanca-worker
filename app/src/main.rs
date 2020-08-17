@@ -317,9 +317,20 @@ fn main() {
     let enclave_sec256p1_pubkey: Secp256r1PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
     info!("ec256 pubkey generated {:?}", enclave_sec256p1_pubkey);
 
+    buf_size = buf.len();
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_worker_sr25519_pubkey(buf.as_mut_ptr(), &mut buf_size)
+        )
+        .unwrap()
+    };
+    let enclave_sr25519_pubkey: Sr25519PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
+    info!("enclave sr25519 pubkey generated {:?}", enclave_sr25519_pubkey);
+
     let (worker_keypair, _) = sr25519::Pair::generate();
     let worker_account: AccountId = worker_keypair.public().as_array_ref().to_owned().into();
-    info!("sr25519 keypair generated {:?}", worker_keypair.public());
+    info!("worker sr25519 keypair generated {:?}", worker_keypair.public());
 
     // inject funds into worker account
     fund_account(&opt.ws_url, &worker_account);
@@ -333,9 +344,14 @@ fn main() {
     // get the keys from enclave
     let sr25519_public_key = enclave::enclave_sr25519_public_key(e.geteid()).expect("enclave sr25519 public key").to_schnorrkel_public();
 
+    let enclave_pubkeys = advanca_node_primitives::PublicKeys {
+        secp256r1_public_key: serde_json::to_vec(&enclave_sec256p1_pubkey).unwrap(),
+        sr25519_public_key: serde_json::to_vec(&enclave_sr25519_pubkey).unwrap(),
+    };
+
     let enclave = Enclave::<AccountId> {
         account_id: sr25519_public_key.to_bytes().to_owned().into(),
-        public_key: serde_json::to_vec(&enclave_sec256p1_pubkey).unwrap(),
+        public_keys: enclave_pubkeys,
         attestation: serde_json::to_vec(&aas_report).unwrap(),
     };
 
@@ -369,10 +385,10 @@ fn main() {
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
 
-    let user_pubkey: Secp256r1PublicKey = serde_json::from_slice(&user.public_key).unwrap();
+    let user_pubkey: Secp256r1PublicKey = serde_json::from_slice(&user.public_keys.secp256r1_public_key).unwrap();
     info!("user public_key: {:?}", user_pubkey);
     let signed_owner_task_pubkey: Secp256r1SignedMsg =
-        serde_json::from_slice(&task.signed_owner_task_pubkey).unwrap();
+        serde_json::from_slice(&task.signed_owner_task_secp256r1_pubkey).unwrap();
     let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
     info!("verifying owner task pubkey ... {:?}", verified);
     assert_eq!(verified, true);

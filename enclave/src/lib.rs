@@ -96,11 +96,12 @@ static mut ATTESTED_SESSION: AttestedSession = AttestedSession {
 
 #[derive(Default, Clone, Copy)]
 struct TaskInfo {
-    task_prvkey: Secp256r1PrivateKey,
-    task_pubkey: Secp256r1PublicKey,
+    task_secp256r1_prvkey: Secp256r1PrivateKey,
+    task_secp256r1_pubkey: Secp256r1PublicKey,
     task_sr25519_prvkey: Sr25519PrivateKey,
     task_sr25519_pubkey: Sr25519PublicKey,
-    user_pubkey: Secp256r1PublicKey,
+    user_secp256r1_pubkey: Secp256r1PublicKey,
+    user_sr25519_pubkey: Sr25519PublicKey,
     kdk: Aes128Key,
     enclave_total_in: usize,
     enclave_total_out: usize,
@@ -108,8 +109,8 @@ struct TaskInfo {
 
 static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
 static mut SINGLE_TASK: TaskInfo = TaskInfo {
-    task_prvkey: Secp256r1PrivateKey { r: [0; 32] },
-    task_pubkey: Secp256r1PublicKey {
+    task_secp256r1_prvkey: Secp256r1PrivateKey { r: [0; 32] },
+    task_secp256r1_pubkey: Secp256r1PublicKey {
         gx: [0; 32],
         gy: [0; 32],
     },
@@ -120,9 +121,12 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
     task_sr25519_pubkey: Sr25519PublicKey {
         compressed_point: [0; 32],
     },
-    user_pubkey: Secp256r1PublicKey {
+    user_secp256r1_pubkey: Secp256r1PublicKey {
         gx: [0; 32],
         gy: [0; 32],
+    },
+    user_sr25519_pubkey: Sr25519PublicKey {
+        compressed_point: [0; 32],
     },
     kdk: Aes128Key { key: [0; 16] },
     enclave_total_in: 0,
@@ -245,7 +249,7 @@ pub unsafe extern "C" fn get_task_ec256_pubkey(
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let task_info = (*TASKS).get(&task_id).unwrap();
-    let task_pubkey = task_info.task_pubkey;
+    let task_pubkey = task_info.task_secp256r1_pubkey;
     let enclave_secp256r1_prvkey = ATTESTED_SESSION.enclave_secp256r1_prvkey;
     let signed_pubkey: Secp256r1SignedMsg =
         secp256r1_sign_msg(&enclave_secp256r1_prvkey, &serde_json::to_vec(&task_pubkey).unwrap()).unwrap();
@@ -283,26 +287,27 @@ pub unsafe extern "C" fn accept_task(
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
-    let user_pubkey: Secp256r1PublicKey = serde_json::from_slice(pubkey_buf_slice).unwrap();
-    let (task_prvkey, task_pubkey) = secp256r1_gen_keypair().unwrap();
+    let user_secp256r1_pubkey: Secp256r1PublicKey = serde_json::from_slice(pubkey_buf_slice).unwrap();
+    let (task_secp256r1_prvkey, task_secp256r1_pubkey) = secp256r1_gen_keypair().unwrap();
     let (task_sr25519_prvkey, task_sr25519_pubkey) = sr25519_gen_keypair().unwrap();
 
-    let kdk = enclave_cryptoerr!(derive_kdk(&task_prvkey, &user_pubkey));
+    let kdk = enclave_cryptoerr!(derive_kdk(&task_secp256r1_prvkey, &user_secp256r1_pubkey));
     let task_info = TaskInfo {
-        task_prvkey: task_prvkey,
-        task_pubkey: task_pubkey,
+        task_secp256r1_prvkey: task_secp256r1_prvkey,
+        task_secp256r1_pubkey: task_secp256r1_pubkey,
         task_sr25519_prvkey: task_sr25519_prvkey,
         task_sr25519_pubkey: task_sr25519_pubkey,
-        user_pubkey: user_pubkey,
+        user_secp256r1_pubkey: user_secp256r1_pubkey,
+        user_sr25519_pubkey: Sr25519PublicKey::default(),
         kdk: kdk,
         enclave_total_in: 0,
         enclave_total_out: 0,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
-    SINGLE_TASK.task_prvkey = task_prvkey;
-    SINGLE_TASK.task_pubkey = task_pubkey;
-    SINGLE_TASK.user_pubkey = user_pubkey;
+    SINGLE_TASK.task_secp256r1_prvkey = task_secp256r1_prvkey;
+    SINGLE_TASK.task_secp256r1_pubkey = task_secp256r1_pubkey;
+    SINGLE_TASK.user_secp256r1_pubkey = user_secp256r1_pubkey;
     SINGLE_TASK.kdk = kdk;
     sgx_status_t::SGX_SUCCESS
 }
