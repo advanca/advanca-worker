@@ -20,7 +20,7 @@ use structopt::StructOpt;
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::AccountKeyring;
 
-use advanca_node_primitives::{AccountId, Privacy, TaskSpec};
+use advanca_node_primitives::{AccountId, Privacy, TaskSpec, PublicKeys};
 
 use advanca_crypto::*;
 use advanca_crypto_types::*;
@@ -144,9 +144,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // generate secp256r1 keypair for communication with worker
     let (prvkey, pubkey) = secp256r1_gen_keypair().unwrap();
+    let (sr25519_prvkey, sr25519_pubkey) = sr25519_gen_keypair().unwrap();
 
     info!("generated client ec256 keypair");
     trace!("generated client ec256 keypair {:?}", prvkey.r);
+
+    let public_keys = PublicKeys {
+        secp256r1_public_key: serde_json::to_vec(&pubkey).unwrap(),
+        sr25519_public_key: serde_json::to_vec(&sr25519_pubkey).unwrap(),
+    };
+
+    info!("generated client sr25519 keypair");
+    trace!("generated client sr25519 keypair {:?}", sr25519_prvkey.secret);
 
     let client_signer = PairSigner::new(client_sr25519_keypair.clone());
 
@@ -156,27 +165,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("public_key bytes: {:?}", public_key);
 
     let result = api
-        .register_user_and_watch(&client_signer, 1, public_key)
+        .register_user_and_watch(&client_signer, 1, public_keys)
         .await
         .expect("extrinsic success");
     info!("registered user (extrinsic={:?})", result.extrinsic);
     display_balance(client_account.clone(), &api).await?;
 
+    info!("sleeping for 12 seconds...");
+    async_std::task::sleep(std::time::Duration::from_secs(18)).await;
+
     // submit task
-    info!("generating ephemeral task key ...");
-    let (owner_task_prvkey, owner_task_pubkey) = secp256r1_gen_keypair().unwrap();
-    debug!("owner task prvkey: {:?}", owner_task_prvkey);
-    debug!("owner task pubkey: {:?}", owner_task_pubkey);
-    let signed_task_pubkey =
-        secp256r1_sign_msg(&prvkey, &serde_json::to_vec(&owner_task_pubkey).unwrap()).unwrap();
-    info!("signed task pubkey ... {:?}", signed_task_pubkey);
+    info!("generating ephemeral task secp256r1 key ...");
+    let (owner_task_secp256r1_prvkey, owner_task_secp256r1_pubkey) = secp256r1_gen_keypair().unwrap();
+    debug!("owner task secp256r1 prvkey: {:?}", owner_task_secp256r1_prvkey);
+    debug!("owner task secp256r1 pubkey: {:?}", owner_task_secp256r1_pubkey);
+
+    info!("generating ephemeral task sr25519 key ...");
+    let (owner_task_sr25519_prvkey, owner_task_sr25519_pubkey) = sr25519_gen_keypair().unwrap();
+    debug!("owner task sr25519 prvkey: {:?}", owner_task_sr25519_prvkey);
+    debug!("owner task sr25519 pubkey: {:?}", owner_task_sr25519_pubkey);
+
+    let signed_task_secp256r1_pubkey =
+        secp256r1_sign_msg(&prvkey, &serde_json::to_vec(&owner_task_secp256r1_pubkey).unwrap()).unwrap();
+    info!("signed task secp256r1 pubkey ... {:?}", signed_task_secp256r1_pubkey);
+
+    let signed_task_sr25519_pubkey =
+        sr25519_sign_msg(&sr25519_prvkey, &serde_json::to_vec(&owner_task_sr25519_pubkey).unwrap()).unwrap();
+    info!("signed task sr25519 pubkey ... {:?}", signed_task_sr25519_pubkey);
+
     info!("submitting task ...");
     let mut task_spec: TaskSpec<Privacy> = Default::default();
     task_spec.privacy = Privacy::Encryption;
     let result = api
         .submit_task_and_watch(
             &client_signer,
-            serde_json::to_vec(&signed_task_pubkey).unwrap(),
+            serde_json::to_vec(&signed_task_secp256r1_pubkey).unwrap(),
+            serde_json::to_vec(&signed_task_sr25519_pubkey).unwrap(),
             0,
             task_spec,
         )
@@ -206,21 +230,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("querying worker information ...");
     let worker = api.workers(worker_id, None).await?;
     info!("received worker information");
-    let enclave_public_key = serde_json::from_slice(&worker.enclave.public_key).unwrap();
-    debug!("enclave public key is {:?}", enclave_public_key);
+    let enclave_secp256r1_public_key = serde_json::from_slice(&worker.enclave.public_keys.secp256r1_public_key).unwrap();
+    debug!("enclave public key is {:?}", enclave_secp256r1_public_key);
 
-    let signed_task_pubkey_bytes = task
-        .signed_worker_task_pubkey
+    let signed_task_secp256r1_pubkey_bytes = task
+        .signed_enclave_task_secp256r1_pubkey
         .expect("signed task pubkey should exist");
-    let signed_task_pubkey: Secp256r1SignedMsg =
-        serde_json::from_slice(&signed_task_pubkey_bytes).unwrap();
+    let signed_task_secp256r1_pubkey: Secp256r1SignedMsg =
+        serde_json::from_slice(&signed_task_secp256r1_pubkey_bytes).unwrap();
 
     // verify that the task_pubkey is untampered
-    let verified = secp256r1_verify_msg(&enclave_public_key, &signed_task_pubkey).unwrap();
+    let verified = secp256r1_verify_msg(&enclave_secp256r1_public_key, &signed_task_secp256r1_pubkey).unwrap();
     assert_eq!(verified, true);
-    let worker_task_pubkey: Secp256r1PublicKey =
-        serde_json::from_slice(&signed_task_pubkey.msg).unwrap();
-    let kdk: Aes128Key = derive_kdk(&owner_task_prvkey, &worker_task_pubkey).unwrap();
+    let enclave_task_secp256r1_pubkey: Secp256r1PublicKey =
+        serde_json::from_slice(&signed_task_secp256r1_pubkey.msg).unwrap();
+    let kdk: Aes128Key = derive_kdk(&owner_task_secp256r1_prvkey, &enclave_task_secp256r1_pubkey).unwrap();
     let encrypted_worker_url = task.worker_url.expect("encrypted url should exist");
     let url_encrypted: Aes128EncryptedMsg = serde_json::from_slice(&encrypted_worker_url).unwrap();
     debug!("encrypted_url: {:?}", url_encrypted);
@@ -231,19 +255,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("worker url is {:?}", url);
 
     // talk to worker directly
-    grpc::start_demo(&url, worker_task_pubkey, owner_task_prvkey);
+    grpc::start_demo(&url, enclave_task_secp256r1_pubkey, owner_task_secp256r1_prvkey);
 
     // abort the task
     info!("sleeping for 12 seconds...");
-    async_std::task::sleep(std::time::Duration::from_secs(12)).await;
+    async_std::task::sleep(std::time::Duration::from_secs(18)).await;
+
     info!("aborting task ...");
     let result = api
         .abort_task_and_watch(&client_signer, task_id)
         .await
         .expect("extrinsic success");
     info!("task aborted (extrinsic={:?})", result.extrinsic);
-    info!("sleeping for 18 seconds...");
-    async_std::task::sleep(std::time::Duration::from_secs(18)).await;
+
+    let _event =
+        async_std::task::block_on(wait_for_event(&api, |_: &TaskCompletedEvent<_>| {
+            true
+        }))
+    .expect("retrieve an event");
     display_balance(client_account.clone(), &api).await?;
 
     Ok(())
