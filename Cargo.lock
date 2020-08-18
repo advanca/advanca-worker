@@ -44,7 +44,7 @@ version = "0.4.0"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
- "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
+ "advanca-node-primitives",
  "async-std",
  "clang-sys",
  "env_logger",
@@ -69,14 +69,14 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "structopt",
- "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b)",
+ "substrate-subxt",
  "worker-protos-std",
 ]
 
 [[package]]
 name = "advanca-crypto"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a1ccddb03cac0928ab5cffd672a3a102574df761#a1ccddb03cac0928ab5cffd672a3a102574df761"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -93,7 +93,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a1ccddb03cac0928ab5cffd672a3a102574df761#a1ccddb03cac0928ab5cffd672a3a102574df761"
 dependencies = [
  "aes",
  "cmac",
@@ -108,7 +108,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a1ccddb03cac0928ab5cffd672a3a102574df761#a1ccddb03cac0928ab5cffd672a3a102574df761"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",
@@ -117,19 +117,7 @@ dependencies = [
 [[package]]
 name = "advanca-node-primitives"
 version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a#7d01af90ac821c61d63cacb54c6b1c32777bae2a"
-dependencies = [
- "parity-scale-codec",
- "primitive-types",
- "smart-default",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "advanca-node-primitives"
-version = "0.3.0"
-source = "git+https://github.com/advanca/advanca-node?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a#dc13cadb1e375223c85a22c1fd404b951b6d869a"
+source = "git+https://github.com/advanca/advanca-node/?rev=eadd1462c3ea6ec816a4daba1f994d6837764258#eadd1462c3ea6ec816a4daba1f994d6837764258"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -146,7 +134,7 @@ dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
  "advanca-macros",
- "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
+ "advanca-node-primitives",
  "async-std",
  "clang-sys",
  "env_logger",
@@ -764,6 +752,15 @@ name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
+name = "cloudabi"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4344512281c643ae7638bbabc3af17a11307803ec8f0fcad9fae512a8bf36467"
 dependencies = [
  "bitflags",
 ]
@@ -1951,6 +1948,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "instant"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b141fdc7836c525d4d594027d318c84161ca17aaf8113ab1f81ab93ae897485"
+
+[[package]]
 name = "integer-sqrt"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2346,9 +2349,9 @@ dependencies = [
 
 [[package]]
 name = "libz-sys"
-version = "1.0.27"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ca8894883d250240341478bf987467332fbdd5da5c42426c69a8f93dbc302f2"
+checksum = "af67924b8dd885cccea261866c8ce5b74d239d272e154053ff927dae839f5ae9"
 dependencies = [
  "cc",
  "libc",
@@ -2372,6 +2375,15 @@ name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4da24a77a3d8a6d4862d95f72e6fdb9c09a643ecdb402d754004a557f2bec75"
+dependencies = [
+ "scopeguard",
+]
+
+[[package]]
+name = "lock_api"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28247cc5a5be2f05fbcd76dd0cf2c7d3b5400cb978a28042abcd4fa0b3f8261c"
 dependencies = [
  "scopeguard",
 ]
@@ -2800,11 +2812,11 @@ checksum = "1ab52be62400ca80aa00285d25253d7f7c437b7375c4de678f5405d3afe82ca5"
 
 [[package]]
 name = "once_cell"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b631f7e854af39a1739f401cf34a8a013dfe09eac4fa4dba91e9768bd28168d"
+checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
 dependencies = [
- "parking_lot 0.10.2",
+ "parking_lot 0.11.0",
 ]
 
 [[package]]
@@ -3462,7 +3474,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f842b1982eb6c2fe34036a4fbfb06dd185a3f5c8edfaacdf7d1ea10b07de6252"
 dependencies = [
- "lock_api",
+ "lock_api 0.3.4",
  "parking_lot_core 0.6.2",
  "rustc_version",
 ]
@@ -3473,8 +3485,19 @@ version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3a704eb390aafdc107b0e392f56a82b668e3a71366993b5340f5833fd62505e"
 dependencies = [
- "lock_api",
+ "lock_api 0.3.4",
  "parking_lot_core 0.7.2",
+]
+
+[[package]]
+name = "parking_lot"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4893845fa2ca272e647da5d0e46660a314ead9c2fdd9a883aabc32e481a8733"
+dependencies = [
+ "instant",
+ "lock_api 0.4.1",
+ "parking_lot_core 0.8.0",
 ]
 
 [[package]]
@@ -3484,7 +3507,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b876b1b9e7ac6e1a74a6da34d25c42e17e8862aa409cbbbdcfc8d86c6f3bc62b"
 dependencies = [
  "cfg-if",
- "cloudabi",
+ "cloudabi 0.0.3",
  "libc",
  "redox_syscall",
  "rustc_version",
@@ -3499,7 +3522,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d58c7c768d4ba344e3e8d72518ac13e259d7c7ade24167003b8488e10b6740a3"
 dependencies = [
  "cfg-if",
- "cloudabi",
+ "cloudabi 0.0.3",
+ "libc",
+ "redox_syscall",
+ "smallvec 1.4.2",
+ "winapi 0.3.9",
+]
+
+[[package]]
+name = "parking_lot_core"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c361aa727dd08437f2f1447be8b59a33b0edd15e0fcee698f935613d9efbca9b"
+dependencies = [
+ "cfg-if",
+ "cloudabi 0.1.0",
+ "instant",
  "libc",
  "redox_syscall",
  "smallvec 1.4.2",
@@ -3834,7 +3872,7 @@ version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c618c47cd3ebd209790115ab837de41425723956ad3ce2e6a7f09890947cacb9"
 dependencies = [
- "cloudabi",
+ "cloudabi 0.0.3",
  "fuchsia-cprng",
  "libc",
  "rand_core 0.3.1",
@@ -3962,7 +4000,7 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b75f676a1e053fc562eafbb47838d67c84801e38fc1ba459e8f180deabd5071"
 dependencies = [
- "cloudabi",
+ "cloudabi 0.0.3",
  "fuchsia-cprng",
  "libc",
  "rand_core 0.4.2",
@@ -4620,7 +4658,7 @@ dependencies = [
 [[package]]
 name = "sgx-ra"
 version = "0.3.1"
-source = "git+https://github.com/advanca/advanca-sgx-helper?rev=e3e6886c9d0e5fd9b673c0365012bd861edc0e39#e3e6886c9d0e5fd9b673c0365012bd861edc0e39"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=a1ccddb03cac0928ab5cffd672a3a102574df761#a1ccddb03cac0928ab5cffd672a3a102574df761"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
@@ -5649,7 +5687,7 @@ dependencies = [
 name = "substrate-api"
 version = "0.3.0"
 dependencies = [
- "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
+ "advanca-node-primitives",
  "async-std",
  "env_logger",
  "hex",
@@ -5659,7 +5697,7 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-runtime",
- "substrate-subxt 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89)",
+ "substrate-subxt",
 ]
 
 [[package]]
@@ -5691,9 +5729,9 @@ dependencies = [
 [[package]]
 name = "substrate-subxt"
 version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89#41ef6db2f46ef9df64a627e3efc04a942def5d89"
+source = "git+https://github.com/advanca/substrate-subxt/?rev=790c2bff5b0f709d4f69f01740d35499cd403b9a#790c2bff5b0f709d4f69f01740d35499cd403b9a"
 dependencies = [
- "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node/?rev=7d01af90ac821c61d63cacb54c6b1c32777bae2a)",
+ "advanca-node-primitives",
  "frame-metadata",
  "frame-support",
  "futures 0.3.5",
@@ -5712,36 +5750,7 @@ dependencies = [
  "sp-runtime",
  "sp-transaction-pool",
  "sp-version",
- "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89)",
- "thiserror",
- "url 2.1.1",
-]
-
-[[package]]
-name = "substrate-subxt"
-version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
-dependencies = [
- "advanca-node-primitives 0.3.0 (git+https://github.com/advanca/advanca-node?rev=dc13cadb1e375223c85a22c1fd404b951b6d869a)",
- "frame-metadata",
- "frame-support",
- "futures 0.3.5",
- "hex",
- "jsonrpsee",
- "log 0.4.11",
- "num-traits",
- "pallet-balances",
- "pallet-indices",
- "parity-scale-codec",
- "sc-rpc-api",
- "serde",
- "serde_json",
- "sp-core",
- "sp-rpc",
- "sp-runtime",
- "sp-transaction-pool",
- "sp-version",
- "substrate-subxt-proc-macro 0.11.0 (git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b)",
+ "substrate-subxt-proc-macro",
  "thiserror",
  "url 2.1.1",
 ]
@@ -5749,22 +5758,7 @@ dependencies = [
 [[package]]
 name = "substrate-subxt-proc-macro"
 version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=41ef6db2f46ef9df64a627e3efc04a942def5d89#41ef6db2f46ef9df64a627e3efc04a942def5d89"
-dependencies = [
- "heck",
- "proc-macro-crate",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "sp-keyring",
- "syn",
- "synstructure",
-]
-
-[[package]]
-name = "substrate-subxt-proc-macro"
-version = "0.11.0"
-source = "git+https://github.com/advanca/substrate-subxt?rev=cea05ad5ecd03e649827617e5e2ae3f696f4e31b#cea05ad5ecd03e649827617e5e2ae3f696f4e31b"
+source = "git+https://github.com/advanca/substrate-subxt/?rev=790c2bff5b0f709d4f69f01740d35499cd403b9a#790c2bff5b0f709d4f69f01740d35499cd403b9a"
 dependencies = [
  "heck",
  "proc-macro-crate",
@@ -5920,9 +5914,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53953d2d3a5ad81d9f844a32f14ebb121f50b650cd59d0ee2a07cf13c617efed"
+checksum = "238ce071d267c5710f9d31451efec16c5ee22de34df17cc05e56cbc92e967117"
 
 [[package]]
 name = "tokio"
