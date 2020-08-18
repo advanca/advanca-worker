@@ -20,7 +20,8 @@ use log::{error, trace};
 use pallet_balances::AccountData;
 
 use advanca_node_primitives::{
-    self, Ciphertext, Duration, Enclave, Privacy, Task, TaskSpec, TaskStatus, User, Worker, PublicKeys,
+    self, Ciphertext, Duration, Enclave, Privacy, PublicKeys, Task, TaskSpec, TaskStatus, User,
+    Worker,
 };
 use advanca_node_primitives::{AccountId, Balance, Hash};
 use sp_core::sr25519;
@@ -225,7 +226,7 @@ impl SubstrateApi {
     }
 
     /// Listen for event TaskCompleted once
-    /// 
+    ///
     /// Block the current thread till TaskCompleted return and task id is returned
     pub fn listen_for_task_completed(&self) -> TaskId {
         let event =

@@ -33,17 +33,23 @@ sgx_crypto_helper = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 sgx_types         = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_ucrypto       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
-advanca-crypto       = { rev = "e3e6886c9d0e5fd9b673c0365012bd861edc0e39", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
-advanca-crypto-types = { rev = "e3e6886c9d0e5fd9b673c0365012bd861edc0e39", git = "https://github.com/advanca/advanca-sgx-helper", features = ["std_env"] }
-advanca-node-primitives = { rev = "7d01af90ac821c61d63cacb54c6b1c32777bae2a", git = "https://github.com/advanca/advanca-node/" }
+advanca-crypto          = { rev = "a1ccddb03cac0928ab5cffd672a3a102574df761", git = "https://github.com/advanca/advanca-sgx-helper/", features = ["std_env"] }
+advanca-crypto-types    = { rev = "a1ccddb03cac0928ab5cffd672a3a102574df761", git = "https://github.com/advanca/advanca-sgx-helper/", features = ["std_env"] }
+advanca-node-primitives = { rev = "eadd1462c3ea6ec816a4daba1f994d6837764258", git = "https://github.com/advanca/advanca-node/" }
+substrate-subxt         = { rev = "790c2bff5b0f709d4f69f01740d35499cd403b9a", git = "https://github.com/advanca/substrate-subxt/" }
+
+#advanca-crypto          = { path = "../../../advanca-sgx-helper/advanca-crypto/", features = ["std_env"] }
+#advanca-crypto-types    = { path = "../../../advanca-sgx-helper/advanca-crypto-types/", features = ["std_env"] }
+#advanca-node-primitives = { path = "../../advanca-node/advanca-node-primitives/" }
+#substrate-subxt         = { path = "../../../substrate-subxt" }
 
 worker-protos-std    = { path = "../worker-protos/worker-protos-std" }
 
 async-std = { version = "1.6.2", features = ["attributes"] }
 
-[dependencies.substrate-subxt]
-git = 'https://github.com/advanca/substrate-subxt'
-rev = 'cea05ad5ecd03e649827617e5e2ae3f696f4e31b'
+#[dependencies.substrate-subxt]
+#git = 'https://github.com/advanca/substrate-subxt'
+#rev = '41ef6db2f46ef9df64a627e3efc04a942def5d89'
 
 [dependencies.codec]
 package = "parity-scale-codec"
