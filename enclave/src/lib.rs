@@ -222,7 +222,7 @@ pub unsafe extern "C" fn get_task_sr25519_pubkey(
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
     let task_info = (*TASKS).get(&task_id).unwrap();
-    let task_sr25519_pubkey = task_info.task_sr25519_pubkey;
+    let task_sr25519_pubkey : Sr25519PublicKey = task_info.task_sr25519_pubkey;
     let enclave_sr25519_prvkey = ATTESTED_SESSION.enclave_sr25519_prvkey;
     let signed_pubkey: Sr25519SignedMsg =
         sr25519_sign_msg(&enclave_sr25519_prvkey, &serde_json::to_vec(&task_sr25519_pubkey).unwrap()).unwrap();
@@ -307,6 +307,8 @@ pub unsafe extern "C" fn accept_task(
     // TODO! hack for single task demo
     SINGLE_TASK.task_secp256r1_prvkey = task_secp256r1_prvkey;
     SINGLE_TASK.task_secp256r1_pubkey = task_secp256r1_pubkey;
+    SINGLE_TASK.task_sr25519_prvkey   = task_sr25519_prvkey;
+    SINGLE_TASK.task_sr25519_pubkey   = task_sr25519_pubkey;
     SINGLE_TASK.user_secp256r1_pubkey = user_secp256r1_pubkey;
     SINGLE_TASK.kdk = kdk;
     sgx_status_t::SGX_SUCCESS
