@@ -20,7 +20,7 @@ use log::{error, trace};
 use pallet_balances::AccountData;
 
 use advanca_node_primitives::{
-    self, Ciphertext, Duration, Enclave, Privacy, Task, TaskSpec, TaskStatus, User, Worker,
+    self, Ciphertext, Duration, Enclave, Privacy, Task, TaskSpec, TaskStatus, User, Worker, PublicKeys,
 };
 use advanca_node_primitives::{AccountId, Balance, Hash};
 use sp_core::sr25519;
@@ -136,7 +136,7 @@ impl SubstrateApi {
             .extrinsic
     }
 
-    pub fn register_user(&self, deposit: Balance, public_key: Vec<u8>) -> Hash {
+    pub fn register_user(&self, deposit: Balance, public_key: PublicKeys) -> Hash {
         async_std::task::block_on(self.client.register_user_and_watch(
             self.signer(),
             deposit,
@@ -158,13 +158,15 @@ impl SubstrateApi {
 
     pub fn submit_task(
         &self,
-        signed_user_task_pubkey: Vec<u8>,
+        signed_user_task_secp256r1_pubkey: Vec<u8>,
+        signed_user_task_sr25519_pubkey: Vec<u8>,
         lease: Duration,
         task_spec: TaskSpec<Privacy>,
     ) -> Hash {
         async_std::task::block_on(self.client.submit_task_and_watch(
             self.signer(),
-            signed_user_task_pubkey,
+            signed_user_task_secp256r1_pubkey,
+            signed_user_task_sr25519_pubkey,
             lease,
             task_spec,
         ))
@@ -185,13 +187,15 @@ impl SubstrateApi {
     pub fn accept_task(
         &self,
         task_id: TaskId,
-        signed_eph_pubkey: Vec<u8>,
+        signed_secp256r1_pubkey: Vec<u8>,
+        signed_sr25519_pubkey: Vec<u8>,
         url: Ciphertext,
     ) -> Hash {
         async_std::task::block_on(self.client.accept_task_and_watch(
             self.signer(),
             task_id,
-            signed_eph_pubkey,
+            signed_secp256r1_pubkey,
+            signed_sr25519_pubkey,
             url,
         ))
         .expect("get accept_task hash")
@@ -218,6 +222,18 @@ impl SubstrateApi {
         async_std::task::block_on(self.client.complete_task_and_watch(self.signer(), task_id))
             .expect("get complete_task hash")
             .extrinsic
+    }
+
+    /// Listen for event TaskCompleted once
+    /// 
+    /// Block the current thread till TaskCompleted return and task id is returned
+    pub fn listen_for_task_completed(&self) -> TaskId {
+        let event =
+            async_std::task::block_on(wait_for_event(&self.client, |_: &TaskCompletedEvent<_>| {
+                true
+            }))
+            .expect("retrieve an event");
+        event.task_id
     }
 
     /// Listen for event WorkerAdded once
