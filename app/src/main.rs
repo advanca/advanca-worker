@@ -412,10 +412,22 @@ fn main() {
             get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
         )
     };
-    let signed_task_pubkey: Secp256r1SignedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
-    let signed_task_pubkey_bytes = serde_json::to_vec(&signed_task_pubkey).unwrap();
+    let signed_enclave_task_secp256r1_pubkey: Secp256r1SignedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
+    let signed_enclave_task_secp256r1_pubkey_bytes = serde_json::to_vec(&signed_enclave_task_secp256r1_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
-    debug!("signed task public key is {:?}", signed_task_pubkey);
+    debug!("signed task public key is {:?}", signed_enclave_task_secp256r1_pubkey);
+
+    buf_size = buf.len();
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_task_sr25519_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
+        )
+    };
+    let signed_enclave_task_sr25519_pubkey: Sr25519SignedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
+    let signed_enclave_task_sr25519_pubkey_bytes = serde_json::to_vec(&signed_enclave_task_sr25519_pubkey).unwrap();
+    debug!("user public key is {:?}", user_pubkey);
+    debug!("signed task public key is {:?}", signed_enclave_task_sr25519_pubkey);
 
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
@@ -474,7 +486,8 @@ fn main() {
     );
     let hash = api_wrapper.lock().unwrap().accept_task(
         task_id,
-        signed_task_pubkey_bytes,
+        signed_enclave_task_secp256r1_pubkey_bytes,
+        signed_enclave_task_sr25519_pubkey_bytes,
         serde_json::to_vec(&url_encrypted).unwrap(),
     );
     info!("accepted task (extrinsic={:?})", hash);

@@ -54,16 +54,16 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
         aas_verify_reg_report(&AAS_PUB_KEY, &worker_attestation_report).unwrap()
     );
     debug!("get enclave's attested pubkey");
-    let enclave_secp256r1_pubkey: Secp256r1PublicKey = worker_attestation_report.enclave_secp256r1_pubkey;
+    let enclave_sr25519_pubkey: Sr25519PublicKey = worker_attestation_report.enclave_sr25519_pubkey;
     debug!("verifying enclave's task secp256r1 pubkey");
-    let signed_enclave_task_secp256r1_pubkey =
-        serde_json::from_slice(&task.signed_enclave_task_secp256r1_pubkey.unwrap()).unwrap();
+    let signed_enclave_task_sr25519_pubkey =
+        serde_json::from_slice(&task.signed_enclave_task_sr25519_pubkey.unwrap()).unwrap();
     assert_eq!(
         true,
-        secp256r1_verify_msg(&enclave_secp256r1_pubkey, &signed_enclave_task_secp256r1_pubkey).unwrap()
+        sr25519_verify_msg(&enclave_sr25519_pubkey, &signed_enclave_task_sr25519_pubkey).unwrap()
     );
-    let worker_task_pubkey: Secp256r1PublicKey =
-        serde_json::from_slice(&signed_enclave_task_secp256r1_pubkey.msg).unwrap();
+    let enclave_task_sr25519_pubkey: Sr25519PublicKey =
+        serde_json::from_slice(&signed_enclave_task_sr25519_pubkey.msg).unwrap();
     debug!("iterating over the evidences ...");
     let mut verified_evidence = 0;
     let mut alive_blocks = HashSet::new();
@@ -81,10 +81,10 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
         );
         let timestamp: AasTimestamp = serde_json::from_slice(&signed_timestamp.msg).unwrap();
         trace!("verifying signed evidence ...");
-        let signed_evidence: Secp256r1SignedMsg = serde_json::from_slice(&timestamp.data).unwrap();
+        let signed_evidence: Sr25519SignedMsg = serde_json::from_slice(&timestamp.data).unwrap();
         assert_eq!(
             true,
-            secp256r1_verify_msg(&worker_task_pubkey, &signed_evidence).unwrap()
+            sr25519_verify_msg(&enclave_task_sr25519_pubkey, &signed_evidence).unwrap()
         );
         let evidence: AliveEvidence = serde_json::from_slice(&signed_evidence.msg).unwrap();
         trace!("Evidence: {:?}", evidence);

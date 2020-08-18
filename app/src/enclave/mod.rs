@@ -124,7 +124,7 @@ pub fn enclave_sr25519_public_key(eid: sgx_enclave_id_t) -> SgxResult<Sr25519Pub
         .unwrap()
     };
 
-    let publickey: Sr25519PublicKey = serde_json::from_slice(buf.as_slice()).unwrap();
+    let publickey: Sr25519PublicKey = serde_json::from_slice(&buf[..buf_size]).unwrap();
 
     Ok(publickey)
 }
