@@ -40,6 +40,7 @@ serde        	  = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde_json        = { git = "https://github.com/mesalock-linux/serde-json-sgx"}
 serde_derive      = { git = "https://github.com/mesalock-linux/serde-sgx" }
 serde-big-array   = { git = "https://github.com/mesalock-linux/serde-big-array-sgx" }
+serde_cbor        = { git = "https://github.com/mesalock-linux/cbor-sgx" }
 
 # customized crates
 advanca-macros         = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper" }

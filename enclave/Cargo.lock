@@ -55,6 +55,7 @@ dependencies = [
  "protobuf 2.8.1 (git+https://github.com/mesalock-linux/rust-protobuf-sgx.git?tag=sgx_1.1.2)",
  "serde 1.0.106",
  "serde-big-array",
+ "serde_cbor",
  "serde_derive 1.0.106 (git+https://github.com/mesalock-linux/serde-sgx)",
  "serde_json",
  "sgx_rand",
@@ -124,6 +125,12 @@ dependencies = [
  "serde 1.0.106",
  "sgx_tstd",
 ]
+
+[[package]]
+name = "bitflags"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "bitflags"
@@ -326,6 +333,12 @@ dependencies = [
  "sgx_trts",
  "sgx_tstd",
 ]
+
+[[package]]
+name = "half"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d36fab90f82edc3c747f9d438e06cf0a491055896f2a279638bb5beed6c40177"
 
 [[package]]
 name = "hashbrown_tstd"
@@ -809,6 +822,16 @@ source = "git+https://github.com/mesalock-linux/serde-big-array-sgx#580cfb3c78fe
 dependencies = [
  "serde 1.0.106",
  "serde_derive 1.0.106 (git+https://github.com/mesalock-linux/serde-sgx)",
+]
+
+[[package]]
+name = "serde_cbor"
+version = "0.11.1"
+source = "git+https://github.com/mesalock-linux/cbor-sgx#463d759988cf333549b9a3792dd67d2d62d81c5e"
+dependencies = [
+ "half",
+ "serde 1.0.106",
+ "sgx_tstd",
 ]
 
 [[package]]
