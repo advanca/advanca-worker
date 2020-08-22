@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::convert::TryFrom;
 use std::str;
 use std::sync::mpsc;
 use std::thread;
@@ -29,8 +28,7 @@ use sp_keyring::AccountKeyring;
 
 use substrate_api::SubstrateApi;
 
-use advanca_core::Enclave;
-use advanca_runtime::AccountId;
+use advanca_node_primitives::{AccountId, Enclave};
 
 mod enclave;
 mod grpc;
@@ -94,6 +92,16 @@ struct Opt {
         help = "set advanca-attestation-service address and port"
     )]
     aas_url: String,
+}
+
+fn display_balance(account_id: AccountId, api: &SubstrateApi) {
+    let accountdata = api.get_balance(account_id);
+    info!("{:=^80}", "Worker Balance Information");
+    info!("Free        : {:?}", accountdata.free);
+    info!("Reserved    : {:?}", accountdata.reserved);
+    info!("Misc Frozen : {:?}", accountdata.misc_frozen);
+    info!("Fee Frozen  : {:?}", accountdata.fee_frozen);
+    info!("{:=^80}", "");
 }
 
 async fn aas_remote_attest(
@@ -185,7 +193,7 @@ async fn aas_remote_attest(
         // aas accepted our attestation, we'll prepare the request
         let mut buf = [0_u8; 4096];
         let mut buf_size: usize = buf.len();
-        let _ = unsafe { handle_ecall!(eid, gen_worker_ec256_pubkey()).unwrap() };
+        let _ = unsafe { handle_ecall!(eid, gen_worker_key()).unwrap() };
         let _ = unsafe {
             handle_ecall!(
                 eid,
@@ -205,7 +213,7 @@ async fn aas_remote_attest(
 
         assert_eq!(msg_aas_report.get_msg_type(), MsgType::AAS_RA_REG_REPORT);
         let aas_report_bytes = msg_aas_report.get_msg_bytes();
-        let aas_report: AasRegReport = serde_cbor::from_slice(aas_report_bytes).unwrap();
+        let aas_report: AasRegReport = serde_json::from_slice(aas_report_bytes).unwrap();
         // 04:1a:4f:ea:0d:04:bd:ed:7d:c1:43:ee:74:cb:8e:
         // 56:9e:6e:49:1c:89:bc:d6:5c:34:8f:8a:5b:40:5f:
         // 79:53:e3:89:7d:0f:0c:bc:cf:f0:45:ce:c9:a9:1d:
@@ -306,12 +314,31 @@ fn main() {
         )
         .unwrap()
     };
-    let worker_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
-    info!("ec256 pubkey generated {:?}", worker_pubkey);
+    let enclave_sec256p1_pubkey: Secp256r1PublicKey =
+        serde_json::from_slice(&buf[..buf_size]).unwrap();
+    info!("ec256 pubkey generated {:?}", enclave_sec256p1_pubkey);
+
+    buf_size = buf.len();
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_worker_sr25519_pubkey(buf.as_mut_ptr(), &mut buf_size)
+        )
+        .unwrap()
+    };
+    let enclave_sr25519_pubkey: Sr25519PublicKey =
+        serde_json::from_slice(&buf[..buf_size]).unwrap();
+    info!(
+        "enclave sr25519 pubkey generated {:?}",
+        enclave_sr25519_pubkey
+    );
 
     let (worker_keypair, _) = sr25519::Pair::generate();
     let worker_account: AccountId = worker_keypair.public().as_array_ref().to_owned().into();
-    info!("sr25519 keypair generated {:?}", worker_keypair.public());
+    info!(
+        "worker sr25519 keypair generated {:?}",
+        worker_keypair.public()
+    );
 
     // inject funds into worker account
     fund_account(&opt.ws_url, &worker_account);
@@ -320,21 +347,29 @@ fn main() {
     let mut api = SubstrateApi::new(&opt.ws_url);
     api.set_signer(worker_keypair.clone());
 
+    display_balance(worker_account.clone(), &api);
+
     // get the keys from enclave
-    let sr25519_public_key = sr25519::Public::try_from(
-        &enclave::sr25519_public_key(e.geteid()).expect("enclave sr25519 public key")[..],
-    )
-    .unwrap(); //.try_into().unwrap();
+    let sr25519_public_key = enclave::enclave_sr25519_public_key(e.geteid())
+        .expect("enclave sr25519 public key")
+        .to_schnorrkel_public();
+
+    let enclave_pubkeys = advanca_node_primitives::PublicKeys {
+        secp256r1_public_key: serde_json::to_vec(&enclave_sec256p1_pubkey).unwrap(),
+        sr25519_public_key: serde_json::to_vec(&enclave_sr25519_pubkey).unwrap(),
+    };
 
     let enclave = Enclave::<AccountId> {
-        account_id: sr25519_public_key.as_array_ref().to_owned().into(),
-        public_key: serde_cbor::to_vec(&worker_pubkey).unwrap(),
-        attestation: serde_cbor::to_vec(&aas_report).unwrap(),
+        account_id: sr25519_public_key.to_bytes().to_owned().into(),
+        public_keys: enclave_pubkeys,
+        attestation: serde_json::to_vec(&aas_report).unwrap(),
     };
 
     info!("registering worker ...");
     let hash = api.register_worker(10, enclave);
     info!("registered worker (extrinsic={:?})", hash);
+
+    display_balance(worker_account.clone(), &api);
 
     // listen for new task
     info!("listening for new task ...");
@@ -360,10 +395,11 @@ fn main() {
     let user = api.get_user(owner.clone());
     info!("received user information (id={})", owner.clone());
 
-    let user_pubkey: Secp256r1PublicKey = serde_cbor::from_slice(&user.public_key).unwrap();
+    let user_pubkey: Secp256r1PublicKey =
+        serde_json::from_slice(&user.public_keys.secp256r1_public_key).unwrap();
     info!("user public_key: {:?}", user_pubkey);
     let signed_owner_task_pubkey: Secp256r1SignedMsg =
-        serde_cbor::from_slice(&task.signed_owner_task_pubkey).unwrap();
+        serde_json::from_slice(&task.signed_owner_task_secp256r1_pubkey).unwrap();
     let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
     info!("verifying owner task pubkey ... {:?}", verified);
     assert_eq!(verified, true);
@@ -387,10 +423,32 @@ fn main() {
             get_task_ec256_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
         )
     };
-    let signed_task_pubkey: Secp256r1SignedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
-    let signed_task_pubkey_bytes = serde_cbor::to_vec(&signed_task_pubkey).unwrap();
+    let signed_enclave_task_secp256r1_pubkey: Secp256r1SignedMsg =
+        serde_json::from_slice(&buf[..buf_size]).unwrap();
+    let signed_enclave_task_secp256r1_pubkey_bytes =
+        serde_json::to_vec(&signed_enclave_task_secp256r1_pubkey).unwrap();
     debug!("user public key is {:?}", user_pubkey);
-    debug!("signed task public key is {:?}", signed_task_pubkey);
+    debug!(
+        "signed task public key is {:?}",
+        signed_enclave_task_secp256r1_pubkey
+    );
+
+    buf_size = buf.len();
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            get_task_sr25519_pubkey(buf.as_mut_ptr(), &mut buf_size, task_id.as_ptr())
+        )
+    };
+    let signed_enclave_task_sr25519_pubkey: Sr25519SignedMsg =
+        serde_json::from_slice(&buf[..buf_size]).unwrap();
+    let signed_enclave_task_sr25519_pubkey_bytes =
+        serde_json::to_vec(&signed_enclave_task_sr25519_pubkey).unwrap();
+    debug!("user public key is {:?}", user_pubkey);
+    debug!(
+        "signed task public key is {:?}",
+        signed_enclave_task_sr25519_pubkey
+    );
 
     let msg = opt.grpc_url.as_bytes();
     debug!("url: {:?}", opt.grpc_url);
@@ -410,7 +468,7 @@ fn main() {
         )
         .unwrap()
     };
-    let url_encrypted: Aes128EncryptedMsg = serde_cbor::from_slice(&buf[..buf_size]).unwrap();
+    let url_encrypted: Aes128EncryptedMsg = serde_json::from_slice(&buf[..buf_size]).unwrap();
     debug!("msg len: {:?}", msg.len());
     debug!("ivcipher len: {:?}", buf_size);
     debug!("url_encrypted: {:?}", url_encrypted);
@@ -449,8 +507,9 @@ fn main() {
     );
     let hash = api_wrapper.lock().unwrap().accept_task(
         task_id,
-        signed_task_pubkey_bytes,
-        serde_cbor::to_vec(&url_encrypted).unwrap(),
+        signed_enclave_task_secp256r1_pubkey_bytes,
+        signed_enclave_task_sr25519_pubkey_bytes,
+        serde_json::to_vec(&url_encrypted).unwrap(),
     );
     info!("accepted task (extrinsic={:?})", hash);
 
@@ -468,6 +527,11 @@ fn main() {
         .join()
         .expect("Couldn't join on the watchdog");
     info!("watchdong killed");
+
+    api_wrapper.lock().unwrap().complete_task(task_id);
+    info!("complete task: {:?}", task_id);
+
+    display_balance(worker_account.clone(), &api_wrapper.lock().unwrap());
 
     let sgx_return = unsafe { enclave_ra_close(eid, &mut retval, ra_context) };
     info!("enclave_ra_close: {}", sgx_return);

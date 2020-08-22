@@ -39,9 +39,6 @@ enclave {
 			[out] uint32_t* response_size
 		);
 
-		public sgx_status_t get_sr25519_public_key(
-			[out, size=public_key_size] uint8_t* public_key, uint32_t public_key_size);
-
 		public sgx_status_t enclave_init_ra (
 				int b_pse,
 				[out] sgx_ra_context_t *p_context
@@ -58,7 +55,18 @@ enclave {
 				                    size_t   msg_len
 				);
 
-		public sgx_status_t gen_worker_ec256_pubkey (
+		public sgx_status_t gen_worker_key (
+				);
+
+		public sgx_status_t get_worker_sr25519_pubkey (
+				[user_check]            uint8_t            *ubuf,
+				[in,out]                size_t             *ubuf_size
+				);
+
+		public sgx_status_t get_task_sr25519_pubkey (
+				[user_check]            uint8_t            *ubuf,
+				[in,out]                size_t             *ubuf_size,
+				[in, count=32]          uint8_t            *task_id
 				);
 
 		public sgx_status_t get_worker_ec256_pubkey (

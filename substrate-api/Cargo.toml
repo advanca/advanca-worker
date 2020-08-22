@@ -3,7 +3,7 @@ authors = ["Advanca Authors"]
 edition = "2018"
 license = "GPL-3.0"
 name = "substrate-api"
-version = "0.2.0"
+version = "0.3.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,19 +11,21 @@ version = "0.2.0"
 env_logger = "0.7.0"
 log = "0.4.8"
 hex = "0.4.2"
+async-std = { version = "1.6.2", features = ["attributes"] }
 
-sp-core = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+sp-core         = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }
+sp-runtime      = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }
+pallet-balances = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }
 
-advanca-runtime = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
-advanca-core    = { tag = "v0.2.0", git = "https://github.com/advanca/advanca-node" }
+advanca-node-primitives = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-node/" }
+substrate-subxt         = { rev = "d86bad44a3281c9eb0630d8b166885200f1fa150", git = "https://github.com/advanca/substrate-subxt/" }
 
-[dependencies.substrate-api-client]
-git = "https://github.com/advanca/substrate-api-client"
-rev = "1231a987dcfe5610ddbd32ada6f95aecc4f90ec9"
+#advanca-node-primitives = { path = "../../advanca-node/advanca-node-primitives/" }
+#substrate-subxt         = { path = "../../../substrate-subxt" }
 
 [dependencies.codec]
 package = "parity-scale-codec"
-version = "1.0.0"
+version = "1.3.0"
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate", rev = "00a400f82539e2f78e8ddbcd98aea512c87c5f3c"}
+sp-keyring = { tag = "v2.0.0-rc5+2", git = "https://github.com/paritytech/substrate" }

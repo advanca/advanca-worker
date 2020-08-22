@@ -22,7 +22,9 @@ exclude = [
 #substrate-api-client = { path = "../substrate-api-client" }
 
 #[patch.'https://github.com/advanca/advanca-sgx-helper']
-#advanca-crypto-types = { path = "../advanca-sgx-helper/advanca-crypto-types" }
+#advanca-crypto = { path = "../../advanca-sgx-helper/advanca-crypto" }
+#advanca-crypto-types = { path = "../../advanca-sgx-helper/advanca-crypto-types" }
+#advanca-macros = { path = "../../advanca-sgx-helper/advanca-macros" }
 
 [patch.crates-io]
 protobuf-build  = { rev = "1c76baf642c9abc6428c94c66f4f16304c77950e", git = "https://github.com/advanca/protobuf-build.git" }

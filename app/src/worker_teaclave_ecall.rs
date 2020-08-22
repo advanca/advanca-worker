@@ -16,12 +16,6 @@ extern "C" {
         response_capacity: u32,
         response_size: *mut u32,
     ) -> sgx_status_t;
-    pub fn get_sr25519_public_key(
-        eid: sgx_enclave_id_t,
-        retval: *mut sgx_status_t,
-        public_key: *mut u8,
-        public_key_size: u32,
-    ) -> sgx_status_t;
     pub fn enclave_init_ra(
         eid: sgx_enclave_id_t,
         retval: *mut sgx_status_t,
@@ -41,9 +35,19 @@ extern "C" {
         msg: *const u8,
         msg_len: usize,
     ) -> sgx_status_t;
-    pub fn gen_worker_ec256_pubkey(
+    pub fn gen_worker_key(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+    pub fn get_worker_sr25519_pubkey(
         eid: sgx_enclave_id_t,
         retval: *mut sgx_status_t,
+        ubuf: *mut u8,
+        ubuf_size: *mut usize,
+    ) -> sgx_status_t;
+    pub fn get_task_sr25519_pubkey(
+        eid: sgx_enclave_id_t,
+        retval: *mut sgx_status_t,
+        ubuf: *mut u8,
+        ubuf_size: *mut usize,
+        task_id: *const u8,
     ) -> sgx_status_t;
     pub fn get_worker_ec256_pubkey(
         eid: sgx_enclave_id_t,

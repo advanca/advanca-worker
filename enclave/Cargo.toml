@@ -26,8 +26,8 @@ sgx_tunittest = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-
 
 [dependencies]
 # unmodified crates
-codec             = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
-primitive-types   = { version = "0.6", default-features = false, features = ["codec"] }
+codec             = { package = "parity-scale-codec", version = "1.3.0", default-features = false, features = ["derive"] }
+primitive-types   = { version = "0.7.2", default-features = false, features = ["codec"] }
 
 # mesalock-modified crates
 # NOTE: Have to ensure all the git repos have the same Cargo version
@@ -43,10 +43,16 @@ serde-big-array   = { git = "https://github.com/mesalock-linux/serde-big-array-s
 serde_cbor        = { git = "https://github.com/mesalock-linux/cbor-sgx" }
 
 # customized crates
-advanca-macros         = { tag = "v0.3.0", git = "https://github.com/advanca/advanca-sgx-helper" }
-advanca-crypto         = { tag = "v0.3.0", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
-advanca-crypto-types   = { tag = "v0.3.0", git = "https://github.com/advanca/advanca-sgx-helper", features = ["sgx_enclave"] }
-oram                   = { tag = "v0.1.2", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
+advanca-macros         = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper" }
+advanca-crypto         = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper", default-features = false, features = ["sgx_enclave"] }
+advanca-crypto-types   = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper", default-features = false, features = ["sgx_enclave"] }
+oram                   = { rev = "2dd7044a688294d6754d4deb03518045f0b19864", git = "https://github.com/advanca/oram.git", default-features = false, features = ["sgx"] }
+
+#advanca-macros         = { path = "../../../advanca-sgx-helper/advanca-macros"}
+#advanca-crypto         = { path = "../../../advanca-sgx-helper/advanca-crypto", default-features = false, features = ["sgx_enclave"] }
+#advanca-crypto-types   = { path = "../../../advanca-sgx-helper/advanca-crypto-types", default-features = false, features = ["sgx_enclave"] }
+#oram                   = { path = "../../../oram/", default-features = false, features = ["sgx"] }
+
 worker-protos-enclave  = { path = "../worker-protos/worker-protos-enclave" }
 
 # rust-sgx-sdk crates
