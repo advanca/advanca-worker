@@ -28,7 +28,7 @@ use advanca_crypto_types::*;
 use substrate_subxt::{
     advanca::advanca_core::*,
     advanca::AdvancaRuntime,
-    balances::{TransferCallExt, TransferEvent, TransferEventExt, ReserveRepatriatedEvent},
+    balances::{ReserveRepatriatedEvent, TransferCallExt, TransferEvent, TransferEventExt},
     balances::{ReservedEvent, UnreservedEvent},
     system::AccountStoreExt,
     Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
@@ -116,11 +116,15 @@ where
     Err("Cannot find the matching event".into())
 }
 
-async fn get_reserved_event (raw_events: &Vec<substrate_subxt::RawEvent>) 
-    -> Option<ReservedEvent<AdvancaRuntime>> 
-{
-    if let Some(raw_event) = raw_events.iter().find(|raw| raw.module == "Balances" && raw.variant == "Reserved") {
-        let reserved_event : ReservedEvent<AdvancaRuntime> = ReservedEvent::<AdvancaRuntime>::decode(&mut &raw_event.data[..]).unwrap();
+async fn get_reserved_event(
+    raw_events: &Vec<substrate_subxt::RawEvent>,
+) -> Option<ReservedEvent<AdvancaRuntime>> {
+    if let Some(raw_event) = raw_events
+        .iter()
+        .find(|raw| raw.module == "Balances" && raw.variant == "Reserved")
+    {
+        let reserved_event: ReservedEvent<AdvancaRuntime> =
+            ReservedEvent::<AdvancaRuntime>::decode(&mut &raw_event.data[..]).unwrap();
         return Some(reserved_event);
     }
     None
@@ -138,7 +142,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     info!("connected to advanca-node API");
     trace!("API Metadata:\n{}", api.metadata().pretty());
-
 
     // generate sr25519 keypair
     let (client_sr25519_keypair, _) = sr25519::Pair::generate();
@@ -324,16 +327,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let raw = sub.next().await.unwrap().unwrap();
         if raw.module == "Balances" && raw.variant == "ReserveRepatriated" {
-            let reserve_repatriate : ReserveRepatriatedEvent<AdvancaRuntime> = ReserveRepatriatedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
+            let reserve_repatriate: ReserveRepatriatedEvent<AdvancaRuntime> =
+                ReserveRepatriatedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
             info!("task payment: {:?}", reserve_repatriate);
         }
         if raw.module == "Balances" && raw.variant == "Unreserved" {
-            let unreserve : UnreservedEvent<AdvancaRuntime> = UnreservedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
+            let unreserve: UnreservedEvent<AdvancaRuntime> =
+                UnreservedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
             info!("task unreserve remaining: {:?}", unreserve);
         }
         if raw.module == "AdvancaCore" && raw.variant == "TaskCompleted" {
             info!("task completed!");
-            break
+            break;
         }
     }
     display_balance(client_account.clone(), &api).await?;

@@ -8,12 +8,12 @@ use crate::enclave::heartbeat_challenge;
 use aas_protos_std::aas::aas::*;
 use advanca_crypto::*;
 use advanca_crypto_types::*;
+use hex;
 use primitive_types::H256;
 use sgx_types::*;
-use substrate_api::SubstrateApi;
-use worker_protos_std::storage::storage::*; 
-use hex;
 use std::collections::HashSet;
+use substrate_api::SubstrateApi;
+use worker_protos_std::storage::storage::*;
 
 // Defining the Header from sp_runtime here instead of using
 // the defined type from node. Lessen compilation time.
