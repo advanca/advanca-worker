@@ -36,7 +36,7 @@ sgx_ucrypto       = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-
 advanca-crypto          = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper/", features = ["std_env"] }
 advanca-crypto-types    = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-sgx-helper/", features = ["std_env"] }
 advanca-node-primitives = { tag = "v0.4.0", git = "https://github.com/advanca/advanca-node/" }
-substrate-subxt         = { rev = "d86bad44a3281c9eb0630d8b166885200f1fa150", git = "https://github.com/advanca/substrate-subxt/" }
+substrate-subxt         = { rev = "03b00b047a2cd13b516a48bd1bf1f5a8843ea54a", git = "https://github.com/advanca/substrate-subxt/" }
 
 #advanca-crypto          = { path = "../../../advanca-sgx-helper/advanca-crypto/", features = ["std_env"] }
 #advanca-crypto-types    = { path = "../../../advanca-sgx-helper/advanca-crypto-types/", features = ["std_env"] }
