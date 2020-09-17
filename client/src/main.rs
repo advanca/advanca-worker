@@ -28,10 +28,13 @@ use advanca_crypto_types::*;
 use substrate_subxt::{
     advanca::advanca_core::*,
     advanca::AdvancaRuntime,
-    balances::{TransferCallExt, TransferEvent, TransferEventExt},
+    balances::{TransferCallExt, TransferEvent, TransferEventExt, ReserveRepatriatedEvent},
+    balances::{ReservedEvent, UnreservedEvent},
     system::AccountStoreExt,
     Client, ClientBuilder, EventSubscription, EventsDecoder, PairSigner,
 };
+
+use codec::Decode;
 
 mod grpc;
 
@@ -113,6 +116,16 @@ where
     Err("Cannot find the matching event".into())
 }
 
+async fn get_reserved_event (raw_events: &Vec<substrate_subxt::RawEvent>) 
+    -> Option<ReservedEvent<AdvancaRuntime>> 
+{
+    if let Some(raw_event) = raw_events.iter().find(|raw| raw.module == "Balances" && raw.variant == "Reserved") {
+        let reserved_event : ReservedEvent<AdvancaRuntime> = ReservedEvent::<AdvancaRuntime>::decode(&mut &raw_event.data[..]).unwrap();
+        return Some(reserved_event);
+    }
+    None
+}
+
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
@@ -125,6 +138,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     info!("connected to advanca-node API");
     trace!("API Metadata:\n{}", api.metadata().pretty());
+
 
     // generate sr25519 keypair
     let (client_sr25519_keypair, _) = sr25519::Pair::generate();
@@ -175,7 +189,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     display_balance(client_account.clone(), &api).await?;
 
     info!("sleeping for 12 seconds...");
-    async_std::task::sleep(std::time::Duration::from_secs(18)).await;
+    async_std::task::sleep(std::time::Duration::from_secs(12)).await;
 
     // submit task
     info!("generating ephemeral task secp256r1 key ...");
@@ -218,17 +232,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("submitting task ...");
     let mut task_spec: TaskSpec<Privacy> = Default::default();
     task_spec.privacy = Privacy::Encryption;
+    // set duration of task to infinite
+    let duration = 0;
     let result = api
         .submit_task_and_watch(
             &client_signer,
             serde_json::to_vec(&signed_task_secp256r1_pubkey).unwrap(),
             serde_json::to_vec(&signed_task_sr25519_pubkey).unwrap(),
-            0,
+            duration,
             task_spec,
         )
         .await
         .expect("extrinsic success");
     info!("task submitted (extrinsic={:?})", result.extrinsic);
+    info!("task duration: {}", duration);
+    let reserved_event = get_reserved_event(&result.events).await.unwrap();
+    info!("task amount reserved: {:?}", reserved_event);
     display_balance(client_account.clone(), &api).await?;
 
     let task_id = result
@@ -287,7 +306,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // abort the task
-    info!("sleeping for 12 seconds...");
+    info!("sleeping for 18 seconds...");
     async_std::task::sleep(std::time::Duration::from_secs(18)).await;
 
     info!("aborting task ...");
@@ -296,9 +315,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("extrinsic success");
     info!("task aborted (extrinsic={:?})", result.extrinsic);
+    info!("waiting for task completion!");
 
-    let _event = async_std::task::block_on(wait_for_event(&api, |_: &TaskCompletedEvent<_>| true))
-        .expect("retrieve an event");
+    let sub = api.subscribe_events().await?;
+    let mut decoder = EventsDecoder::<AdvancaRuntime>::new(api.metadata().clone());
+    decoder.with_advanca_core();
+    let mut sub = EventSubscription::<AdvancaRuntime>::new(sub, decoder);
+    loop {
+        let raw = sub.next().await.unwrap().unwrap();
+        if raw.module == "Balances" && raw.variant == "ReserveRepatriated" {
+            let reserve_repatriate : ReserveRepatriatedEvent<AdvancaRuntime> = ReserveRepatriatedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
+            info!("task payment: {:?}", reserve_repatriate);
+        }
+        if raw.module == "Balances" && raw.variant == "Unreserved" {
+            let unreserve : UnreservedEvent<AdvancaRuntime> = UnreservedEvent::<AdvancaRuntime>::decode(&mut &raw.data[..]).unwrap();
+            info!("task unreserve remaining: {:?}", unreserve);
+        }
+        if raw.module == "AdvancaCore" && raw.variant == "TaskCompleted" {
+            info!("task completed!");
+            break
+        }
+    }
     display_balance(client_account.clone(), &api).await?;
 
     Ok(())
