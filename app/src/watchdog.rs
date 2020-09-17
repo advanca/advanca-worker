@@ -11,8 +11,7 @@ use advanca_crypto_types::*;
 use primitive_types::H256;
 use sgx_types::*;
 use substrate_api::SubstrateApi;
-use worker_protos_std::storage::storage::*;
-
+use worker_protos_std::storage::storage::*; 
 use hex;
 use std::collections::HashSet;
 
@@ -123,7 +122,7 @@ pub fn watchdog_loop(
     aas_client: Arc<Mutex<AasServerClient>>,
     api: Arc<Mutex<SubstrateApi>>,
 ) {
-    async_std::task::block_on(async move {
+    let alive_evidence = async_std::task::block_on(async move {
         let mut alive_evidence = Vec::<Vec<u8>>::new();
         let transport = jsonrpsee::transport::ws::WsTransportClient::new(uri)
             .await
@@ -163,12 +162,14 @@ pub fn watchdog_loop(
                 break;
             }
         }
-        let task_id = H256::from(&task_id);
-        let evidence_extrinsic = api
-            .lock()
-            .unwrap()
-            .submit_task_evidence(task_id, alive_evidence);
-        debug!("evidence extrinsic: {:?}", evidence_extrinsic);
-        print_task_stats(task_id, api);
+        alive_evidence
     });
+    info!("[watchdog] ending...");
+    let task_id = H256::from(&task_id);
+    let evidence_extrinsic = api
+        .lock()
+        .unwrap()
+        .submit_task_evidence(task_id, alive_evidence);
+    debug!("evidence extrinsic: {:?}", evidence_extrinsic);
+    print_task_stats(task_id, api);
 }
