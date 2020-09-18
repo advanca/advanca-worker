@@ -401,17 +401,28 @@ fn main() {
     let signed_owner_task_pubkey: Secp256r1SignedMsg =
         serde_json::from_slice(&task.signed_owner_task_secp256r1_pubkey).unwrap();
     let verified = secp256r1_verify_msg(&user_pubkey, &signed_owner_task_pubkey).unwrap();
-    info!("verifying owner task pubkey ... {:?}", verified);
+    info!("verifying owner task secp256r1 pubkey ... {:?}", verified);
+    assert_eq!(verified, true);
+
+    let user_pubkey_sr25519: Sr25519PublicKey =
+        serde_json::from_slice(&user.public_keys.sr25519_public_key).unwrap();
+    let signed_owner_task_pubkey_sr25519: Sr25519SignedMsg =
+        serde_json::from_slice(&task.signed_owner_task_sr25519_pubkey).unwrap();
+    let verified = sr25519_verify_msg(&user_pubkey_sr25519, &signed_owner_task_pubkey_sr25519).unwrap();
+    info!("verifying owner task sr25519 pubkey ... {:?}", verified);
     assert_eq!(verified, true);
 
     let owner_task_pubkey_bytes = signed_owner_task_pubkey.msg;
+    let owner_task_pubkey_sr25519_bytes = signed_owner_task_pubkey_sr25519.msg;
     let _ = unsafe {
         handle_ecall!(
             eid,
             accept_task(
                 task_id.as_ptr(),
                 owner_task_pubkey_bytes.as_ptr(),
-                owner_task_pubkey_bytes.len()
+                owner_task_pubkey_bytes.len(),
+                owner_task_pubkey_sr25519_bytes.as_ptr(),
+                owner_task_pubkey_sr25519_bytes.len()
             )
         )
         .unwrap()

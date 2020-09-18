@@ -87,9 +87,11 @@ enclave {
 				);
 
 		public sgx_status_t accept_task (
-				[in, size=32]           uint8_t            *task_id,
-				[in, size=user_pubkey_size] uint8_t            *user_pubkey,
-				                        size_t              user_pubkey_size
+				[in, size=32]                         uint8_t *task_id,
+				[in, size=user_pubkey_secp256r1_size] uint8_t *user_pubkey_secp256r1,
+				                                      size_t   user_pubkey_secp256r1_size,
+				[in, size=user_pubkey_sr25519_size]   uint8_t *user_pubkey_sr25519,
+				                                      size_t   user_pubkey_sr25519_size
 				);
 
 		public sgx_status_t encrypt_msg (

@@ -286,15 +286,23 @@ pub unsafe extern "C" fn gen_worker_reg_request(
 #[no_mangle]
 pub unsafe extern "C" fn accept_task(
     p_task_id: *const u8,
-    p_user_pubkey_buf: *const u8,
-    user_pubkey_buf_size: usize,
+    p_user_pubkey_secp256r1_buf: *const u8,
+    user_pubkey_secp256r1_buf_size: usize,
+    p_user_pubkey_sr25519_buf: *const u8,
+    user_pubkey_sr25519_buf_size: usize,
 ) -> sgx_status_t {
     let mut task_id = [0_u8; 32];
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
-    let pubkey_buf_slice = core::slice::from_raw_parts(p_user_pubkey_buf, user_pubkey_buf_size);
+
+    let pubkey_secp256r1_buf_slice = core::slice::from_raw_parts(p_user_pubkey_secp256r1_buf, user_pubkey_secp256r1_buf_size);
     let user_secp256r1_pubkey: Secp256r1PublicKey =
-        serde_json::from_slice(pubkey_buf_slice).unwrap();
+        serde_json::from_slice(pubkey_secp256r1_buf_slice).unwrap();
+
+    let pubkey_sr25519_buf_slice = core::slice::from_raw_parts(p_user_pubkey_sr25519_buf, user_pubkey_sr25519_buf_size);
+    let user_sr25519_pubkey: Sr25519PublicKey =
+        serde_json::from_slice(pubkey_sr25519_buf_slice).unwrap();
+
     let (task_secp256r1_prvkey, task_secp256r1_pubkey) = secp256r1_gen_keypair().unwrap();
     let (task_sr25519_prvkey, task_sr25519_pubkey) = sr25519_gen_keypair().unwrap();
 
@@ -305,7 +313,7 @@ pub unsafe extern "C" fn accept_task(
         task_sr25519_prvkey: task_sr25519_prvkey,
         task_sr25519_pubkey: task_sr25519_pubkey,
         user_secp256r1_pubkey: user_secp256r1_pubkey,
-        user_sr25519_pubkey: Sr25519PublicKey::default(),
+        user_sr25519_pubkey: user_sr25519_pubkey,
         kdk: kdk,
         enclave_total_in: 0,
         enclave_total_out: 0,
@@ -317,6 +325,7 @@ pub unsafe extern "C" fn accept_task(
     SINGLE_TASK.task_sr25519_prvkey = task_sr25519_prvkey;
     SINGLE_TASK.task_sr25519_pubkey = task_sr25519_pubkey;
     SINGLE_TASK.user_secp256r1_pubkey = user_secp256r1_pubkey;
+    SINGLE_TASK.user_sr25519_pubkey = task_info.user_sr25519_pubkey;
     SINGLE_TASK.kdk = kdk;
     sgx_status_t::SGX_SUCCESS
 }
