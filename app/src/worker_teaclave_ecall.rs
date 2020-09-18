@@ -73,8 +73,10 @@ extern "C" {
         eid: sgx_enclave_id_t,
         retval: *mut sgx_status_t,
         task_id: *const u8,
-        user_pubkey: *const u8,
-        user_pubkey_size: usize,
+        user_pubkey_secp256r1: *const u8,
+        user_pubkey_secp256r1_size: usize,
+        user_pubkey_sr25519: *const u8,
+        user_pubkey_sr25519_size: usize,
     ) -> sgx_status_t;
     pub fn encrypt_msg(
         eid: sgx_enclave_id_t,

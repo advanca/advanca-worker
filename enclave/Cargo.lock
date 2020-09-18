@@ -40,7 +40,7 @@ dependencies = [
 
 [[package]]
 name = "advanca-worker-enclave"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
