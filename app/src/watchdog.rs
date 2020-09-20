@@ -71,6 +71,7 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     let mut storage_size = 0;
     let mut data_in = 0;
     let mut data_out = 0;
+    let mut compute = 0;
     for evidence_bytes in task.worker_heartbeat_evidence {
         let signed_timestamp: Secp256r1SignedMsg = serde_json::from_slice(&evidence_bytes).unwrap();
         trace!("verifying aas timestamp...");
@@ -93,6 +94,7 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
         storage_size = evidence.storage_size;
         data_in = evidence.data_in;
         data_out = evidence.data_out;
+        compute = evidence.compute;
         verified_evidence += 1;
     }
     info!("{:=^80}", "Accounting Information");
@@ -111,6 +113,8 @@ pub fn print_task_stats(task_id: H256, api: Arc<Mutex<SubstrateApi>>) {
     info!("{:-^80}", "Data Information");
     info!("Data in   : {}", data_in);
     info!("Data out  : {}", data_out);
+    info!("{:-^80}", "Compute Information");
+    info!("Compute   : {}", compute);
     info!("{:=^80}", "");
 }
 
