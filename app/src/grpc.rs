@@ -53,6 +53,34 @@ pub fn format_payload(payload: &[u8]) -> String {
 }
 
 impl Storage for StorageService {
+    fn demo_compute(
+        &mut self,
+        ctx: RpcContext,
+        req: EncryptedRequest,
+        sink: UnarySink<EncryptedResponse>,
+    ) {
+        let eid = self.enclave.lock().unwrap().geteid();
+        trace!("received encrypted request: {:?}", req.get_payload());
+        debug!(
+            "<EncryptedRequest> payload {:?}",
+            format_payload(req.get_payload())
+        );
+        let output_payload = enclave::demo_compute_rpc(eid, req.get_payload());
+
+        trace!("output_payload from enclave = {:?}", &output_payload);
+        let mut res = EncryptedResponse::new();
+        res.set_payload(output_payload.to_vec());
+        debug!(
+            "<EncryptedResponse> payload {:?}",
+            format_payload(res.get_payload())
+        );
+        let f = sink
+            .success(res.clone())
+            .map_err(move |err| error!("failed to reply: {:?}", err))
+            .map(move |_| trace!("replied with {:?}", res));
+        ctx.spawn(f)
+    }
+
     fn heartbeat(
         &mut self,
         ctx: RpcContext,

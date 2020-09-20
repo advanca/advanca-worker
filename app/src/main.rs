@@ -408,7 +408,8 @@ fn main() {
         serde_json::from_slice(&user.public_keys.sr25519_public_key).unwrap();
     let signed_owner_task_pubkey_sr25519: Sr25519SignedMsg =
         serde_json::from_slice(&task.signed_owner_task_sr25519_pubkey).unwrap();
-    let verified = sr25519_verify_msg(&user_pubkey_sr25519, &signed_owner_task_pubkey_sr25519).unwrap();
+    let verified =
+        sr25519_verify_msg(&user_pubkey_sr25519, &signed_owner_task_pubkey_sr25519).unwrap();
     info!("verifying owner task sr25519 pubkey ... {:?}", verified);
     assert_eq!(verified, true);
 

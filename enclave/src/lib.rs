@@ -32,6 +32,7 @@ mod storage;
 mod utils;
 
 use std::backtrace::{self, PrintFormat};
+use std::convert::TryInto;
 
 use core::slice;
 use oram::SqrtOram;
@@ -105,6 +106,7 @@ struct TaskInfo {
     kdk: Aes128Key,
     enclave_total_in: usize,
     enclave_total_out: usize,
+    compute_amt: usize,
 }
 
 static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
@@ -131,6 +133,7 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
     kdk: Aes128Key { key: [0; 16] },
     enclave_total_in: 0,
     enclave_total_out: 0,
+    compute_amt: 0,
 };
 
 #[no_mangle]
@@ -295,11 +298,13 @@ pub unsafe extern "C" fn accept_task(
     let task_id_slice = core::slice::from_raw_parts(p_task_id, 32);
     task_id.copy_from_slice(&task_id_slice);
 
-    let pubkey_secp256r1_buf_slice = core::slice::from_raw_parts(p_user_pubkey_secp256r1_buf, user_pubkey_secp256r1_buf_size);
+    let pubkey_secp256r1_buf_slice =
+        core::slice::from_raw_parts(p_user_pubkey_secp256r1_buf, user_pubkey_secp256r1_buf_size);
     let user_secp256r1_pubkey: Secp256r1PublicKey =
         serde_json::from_slice(pubkey_secp256r1_buf_slice).unwrap();
 
-    let pubkey_sr25519_buf_slice = core::slice::from_raw_parts(p_user_pubkey_sr25519_buf, user_pubkey_sr25519_buf_size);
+    let pubkey_sr25519_buf_slice =
+        core::slice::from_raw_parts(p_user_pubkey_sr25519_buf, user_pubkey_sr25519_buf_size);
     let user_sr25519_pubkey: Sr25519PublicKey =
         serde_json::from_slice(pubkey_sr25519_buf_slice).unwrap();
 
@@ -317,6 +322,7 @@ pub unsafe extern "C" fn accept_task(
         kdk: kdk,
         enclave_total_in: 0,
         enclave_total_out: 0,
+        compute_amt: 0,
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
@@ -451,5 +457,55 @@ pub unsafe extern "C" fn storage_request(
     *response_size = response_encrypted_bytes.len() as u32;
 
     SINGLE_TASK.enclave_total_out += *response_size as usize;
+    sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn demo_compute(
+    request: *const u8,
+    request_size: u32,
+    response: *mut u8,
+    response_capacity: u32,
+    response_size: *mut u32,
+) -> sgx_status_t {
+    // Each compute function will define its own compute weight similar to that of
+    // the weight for each pallet extrinsic function
+    const COMPUTE_WEIGHT: usize = 140000;
+
+    // Updates the enclave accounting stats
+    SINGLE_TASK.enclave_total_in += request_size as usize;
+    SINGLE_TASK.compute_amt += COMPUTE_WEIGHT;
+
+    // Obtain the shared AES128 key between user and worker
+    let kdk = SINGLE_TASK.kdk;
+
+    // Decrypt incoming request from user
+    let encrypted_msg_slice = slice::from_raw_parts(request, request_size as usize);
+    let response_payload = slice::from_raw_parts_mut(response, response_capacity as usize);
+    let encrypted_msg = serde_json::from_slice(&encrypted_msg_slice).unwrap();
+    let decrypted_msg = enclave_cryptoerr!(aes128gcm_decrypt(&kdk, &encrypted_msg));
+
+    // In this demo, the decrypted message is 2 u32 values
+    let v1 = u32::from_le_bytes(decrypted_msg[..4].try_into().unwrap());
+    let v2 = u32::from_le_bytes(decrypted_msg[4..].try_into().unwrap());
+
+    // Perform computation
+    let result = v1 + v2;
+    let response_bytes = result.to_le_bytes();
+
+    // Encrypt result
+    let response_encrypted = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &response_bytes));
+    let response_encrypted_bytes = serde_json::to_vec(&response_encrypted).unwrap();
+
+    // Writes the encrypted response into the array
+    let (first, _) = response_payload.split_at_mut(response_encrypted_bytes.len());
+    first.clone_from_slice(&response_encrypted_bytes);
+
+    // Writes response size
+    *response_size = response_encrypted_bytes.len() as u32;
+
+    // Updates accounting for enclave data out
+    SINGLE_TASK.enclave_total_out += *response_size as usize;
+
     sgx_status_t::SGX_SUCCESS
 }
