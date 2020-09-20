@@ -53,6 +53,9 @@ use advanca_crypto_types::*;
 
 use advanca_macros::{enclave_cryptoerr, enclave_ret, enclave_ret_protobuf};
 
+mod accounting;
+use accounting::*;
+
 #[derive(Default, Clone, Copy)]
 struct AttestedSession {
     enclave_secp256r1_prvkey: Secp256r1PrivateKey,
@@ -104,9 +107,7 @@ struct TaskInfo {
     user_secp256r1_pubkey: Secp256r1PublicKey,
     user_sr25519_pubkey: Sr25519PublicKey,
     kdk: Aes128Key,
-    enclave_total_in: usize,
-    enclave_total_out: usize,
-    compute_amt: usize,
+    accounting_info: AccountingInfo,
 }
 
 static mut TASKS: *mut HashMap<[u8; 32], TaskInfo> = 0 as *mut HashMap<[u8; 32], TaskInfo>;
@@ -131,9 +132,14 @@ static mut SINGLE_TASK: TaskInfo = TaskInfo {
         compressed_point: [0; 32],
     },
     kdk: Aes128Key { key: [0; 16] },
-    enclave_total_in: 0,
-    enclave_total_out: 0,
-    compute_amt: 0,
+    accounting_info: AccountingInfo {
+        storage_size: 0,
+        storage_in: 0,
+        storage_out: 0,
+        enclave_total_in: 0,
+        enclave_total_out: 0,
+        compute: 0,
+    },
 };
 
 #[no_mangle]
@@ -320,9 +326,7 @@ pub unsafe extern "C" fn accept_task(
         user_secp256r1_pubkey: user_secp256r1_pubkey,
         user_sr25519_pubkey: user_sr25519_pubkey,
         kdk: kdk,
-        enclave_total_in: 0,
-        enclave_total_out: 0,
-        compute_amt: 0,
+        accounting_info: AccountingInfo::default(),
     };
     (*TASKS).insert(task_id, task_info);
     // TODO! hack for single task demo
@@ -381,9 +385,9 @@ pub unsafe extern "C" fn proc_heartbeat(
     p_msg_in: *const u8,
     msg_in_len: usize,
 ) -> sgx_status_t {
-    let data_in = SINGLE_TASK.enclave_total_in;
-    let data_out = SINGLE_TASK.enclave_total_out;
-    let compute = SINGLE_TASK.compute_amt;
+    let data_in = SINGLE_TASK.accounting_info.get_enclave_in();
+    let data_out = SINGLE_TASK.accounting_info.get_enclave_out();
+    let compute = SINGLE_TASK.accounting_info.get_compute();
 
     let heartbeat_req_bytes_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
     let heartbeat_req = parse_from_bytes::<HeartbeatRequest>(&heartbeat_req_bytes_slice).unwrap();
@@ -430,7 +434,9 @@ pub unsafe extern "C" fn storage_request(
     response_size: *mut u32,
 ) -> sgx_status_t {
     let kdk = SINGLE_TASK.kdk;
-    SINGLE_TASK.enclave_total_in += request_size as usize;
+    SINGLE_TASK
+        .accounting_info
+        .record_enclave_in(request_size as usize);
 
     let encrypted_msg_slice = slice::from_raw_parts(request, request_size as usize);
     let response_payload = slice::from_raw_parts_mut(response, response_capacity as usize);
@@ -458,7 +464,9 @@ pub unsafe extern "C" fn storage_request(
     first.clone_from_slice(&response_encrypted_bytes);
     *response_size = response_encrypted_bytes.len() as u32;
 
-    SINGLE_TASK.enclave_total_out += *response_size as usize;
+    SINGLE_TASK
+        .accounting_info
+        .record_enclave_out(*response_size as usize);
     sgx_status_t::SGX_SUCCESS
 }
 
@@ -475,8 +483,10 @@ pub unsafe extern "C" fn demo_compute(
     const COMPUTE_WEIGHT: usize = 140000;
 
     // Updates the enclave accounting stats
-    SINGLE_TASK.enclave_total_in += request_size as usize;
-    SINGLE_TASK.compute_amt += COMPUTE_WEIGHT;
+    SINGLE_TASK
+        .accounting_info
+        .record_enclave_in(request_size as usize);
+    SINGLE_TASK.accounting_info.record_compute(COMPUTE_WEIGHT);
 
     // Obtain the shared AES128 key between user and worker
     let kdk = SINGLE_TASK.kdk;
@@ -507,7 +517,22 @@ pub unsafe extern "C" fn demo_compute(
     *response_size = response_encrypted_bytes.len() as u32;
 
     // Updates accounting for enclave data out
-    SINGLE_TASK.enclave_total_out += *response_size as usize;
+    SINGLE_TASK
+        .accounting_info
+        .record_enclave_out(*response_size as usize);
 
     sgx_status_t::SGX_SUCCESS
+}
+
+pub fn test() {
+    let mut accounting_info = AccountingInfo::default();
+    accounting_info.update_storage_size(1024);
+    accounting_info.update_storage_size(2048);
+    accounting_info.record_storage_in(10);
+    accounting_info.record_storage_in(25);
+    accounting_info.record_storage_out(20);
+    accounting_info.record_storage_out(45);
+    assert_eq!(accounting_info.get_storage_size(), 2048);
+    assert_eq!(accounting_info.get_storage_in(), 35);
+    assert_eq!(accounting_info.get_storage_out(), 65);
 }
