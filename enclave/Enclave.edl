@@ -39,6 +39,12 @@ enclave {
 			[out] uint32_t* response_size
 		);
 
+		public sgx_status_t demo_compute(
+			[in, size=request_size] uint8_t* request, uint32_t request_size,
+			[out, size=response_capacity] uint8_t* response, uint32_t response_capacity,
+			[out] uint32_t* response_size
+		);
+
 		public sgx_status_t enclave_init_ra (
 				int b_pse,
 				[out] sgx_ra_context_t *p_context

@@ -19,6 +19,7 @@ package worker;
 service Storage {
   rpc Send(EncryptedRequest) returns (EncryptedResponse) {}
   rpc heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+  rpc demo_compute(EncryptedRequest) returns (EncryptedResponse) {}
 
   // used for testing
   rpc Get(GetRequest) returns (GetResponse) {}

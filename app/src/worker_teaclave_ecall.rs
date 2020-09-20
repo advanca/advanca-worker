@@ -87,4 +87,13 @@ extern "C" {
         msg_in: *const u8,
         msg_in_len: usize,
     ) -> sgx_status_t;
+    pub fn demo_compute(
+        eid: sgx_enclave_id_t,
+        retval: *mut sgx_status_t,
+        request: *const u8,
+        request_size: u32,
+        response: *mut u8,
+        response_capacity: u32,
+        response_size: *mut u32,
+    ) -> sgx_status_t;
 }

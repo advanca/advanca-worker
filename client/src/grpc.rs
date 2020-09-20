@@ -53,6 +53,33 @@ impl Client {
         }
     }
 
+    pub fn send_demo_compute(&self, v1: u32, v2: u32) -> u32 {
+        // TODO: reorganize the code... currently we are just deriving the key where-ever we need
+        let key = derive_kdk(&self.keypair, &self.server_public_key).unwrap();
+        let mut request = [0_u8; 8];
+        request[..4].copy_from_slice(&v1.to_le_bytes()[..]);
+        request[4..].copy_from_slice(&v2.to_le_bytes()[..]);
+        let mut req = EncryptedRequest::new();
+        {
+            let plaintext = request.to_vec();
+            let encrypted_msg = aes128gcm_encrypt(&key, &plaintext).unwrap();
+            req.set_payload(serde_json::to_vec(&encrypted_msg).unwrap());
+        }
+        trace!("encrypted req {:?}", req);
+        let res = self.storage_client.demo_compute(&req).unwrap();
+        {
+            let ciphertext = res.get_payload();
+            let encrypted_msg_bytes = ciphertext.to_vec();
+            let encrypted_msg = serde_json::from_slice(&encrypted_msg_bytes).unwrap();
+            trace!("response payload {:?}", ciphertext);
+            trace!("decryption key {:?}", key);
+            let plaintext = aes128gcm_decrypt(&key, &encrypted_msg).unwrap();
+            let mut return_bytes = [0_u8; 4];
+            return_bytes.copy_from_slice(&plaintext[..]);
+            u32::from_le_bytes(return_bytes)
+        }
+    }
+
     pub fn send_encrypted_request(&self, plain_req: PlainRequest) -> PlainResponse {
         // TODO: fix this hack... currently we are just deriving the key where-ever we need
         let key = derive_kdk(&self.keypair, &self.server_public_key).unwrap();
@@ -188,5 +215,9 @@ pub fn start_demo(url: &str, enclave_key: Secp256r1PublicKey, client_key: Secp25
         "get Miranda's info: {}",
         client.get_secretly(miranda.id, true)
     );
+    thread::sleep(time::Duration::from_secs(2));
+
+    let myadd = client.send_demo_compute(1, 2);
+    info!("demo_compute(1+2): {}", myadd);
     thread::sleep(time::Duration::from_secs(2));
 }

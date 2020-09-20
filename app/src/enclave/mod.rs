@@ -40,6 +40,31 @@ pub const PAYLOAD_MAX_SIZE: usize = 4196;
 pub static ENCLAVE_TOKEN: &'static str = "enclave.token";
 pub static ENCLAVE_FILE: &'static str = "enclave.signed.so";
 
+///    request: *const u8,
+///        request_size: u32,
+///            response: *mut u8,
+///                response_capacity: u32,
+///                    response_size: *mut u32,
+
+pub fn demo_compute_rpc(eid: sgx_enclave_id_t, encrypted_request: &[u8]) -> Vec<u8> {
+    let mut response = [0_u8; 4096];
+    let mut response_size = 0;
+    let _ = unsafe {
+        handle_ecall!(
+            eid,
+            demo_compute(
+                encrypted_request.as_ptr(),
+                encrypted_request.len() as u32,
+                response.as_mut_ptr(),
+                response.len() as u32,
+                &mut response_size
+            )
+        )
+        .unwrap()
+    };
+    response[..response_size as usize].to_vec()
+}
+
 pub fn heartbeat_challenge(
     eid: sgx_enclave_id_t,
     heartbeat_req: HeartbeatRequest,
