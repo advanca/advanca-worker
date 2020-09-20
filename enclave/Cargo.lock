@@ -3,7 +3,7 @@
 [[package]]
 name = "advanca-crypto"
 version = "0.4.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.4.0#cfdbd0601cdeb4bfac7524eab575ec600acdf8fa"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=bb8f493c693c31c3467f479fe1f7a46feffbbe33#bb8f493c693c31c3467f479fe1f7a46feffbbe33"
 dependencies = [
  "advanca-crypto-types",
  "advanca-macros",
@@ -19,7 +19,7 @@ dependencies = [
 [[package]]
 name = "advanca-crypto-types"
 version = "0.4.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.4.0#cfdbd0601cdeb4bfac7524eab575ec600acdf8fa"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=bb8f493c693c31c3467f479fe1f7a46feffbbe33#bb8f493c693c31c3467f479fe1f7a46feffbbe33"
 dependencies = [
  "curve25519-dalek",
  "schnorrkel",
@@ -32,7 +32,7 @@ dependencies = [
 [[package]]
 name = "advanca-macros"
 version = "0.4.0"
-source = "git+https://github.com/advanca/advanca-sgx-helper?tag=v0.4.0#cfdbd0601cdeb4bfac7524eab575ec600acdf8fa"
+source = "git+https://github.com/advanca/advanca-sgx-helper?rev=bb8f493c693c31c3467f479fe1f7a46feffbbe33#bb8f493c693c31c3467f479fe1f7a46feffbbe33"
 dependencies = [
  "advanca-crypto-types",
  "sgx_types",

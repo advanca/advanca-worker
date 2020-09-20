@@ -383,6 +383,7 @@ pub unsafe extern "C" fn proc_heartbeat(
 ) -> sgx_status_t {
     let data_in = SINGLE_TASK.enclave_total_in;
     let data_out = SINGLE_TASK.enclave_total_out;
+    let compute = SINGLE_TASK.compute_amt;
 
     let heartbeat_req_bytes_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len);
     let heartbeat_req = parse_from_bytes::<HeartbeatRequest>(&heartbeat_req_bytes_slice).unwrap();
@@ -409,6 +410,7 @@ pub unsafe extern "C" fn proc_heartbeat(
         storage_in: storage_in,
         storage_out: storage_out,
         storage_size: storage_size,
+        compute: compute,
     };
     let data = serde_json::to_vec(&alive_evidence).unwrap();
 
