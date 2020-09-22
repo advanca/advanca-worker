@@ -40,7 +40,7 @@ checksum = "ee2a4ec343196209d6594e19543ae87a39f96d5534d7174822a3ad825dd6ed7e"
 
 [[package]]
 name = "advanca-client"
-version = "0.4.1"
+version = "0.5.1"
 dependencies = [
  "advanca-crypto",
  "advanca-crypto-types",
@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "advanca-worker"
-version = "0.4.1"
+version = "0.5.1"
 dependencies = [
  "aas-protos-std",
  "advanca-crypto",
