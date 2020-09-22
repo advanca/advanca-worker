@@ -285,9 +285,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::from_slice(&signed_task_secp256r1_pubkey_bytes).unwrap();
 
     // verify that the task_pubkey is untampered
+    // enclave_task_pubkey is used to derive the shared secret with the enclave
     let verified =
         secp256r1_verify_msg(&enclave_secp256r1_public_key, &signed_task_secp256r1_pubkey).unwrap();
     assert_eq!(verified, true);
+
+    // demo to show attempt to tamper pubkey to intercept communication
+    let mut evil_signed_task_secp256r1_pubkey = signed_task_secp256r1_pubkey.clone();
+    evil_signed_task_secp256r1_pubkey.msg[0] = 0xde;
+    evil_signed_task_secp256r1_pubkey.msg[1] = 0xad;
+    evil_signed_task_secp256r1_pubkey.msg[2] = 0xbe;
+    evil_signed_task_secp256r1_pubkey.msg[3] = 0xef;
+    let demo_verified = secp256r1_verify_msg(
+        &enclave_secp256r1_public_key,
+        &evil_signed_task_secp256r1_pubkey,
+    )
+    .unwrap();
+    info!(
+        "[demo] tampered signed message: {:?}",
+        evil_signed_task_secp256r1_pubkey
+    );
+    info!("[demo] verified: {:?}", demo_verified);
+    assert_eq!(demo_verified, false);
+
     let enclave_task_secp256r1_pubkey: Secp256r1PublicKey =
         serde_json::from_slice(&signed_task_secp256r1_pubkey.msg).unwrap();
     let kdk: Aes128Key =
