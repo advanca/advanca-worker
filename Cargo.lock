@@ -146,6 +146,7 @@ dependencies = [
  "parity-scale-codec",
  "primitive-types",
  "protobuf 2.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.7.3",
  "serde_json",
  "sgx-ra",
  "sgx_crypto_helper",

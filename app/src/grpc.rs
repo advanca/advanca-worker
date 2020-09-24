@@ -29,6 +29,11 @@ use worker_protos_std::storage::storage::{
 };
 use worker_protos_std::storage::storage_grpc::{self, Storage};
 
+use rand::Rng;
+
+use advanca_crypto::*;
+use advanca_crypto_types::*;
+
 #[derive(Clone)]
 struct StorageService {
     database: Arc<RwLock<HashMap<String, String>>>,
@@ -102,6 +107,16 @@ impl Storage for StorageService {
             "<EncryptedRequest> payload {:?}",
             format_payload(req.get_payload())
         );
+        let encrypted_msg: Aes128EncryptedMsg = serde_json::from_slice(&req.get_payload()).unwrap();
+        let random_key = Aes128Key {
+            key: rand::thread_rng().gen::<[u8; 16]>(),
+        };
+        info!("[demo] encrypted request: {:?}", encrypted_msg);
+        info!("[demo] random key: {:?}", random_key);
+        info!("[demo] attempting to decrypt using random key...");
+        let attempted_decryption = aes128gcm_decrypt(&random_key, &encrypted_msg);
+        info!("[demo] {:?}", attempted_decryption);
+
         let output_payload = enclave::storage_request(
             self.enclave.clone().lock().unwrap().geteid(),
             req.get_payload(),
