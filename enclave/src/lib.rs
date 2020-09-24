@@ -354,7 +354,15 @@ pub unsafe extern "C" fn encrypt_msg(
     let kdk = task_info.kdk;
     // TODO: Add a canary at the end of the 2 buffers to ensure that they are of the correct
     // length.
+
+    // General encryption functions that encrypt untrusted input is generally a bad idea. However,
+    // in the case where general encrypt functions are needed, one has to ensure that the input which
+    // is encrypted must be combined with a source of data not under the control of the untrusted
+    // party. In this case, the string literal is needed to ensure that this function doesn't become an arbitrary
+    // encryption gadget for the untrusted world.
+    let magic_string = b"ENCRYPTEDMSG";
     let data_slice = core::slice::from_raw_parts(p_msg_in, msg_in_len as usize);
+    let data_slice = [magic_string, data_slice].concat();
     let encrypted_msg = enclave_cryptoerr!(aes128gcm_encrypt(&kdk, &data_slice));
     enclave_ret!(encrypted_msg, p_ubuf, p_ubuf_size);
     sgx_status_t::SGX_SUCCESS
