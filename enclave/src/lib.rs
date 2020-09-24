@@ -524,6 +524,28 @@ pub unsafe extern "C" fn demo_compute(
     sgx_status_t::SGX_SUCCESS
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn demo_leak(leaked_ptr: *mut usize) -> sgx_status_t {
+    // This function demonstrates how values inside the enclave cannot be directly read by
+    // untrusted code. What we are doing here is to purposefully leak a pointer to a secret value
+    // inside the enclave to the untrusted world and attempting to read that.
+    // Note that this is a guarantee of Intel SGX, with the hardware MMU enforcing any access to
+    // the PRM by untrusted code resulting in an abort with the value being all bits set.
+
+    // creates a usize 43 value and leaks it
+    let secret = Box::new(43);
+    let static_ref: &'static mut usize = Box::leak(secret);
+    assert_eq!(*static_ref, 43);
+    // we're returning the enclave ptr into the untrusted world
+    *leaked_ptr = static_ref as *const usize as usize;
+    println!(
+        "[  trusted] {:x}, {:x}",
+        *leaked_ptr,
+        *((*leaked_ptr) as *const usize)
+    );
+    sgx_status_t::SGX_SUCCESS
+}
+
 pub fn test() {
     let mut accounting_info = AccountingInfo::default();
     accounting_info.update_storage_size(1024);

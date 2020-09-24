@@ -96,4 +96,9 @@ extern "C" {
         response_capacity: u32,
         response_size: *mut u32,
     ) -> sgx_status_t;
+    pub fn demo_leak(
+        eid: sgx_enclave_id_t,
+        retval: *mut sgx_status_t,
+        leaked_ptr: *mut usize,
+    ) -> sgx_status_t;
 }
