@@ -318,7 +318,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     debug!("key: {:?}", kdk);
 
     let url = aes128gcm_decrypt(&kdk, &url_encrypted).unwrap();
-    let url = core::str::from_utf8(&url).unwrap();
+    assert_eq!(url[..12], b"ENCRYPTEDMSG"[..]);
+    let url = core::str::from_utf8(&url[12..]).unwrap();
     info!("worker url is {:?}", url);
 
     // talk to worker directly
