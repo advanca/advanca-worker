@@ -45,6 +45,10 @@ enclave {
 			[out] uint32_t* response_size
 		);
 
+		public sgx_status_t demo_leak(
+			[out] size_t *leaked_ptr
+		);
+
 		public sgx_status_t enclave_init_ra (
 				int b_pse,
 				[out] sgx_ra_context_t *p_context
