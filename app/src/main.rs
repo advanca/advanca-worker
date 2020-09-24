@@ -550,7 +550,7 @@ fn main() {
     info!("freeing ra_context: {}", ra_context);
 
     // perform the leak demo
-    info!("performing leak demo...");
+    info!("[demo] performing leak demo...");
     let mut leaked_ptr: usize = 0;
     unsafe { demo_leak(eid, &mut retval, &mut leaked_ptr) };
     unsafe {
