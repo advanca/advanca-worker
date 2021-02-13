@@ -1,3 +1,9 @@
+# Advanca is now [Automata](https://ata.network).
+
+The development is moved to https://github.com/automata-network/automata. Come and join us there!
+
+----------
+
 # Advanca Worker
 
 [![rust-badge](https://github.com/advanca/advanca-worker/workflows/Rust/badge.svg)](https://github.com/advanca/advanca-worker/actions?query=workflow%3ARust)
